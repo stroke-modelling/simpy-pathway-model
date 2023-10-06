@@ -3,14 +3,14 @@ Simpy pathway model for stroke thrombolysis and thrombectomy
 
 ```mermaid
 flowchart LR
-    A[fa:fa-home Stroke\nonset] --> |Delay| B(fa:fa-phone Call 999)
-    B --> |Delay| C(fa:fa-ambulance Ambulance\ndispatch + travel)
-    C --> D(fa:fa-ambulance Ambulance\non-scene)
-    D --> E{fa:fa-user-md Decision}
-    E --> |Travel| F(fa:fa-syringe IVT-only Unit)
-    E --> |Travel| G(fa:fa-procedures IVT/MT Unit)
+    A[Stroke\nonset] --> |Delay| B(Call 999)
+    B --> |Delay| C(Ambulance\ndispatch + travel)
+    C --> D(Ambulance\non-scene)
+    D --> E{Decision}
+    E --> |Travel| F(IVT-only Unit)
+    E --> |Travel| G(IVT/MT Unit)
     F .-> |Transfer\nif required| G
-    G --> H[fa:fa-walking Outcome]
+    G --> H[Outcome]
     F --> H
 ```
 
