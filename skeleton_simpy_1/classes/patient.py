@@ -7,9 +7,6 @@ class Patient():
 
     Attributes
     ----------
-    lsoa:
-        Home LSOA. Text.
-
     closest_ivt_unit:
         Name or postcode of closest IVT unit. Text.
 
@@ -22,6 +19,10 @@ class Patient():
     closest_mt_time:
         Predicted travel time (minutes) to closest MT unit. Float.
 
+    lsoa:
+        Home LSOA. Text.
+
+
     mt_transfer_unit:
         Name or postcode of closest MT transfer unit. Text.
 
@@ -31,8 +32,9 @@ class Patient():
     mt_transfer_required:
         Is transfer required for MT? Boolean.
 
-    times:
-        Dictionary record of process times
+    
+
+
     """
 
     def __init__(self, globvars, id):
@@ -54,5 +56,8 @@ class Patient():
         self.mt_transfer_time = globvars.mt_transfer_time[self.closest_ivt_unit]
         self.mt_transfer_required = self.closest_mt_unit != self.mt_transfer_unit
 
-        # Set up dictionary for times
-        self.times = dict()
+        # Set up times; these will be relative to onset
+        self.time_onset = ''
+        self.time_ambulance_called = ''
+        self.time_ambulance_arrives = ''
+

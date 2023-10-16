@@ -11,6 +11,7 @@ from classes.globvars import Globvars
 from classes.patient import Patient
 from classes.pathway import Pathway
 
+
 class Model(object):
     """
     The main model object.
@@ -21,10 +22,10 @@ class Model(object):
     ----------
     env:
         SimPy environment
-    
+
     globvars:
         Imported global variables (object)
-    
+
     Methods
     -------
     __init__:
@@ -40,10 +41,24 @@ class Model(object):
 
         # Set up SimPy environment
         self.env = simpy.Environment()
-        
+
         # Set up pathway
         self.pathway = Pathway(self.env, self.globvars)
 
+    def end_run_routine(self):
+        '''
+        End run routine
+        '''
+
+        # Record which columns are used for times
+        completed_patients_keys = self.pathway.completed_patients[0].keys()
+        time_cols = [x for x in completed_patients_keys if x[0:4] == 'time']
+        time_cols.remove('time_onset')
+
+        # Convert results into DataFrames
+        self.results_all = pd.DataFrame(self.pathway.completed_patients)
+        self.results_summary_by_admitting_unit = self.results_all.groupby(
+            by='closest_ivt_unit')[time_cols].agg(['mean', 'std'])
 
     def generate_patient_arrival(self):
         """
@@ -67,7 +82,8 @@ class Model(object):
             # Pass patient to pathway
             self.env.process(self.pathway.process_patient(patient))
             # Sample time to next admission from exponential distribution
-            time_to_next = np.random.exponential(self.globvars.inter_arrival_time)
+            time_to_next = np.random.exponential(
+                self.globvars.inter_arrival_time)
             # SimPy delay to next arrival (using environment timeout)
             yield self.env.timeout(time_to_next)
 
@@ -87,9 +103,9 @@ class Model(object):
         self.env.run(until=self.globvars.run_duration)
 
         # Call end run routine to summarise and record model results
-        # Code to be added
+        self.end_run_routine()
 
         # Show time taken
         time_end = time.time()
         time_taken = time_end - time_start
-        print (f'Sim time taken: {time_taken:0.0f}')
+        print(f'Sim time taken: {time_taken:0.0f}')
