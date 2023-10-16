@@ -13,6 +13,7 @@ dependencies:
   - python=3.10
   - scipy
   - pip:
+    - stroke-outcome
     - simpy==4.0
     - stroke-outcome
 
