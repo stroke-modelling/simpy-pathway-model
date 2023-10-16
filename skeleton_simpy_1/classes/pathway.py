@@ -30,11 +30,11 @@ class Pathway(object):
         Manages the pathway process steps for each patient.
     """
 
-    def __init__(self, env, globvars):
+    def __init__(self, env, scenario):
         """Constructor class"""
 
         self.env = env
-        self.globvars = globvars
+        self.scenario = scenario
         self.completed_patients = []
 
     def process_patient(self, patient):
@@ -62,8 +62,8 @@ class Pathway(object):
         """
         Time from calling ambulance to arrival of ambulance
         """
-        min_duration = self.globvars.process_time_ambulance_response[0]
-        max_duration = self.globvars.process_time_ambulance_response[1]
+        min_duration = self.scenario.process_time_ambulance_response[0]
+        max_duration = self.scenario.process_time_ambulance_response[1]
         duration = random.uniform(min_duration, max_duration)
         yield self.env.timeout(duration)
         patient.time_ambulance_arrives = np.round(
@@ -73,8 +73,8 @@ class Pathway(object):
         """
         Time from onset to calling for ambulance
         """
-        min_duration = self.globvars.process_time_call_ambulance[0]
-        max_duration = self.globvars.process_time_call_ambulance[1]
+        min_duration = self.scenario.process_time_call_ambulance[0]
+        max_duration = self.scenario.process_time_call_ambulance[1]
         duration = random.uniform(min_duration, max_duration)
         yield self.env.timeout(duration)
         patient.time_ambulance_called = np.round(

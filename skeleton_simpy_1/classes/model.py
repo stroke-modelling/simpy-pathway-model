@@ -7,7 +7,7 @@ import time
 from stroke_outcome.discrete_outcome import Discrete_outcome
 import stroke_outcome.outcome_utilities as outcome_utilities
 
-from classes.globvars import Globvars
+from classes.parameters import Scenario
 from classes.patient import Patient
 from classes.pathway import Pathway
 
@@ -23,7 +23,7 @@ class Model(object):
     env:
         SimPy environment
 
-    globvars:
+    scenario:
         Imported global variables (object)
 
     Methods
@@ -36,14 +36,14 @@ class Model(object):
     def __init__(self, scenario):
         """Constructor class for model"""
 
-        # Scenario overwrites default Globvars values
-        self.globvars = Globvars(scenario)
+        # Scenario
+        self.scenario = scenario
 
         # Set up SimPy environment
         self.env = simpy.Environment()
 
         # Set up pathway
-        self.pathway = Pathway(self.env, self.globvars)
+        self.pathway = Pathway(self.env, scenario)
 
     def end_run_routine(self):
         '''
@@ -57,6 +57,7 @@ class Model(object):
 
         # Convert results into DataFrames
         self.results_all = pd.DataFrame(self.pathway.completed_patients)
+        self.results_summary_all = self.results_all[time_cols].agg(['mean', 'std'])
         self.results_summary_by_admitting_unit = self.results_all.groupby(
             by='closest_ivt_unit')[time_cols].agg(['mean', 'std'])
 
@@ -78,12 +79,12 @@ class Model(object):
         while True:
             arrival_count += 1
             # Get patient object
-            patient = Patient(self.globvars, arrival_count)
+            patient = Patient(self.scenario, arrival_count)
             # Pass patient to pathway
             self.env.process(self.pathway.process_patient(patient))
             # Sample time to next admission from exponential distribution
             time_to_next = np.random.exponential(
-                self.globvars.inter_arrival_time)
+                self.scenario.inter_arrival_time)
             # SimPy delay to next arrival (using environment timeout)
             yield self.env.timeout(time_to_next)
 
@@ -93,19 +94,11 @@ class Model(object):
         Note: All SimPy processes must be called with `env.process` in addition
         to the process function/method name"""
 
-        # Record simulation time start
-        time_start = time.time()
-
         # Initialise processes that will run on model run
         self.env.process(self.generate_patient_arrival())
 
         # Run
-        self.env.run(until=self.globvars.run_duration)
+        self.env.run(until=self.scenario.run_duration)
 
         # Call end run routine to summarise and record model results
         self.end_run_routine()
-
-        # Show time taken
-        time_end = time.time()
-        time_taken = time_end - time_start
-        print(f'Sim time taken: {time_taken:0.0f}')

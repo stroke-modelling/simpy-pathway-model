@@ -37,23 +37,23 @@ class Patient():
 
     """
 
-    def __init__(self, globvars, id):
+    def __init__(self, scenario, id):
         """Constructor class for patient"""
 
         self.id = id
 
         # Get LSOA based on admission numbers
-        elements = globvars.lsoa_names
-        frequencies = globvars.lsoa_relative_frequency
+        elements = scenario.lsoa_names
+        frequencies = scenario.lsoa_relative_frequency
         self.lsoa = random.choices(elements, weights=frequencies)[0]
 
         # Get unit details
-        self.closest_ivt_unit = globvars.lsoa_ivt_unit[self.lsoa]
-        self.closest_ivt_time = globvars.lsoa_ivt_travel_time[self.lsoa]
-        self.closest_mt_unit = globvars.lsoa_mt_unit[self.lsoa]
-        self.closest_mt_time = globvars.lsoa_mt_travel_time[self.lsoa]
-        self.mt_transfer_unit = globvars.mt_transfer_unit[self.closest_ivt_unit]
-        self.mt_transfer_time = globvars.mt_transfer_time[self.closest_ivt_unit]
+        self.closest_ivt_unit = scenario.lsoa_ivt_unit[self.lsoa]
+        self.closest_ivt_time = scenario.lsoa_ivt_travel_time[self.lsoa]
+        self.closest_mt_unit = scenario.lsoa_mt_unit[self.lsoa]
+        self.closest_mt_time = scenario.lsoa_mt_travel_time[self.lsoa]
+        self.mt_transfer_unit = scenario.mt_transfer_unit[self.closest_ivt_unit]
+        self.mt_transfer_time = scenario.mt_transfer_time[self.closest_ivt_unit]
         self.mt_transfer_required = self.closest_mt_unit != self.mt_transfer_unit
 
         # Set up times; these will be relative to onset
