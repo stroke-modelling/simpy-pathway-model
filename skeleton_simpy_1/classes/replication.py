@@ -16,16 +16,16 @@ class Replicator:
 
     Sequence of calls:
     ------------------
-        1. `run_scenarios` is called from oustide method
-        2. `run_scenarios` calls `run_trial` for each sceanrio
+        1. `run_scenarios` is called from outside method.
+        2. `run_scenarios` calls `run_trial` for each scenario.
         3. `run_trial` calls `single_run` for each replicate run. This is 
-            performed across multiple CPU cores.
-        4. `collate_trial_results` collates replicate trial runs for a single
-            scenario and groups them in one DataFrame.
-        5. `pivot_results` takes the collated DataFrames (one per sceanrio) and
-            produces summary results.
-        6. When all scenarios and trials are run, `run_scenarios` will print and
-            save results.
+            performed across multiple CPU cores. This is repeated for each
+            scenario.
+        4. `run_scenarios` then calls `aggregate_results` to aggregate results
+            from across trials.
+        5. `run_scenarios` then saves and prints aggregate results. For printing,
+            only the median of the trials is shown. When saved, the 5%, 50%, and
+            95% percentiles across trials are saved.
         """
 
     def __init__(self, scenarios, replications):
@@ -39,14 +39,22 @@ class Replicator:
 
 
     def aggregate_results(self):
+        """
+        Results across trials are aggregated. The 5%, 50% (median), and 95%
+        percentiles are calculated for each result table for each scenario, and
+        saved in a dictionary `aggregated_results`.
+        """
 
         # Define functions to allow percentiles in a Pandas Pivot Table
         def percent_5(g):
+            """Returns 5th percentile of input"""
             return np.percentile(g, 5)
 
         def percent_95(g):
+            """Returns 95th percentile of input"""
             return np.percentile(g, 75)
 
+        # Store aggregated results in a dictionary
         self.aggregated_results = dict()
 
         # Loop through scenarios
@@ -63,6 +71,12 @@ class Replicator:
 
 
     def print_and_save_results(self):
+        """
+        Aggregate results are saved in full. Printed results are limited to
+        median results from trials. When run from a Jupyter notebook, printing
+        uses `display` rather than `print` for nicer formatting of output.
+
+        """
 
         # Get indexes (extract from tuples)
         tuple_indexes = self.aggregated_results.keys()
@@ -86,14 +100,17 @@ class Replicator:
                 for col in df.columns.values.tolist():
                    if col[-1] == 'median':
                        display_cols.append(col)
-                df.columns = [col[0:-1] for col in df.columns]
 
+                df = df[display_cols]
+                df.columns = df.columns.droplevel(-1) # Drop 'median' label
+
+                print ()
                 print (f'Scenario: {scenario}, Result: {result_name}')
-                print(df, end='\n\n')
-
-
-
-        pass
+                # Use display from within Jupyter notebook
+                try:
+                    display (df)
+                except:
+                    print (df)
 
 
     def run_scenarios(self):
@@ -121,7 +138,7 @@ class Replicator:
                     results[i][results_name]['run'] = i + 1
                     results[i][results_name]['name'] = name
                     results_list.append(results[i][results_name])
-
+                # Concatenate trial results
                 self.trial_results[(name, results_name)] = \
                     pd.concat(results_list, axis=0)
 
@@ -139,6 +156,7 @@ class Replicator:
         """Runs trial of a single scenario over multiple CPU cores.
         n_jobs = max cores to use; ise -1 for all available cores. Use of 
         `delayed` ensures different random  numbers in each run"""
+
         trial_output = Parallel(n_jobs=-1)(delayed(self.single_run)(scenario, i) 
                 for i in range(self.replications))
 
@@ -146,16 +164,15 @@ class Replicator:
 
 
     def single_run(self, scenario, i=0):
-        """Calls for a single run of a single scenario. Returns patient
-        count audit, and qtime dictionary (lists of queuing times by patient
-        priority)."""
+        """Calls for a single run of a single scenario."""
 
         model = Model(scenario)
         model.run()
         
-        # Put results in a dictionary
+        # Put model results in a dictionary for returning to main code.
         results = {
             'all': model.results_summary_all,
             'by_admitting_unit': model.results_summary_by_admitting_unit
                     }
+
         return results
