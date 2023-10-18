@@ -34,6 +34,30 @@ class Replicator:
         self.results = dict()
 
 
+    def aggregate_results(self):
+
+        # Define functions to allow percentiles in a Pandas Pivot Table
+        def percent_5(g):
+            return np.percentile(g, 5)
+
+        def percent_95(g):
+            return np.percentile(g, 75)
+
+        self.aggregated_results = dict()
+
+        # Loop through scenarios
+        for scenario_name in self.scenarios.keys():
+            # Loop through results tables for each scenario
+            for results_name in self.results_table_names:
+                # Get results and drop name and run #
+                df = self.trial_results[scenario_name, results_name]
+                df.drop(['name', 'run'], axis=1, inplace=True)
+                # Average by index
+                grouped = df.groupby(
+                    by=df.index.name).agg([percent_5, np.median, percent_95])
+                self.aggregated_results[(scenario_name, results_name)] = grouped.T
+                pass
+
     def run_scenarios(self):
         """Calls for replications of each scenario, calls for summarisation, 
         displaying of results, and saving of results."""
@@ -51,22 +75,24 @@ class Replicator:
             results = self.run_trial(scenario)
 
             # Collate
-            for i in range(len(trial_results)):
-                results[i]['run'] == i = 1
-                results[i]['name'] == name
-            
-            self.trial_results[name] = pd.concat(results)
+            self.results_table_names = []
+            for results_name in results[0].keys():
+                self.results_table_names.append(results_name)
+                results_list = []
+                for i in range(len(results)):
+                    results[i][results_name]['run'] = i + 1
+                    results[i][results_name]['name'] = name
+                    results_list.append(results[i][results_name])
 
-        
-            pass
+                self.trial_results[(name, results_name)] = \
+                    pd.concat(results_list, axis=0)
 
-        
         # Clear displayed progress output
         clear_line = '\r' + " " * 79
         print(clear_line, end = '')
         
-        # Pivot results (Get summary results for all sceanrios)
-        self.pivot_results()
+        # Pivot results (Get summary results for all scenarios)
+        self.aggregate_results()
         
         # Print results
         self.print_results()
@@ -105,7 +131,4 @@ class Replicator:
             'all': model.results_summary_all,
             'by_admitting_unit': model.results_summary_by_admitting_unit
                     }
-        
         return results
-
-    pass

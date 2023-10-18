@@ -58,6 +58,8 @@ class Model(object):
         # Convert results into DataFrames
         self.results_all = pd.DataFrame(self.pathway.completed_patients)
         self.results_summary_all = self.results_all[time_cols].agg(['mean', 'std'])
+        self.results_summary_all.index.name = 'statistic'
+
         self.results_summary_by_admitting_unit = self.results_all.groupby(
             by='closest_ivt_unit')[time_cols].agg(['mean', 'std'])
 
