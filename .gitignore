@@ -9,8 +9,9 @@ temp/
 *.csv
 *.xlsx
 
-# Ignore PyCharm .idea files
+# Ignore PyCharm .idea and .vscode files
 **/.idea/
+**/.vscode/
 
 # Ignore pyc files
 *.pyc
@@ -21,4 +22,6 @@ temp/
 
 # Ignore pycache folders
 **/__pycache__/
+
+
 

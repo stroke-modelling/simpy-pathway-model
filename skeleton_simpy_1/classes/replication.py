@@ -72,9 +72,10 @@ class Replicator:
 
     def print_and_save_results(self):
         """
-        Aggregate results are saved in full. Printed results are limited to
-        median results from trials. When run from a Jupyter notebook, printing
-        uses `display` rather than `print` for nicer formatting of output.
+        Aggregated results (across multiple trial runs) are saved in full. 
+        Printed results are limited to median results from trials. When run
+        from a Jupyter notebook, printing  uses `display` rather than `print`
+        for nicer formatting of output.
 
         """
 
@@ -114,8 +115,10 @@ class Replicator:
 
 
     def run_scenarios(self):
-        """Calls for replications of each scenario, calls for summarisation, 
-        displaying of results, and saving of results."""
+        """
+        Calls for replications of each scenario, calls for summarisation, 
+        displaying of results, and saving of results.
+        """
         
         # Run all named scenarios
         scenario_count = len(self.scenarios)
