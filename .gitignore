@@ -1,0 +1,24 @@
+# Folders to ignore
+_build/
+data/
+temp/
+
+# Ignore file types that may contain data or models
+*.p
+*.pkl
+*.csv
+*.xlsx
+
+# Ignore PyCharm .idea files
+*.idea
+
+# Ignore pyc files
+*.pyc
+
+# Ignore all checkpoints and output folders
+**/.ipynb_checkpoints/
+**/output/
+
+# Ignore pycache folders
+**/__pycache__/
+

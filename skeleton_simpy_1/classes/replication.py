@@ -4,6 +4,10 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
+pd.set_option('display.max_rows', 120)
+pd.set_option('display.max_columns', 120)
+
+
 class Replicator:
     
     """
@@ -52,11 +56,45 @@ class Replicator:
                 # Get results and drop name and run #
                 df = self.trial_results[scenario_name, results_name]
                 df.drop(['name', 'run'], axis=1, inplace=True)
-                # Average by index
+                # Average by index and store
                 grouped = df.groupby(
                     by=df.index.name).agg([percent_5, np.median, percent_95])
-                self.aggregated_results[(scenario_name, results_name)] = grouped.T
-                pass
+                self.aggregated_results[(scenario_name, results_name)] = grouped
+
+
+    def print_and_save_results(self):
+
+        # Get indexes (extract from tuples)
+        tuple_indexes = self.aggregated_results.keys()
+        scenarios = []
+        result_names = []
+        for index in tuple_indexes:
+            scenarios.append(index[0])
+            result_names.append(index[1])
+        scenarios = list(set(scenarios)); scenarios.sort()
+        result_names = list(set(result_names)); result_names.sort()
+
+        # Print and save
+        for scenario in scenarios:
+            for result_name in result_names:
+                df = self.aggregated_results[scenario, result_name]
+                # Save full results
+                df.to_csv(f'./skeleton_simpy_1/output/{scenario}_{result_name}.csv')
+
+                # Display median results only (and remove 'median' as column name)
+                display_cols = []
+                for col in df.columns.values.tolist():
+                   if col[-1] == 'median':
+                       display_cols.append(col)
+                df.columns = [col[0:-1] for col in df.columns]
+
+                print (f'Scenario: {scenario}, Result: {result_name}')
+                print(df, end='\n\n')
+
+
+
+        pass
+
 
     def run_scenarios(self):
         """Calls for replications of each scenario, calls for summarisation, 
@@ -94,12 +132,8 @@ class Replicator:
         # Pivot results (Get summary results for all scenarios)
         self.aggregate_results()
         
-        # Print results
-        self.print_results()
-        
-        # save results
-        self.save_results()
-
+        # Print and save results
+        self.print_and_save_results()
         
     def run_trial(self, scenario):
         """Runs trial of a single scenario over multiple CPU cores.
@@ -110,19 +144,12 @@ class Replicator:
 
         return trial_output
 
-    
-    def save_results(self):
-        """Save summary results to csv files in output folder"""
-
-        pass
-
 
     def single_run(self, scenario, i=0):
         """Calls for a single run of a single scenario. Returns patient
         count audit, and qtime dictionary (lists of queuing times by patient
         priority)."""
 
-        print(f'{i}, ', end='' )
         model = Model(scenario)
         model.run()
         
