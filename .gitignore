@@ -10,7 +10,7 @@ temp/
 *.xlsx
 
 # Ignore PyCharm .idea files
-*.idea
+**/.idea/
 
 # Ignore pyc files
 *.pyc
