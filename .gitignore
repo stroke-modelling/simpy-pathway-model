@@ -1,6 +1,6 @@
 # Folders to ignore
 _build/
-data/
+#data/
 temp/
 
 # Ignore file types that may contain data or models
