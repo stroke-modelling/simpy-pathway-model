@@ -3,7 +3,7 @@ Replicate test (for debugging replication)
 '''
 
 from classes.replication import Replicator
-from classes.parameters import Scenario
+from classes.scenario import Scenario
 
 scenarios = {}
 

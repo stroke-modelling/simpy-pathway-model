@@ -22,7 +22,6 @@ class Patient():
     lsoa:
         Home LSOA. Text.
 
-
     mt_transfer_unit:
         Name or postcode of closest MT transfer unit. Text.
 
@@ -31,10 +30,6 @@ class Patient():
 
     mt_transfer_required:
         Is transfer required for MT? Boolean.
-
-    
-
-
     """
 
     def __init__(self, scenario, id):

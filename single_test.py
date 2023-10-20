@@ -3,7 +3,7 @@ Single run for debugging
 '''
 
 from classes.model import Model
-from classes.parameters import Scenario
+from classes.scenario import Scenario
 
 # Scenario overwrites default values
 scenario = Scenario({"run_duration": 5})

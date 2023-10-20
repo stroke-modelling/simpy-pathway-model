@@ -7,7 +7,6 @@ import time
 from stroke_outcome.discrete_outcome import Discrete_outcome
 import stroke_outcome.outcome_utilities as outcome_utilities
 
-from classes.parameters import Scenario
 from classes.patient import Patient
 from classes.pathway import Pathway
 
