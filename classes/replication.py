@@ -94,7 +94,7 @@ class Replicator:
             for result_name in result_names:
                 df = self.aggregated_results[scenario, result_name]
                 # Save full results
-                df.to_csv(f'./skeleton_simpy_1/output/{scenario}_{result_name}.csv')
+                df.to_csv(f'./output/{scenario}_{result_name}.csv')
 
                 # Display median results only (and remove 'median' as column name)
                 display_cols = []
