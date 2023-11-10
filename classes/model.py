@@ -3,9 +3,9 @@ import pandas as pd
 import simpy
 import time
 
-# Imports from the stroke_outcome package:
-from stroke_outcome.discrete_outcome import Discrete_outcome
-import stroke_outcome.outcome_utilities as outcome_utilities
+# # Imports from the stroke_outcome package:
+# from stroke_outcome.discrete_outcome import Discrete_outcome
+# import stroke_outcome.outcome_utilities as outcome_utilities
 
 from classes.patient import Patient
 from classes.pathway import Pathway
@@ -82,7 +82,7 @@ class Model(object):
             # Get patient object
             patient = Patient(self.scenario, arrival_count)
             # Pass patient to pathway
-            self.env.process(self.pathway.process_patient(patient))
+            self.env.process(self.pathway.process_patient(patient, self.scenario))
             # Sample time to next admission from exponential distribution
             time_to_next = np.random.exponential(
                 self.scenario.inter_arrival_time)

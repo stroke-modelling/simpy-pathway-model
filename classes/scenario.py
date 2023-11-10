@@ -163,3 +163,9 @@ class Scenario(object):
 
         self.mt_transfer_time = dict(inter_hospital_time.min(axis=1))
         self.mt_transfer_unit = dict(inter_hospital_time.idxmin(axis=1))
+
+
+        # Load in hospital performance data
+        self.hospital_performance = pd.read_csv(
+            './data/hospital_performance.csv', index_col='Postcode'
+        )
