@@ -62,13 +62,13 @@ class Pathway(object):
         yield self.env.process(self.go_to_unit(patient))
 
         # Go to scanner
-        yield self.env.process(self.go_to_scanner(patient, scenario))
+        yield self.env.process(self.go_to_scanner(patient))
 
         # Choose whether patient thrombolysed.
         self.choose_whether_thrombolysis(patient)
 
         # Go to thrombolysis
-        yield self.env.process(self.go_to_thrombolysis(patient, scenario))
+        yield self.env.process(self.go_to_thrombolysis(patient))
 
         # Record patient info and delete patient
         self.completed_patients.append(patient.__dict__)
@@ -168,7 +168,7 @@ class Pathway(object):
         if patient.time_scan < 4*60:
             # If scan was within 4 hours,
             # see if there was a user input:
-            if np.isnan(patient.)
+            # if np.isnan(patient.) # ---------------------------------------------- what's this?
             # Use the chance of
             # thrombolysis from the hospital performance stats.
             c = (
