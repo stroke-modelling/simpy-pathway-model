@@ -65,12 +65,13 @@ class Scenario(object):
     def __init__(self, *initial_data, **kwargs):
         """Constructor method for model parameters"""
 
+        # Which LSOAs will we use?
+        self.mt_hub_postcodes = []
         self.limit_to_england = True
+
         self.run_duration = 365 #Days
         self.warm_up = 50
 
-        # Load data
-        self.load_data()
 
         # Set process times
         self.process_time_ambulance_response = (10, 40)
@@ -90,6 +91,10 @@ class Scenario(object):
 
         # Convert run duration to minutes
         self.run_duration *= 1440
+
+        # Load data
+        # (after MT hospitals are updated)
+        self.load_data()
 
     def load_data(self):
         """
@@ -112,9 +117,44 @@ class Scenario(object):
 
         # Load and parse admissions data
         admissions = pd.read_csv("./data/admissions_2017-2019.csv")
-        if self.limit_to_england:
+
+        if len(self.mt_hub_postcodes) > 0:
+            # If given, use only these MT units.
+
+            # Which IVT units are feeder units for these MT units?
+            df_feeders = pd.read_csv('./data/nearest_mt_each_hospital.csv')
+            df_feeders = df_feeders[
+                np.any([df_feeders['name_nearest_MT'].str.contains(s) for s in self.mt_hub_postcodes], axis=0)
+                ]
+            ivt_feeder_postcodes = df_feeders['from_postcode'].values
+            self.ivt_feeder_postcodes = ivt_feeder_postcodes
+            # Which LSOAs are in the catchment areas for these IVT units?
+            df_nearest_teams = pd.read_csv('./data/lsoa_nearest_stroke_team.csv')
+            df_nearest_teams = df_nearest_teams[
+                np.any(
+                    [df_nearest_teams[
+                        'postcode_nearest_stroke_team'].str.contains(s)
+                     for s in ivt_feeder_postcodes],
+                     axis=0
+                    )
+                ]
+            lsoas_to_include = df_nearest_teams['LSOA11NM']
+
+            # Keep only these LSOAs in the admissions data:
+            admissions = pd.merge(
+                left=admissions,
+                right=lsoas_to_include,
+                left_on='area',
+                right_on='LSOA11NM',
+                how='inner'
+            )
+        elif self.limit_to_england:
+            # If no MT unit names were specified:
             mask = admissions["England"] == 1
             admissions = admissions[mask]
+        else:
+            # Just use all LSOAs in the file.
+            pass
 
         self.total_admissions = np.round(admissions["Admissions"].sum(), 0)
         self.lsoa_relative_frequency = np.array(
