@@ -128,22 +128,29 @@ class Pathway(object):
         patient.time_unit_arrival = np.round(
             self.env.now - patient.time_onset, 1)
 
-    def go_to_scanner(self, patient, scenario):
+    def go_to_scanner(self, patient):
         """
         Time from arrival at hospital to scan.
 
-        Uses lognorm distribution from hospital performance.
+        Uses lognorm distribution from hospital performance
+        unless user gave their own values.
         """
-        mu = (
-            scenario.hospital_performance[
-                'lognorm_mu_arrival_scan_arrival_mins_ivt'
-                ].loc[patient.first_unit]
-            )
-        sigma = (
-            scenario.hospital_performance[
-                'lognorm_sigma_arrival_scan_arrival_mins_ivt'
-                ].loc[patient.first_unit]
-            )
+        if np.isnan(self.scenario.process_time_arrival_to_scan[0]):
+            mu = (
+                self.scenario.hospital_performance[
+                    'lognorm_mu_arrival_scan_arrival_mins_ivt'
+                    ].loc[patient.first_unit]
+                )
+        else:
+            mu = self.scenario.process_time_arrival_to_scan[0]
+        if np.isnan(self.scenario.process_time_arrival_to_scan[1]):
+            sigma = (
+                self.scenario.hospital_performance[
+                    'lognorm_sigma_arrival_scan_arrival_mins_ivt'
+                    ].loc[patient.first_unit]
+                )
+        else:
+            sigma = self.scenario.process_time_arrival_to_scan[1]
 
         duration = np.random.lognormal(mu, sigma)
         yield self.env.timeout(duration)
@@ -154,38 +161,56 @@ class Pathway(object):
         """
         Choose whether this patient receives thrombolysis.
 
-        PLACEHOLDER - this function is basic for now.
-        Perhaps later we'll use other patient attributes to make
-        a realistic choice.
+        If the patient arrives after 4 hours, the chance of
+        thrombolysis is zero. Otherwise the chance is read from
+        file or provided by the user.
         """
-        # PLACEHOLDER selection:
-        c = 0.2  # Chance of thrombolysis
+        if patient.time_scan < 4*60:
+            # If scan was within 4 hours,
+            # see if there was a user input:
+            if np.isnan(patient.)
+            # Use the chance of
+            # thrombolysis from the hospital performance stats.
+            c = (
+                self.scenario.hospital_performance[
+                    'proportion6_of_mask5_with_treated_ivt'
+                    ].loc[patient.first_unit]
+                )
+        else:
+            c = 0.0
         b = np.random.binomial(1, c)
 
         # Store in self:
         patient.thrombolysis = (b == 1)  # Convert to bool
 
-    def go_to_thrombolysis(self, patient, scenario):
+    def go_to_thrombolysis(self, patient):
         """
         Time from scan to thrombolysis.
 
-        Uses lognorm distribution from hospital performance.
+        Uses lognorm distribution from hospital performance
+        unless user gave their own values.
         """
         if patient.thrombolysis:
-            mu = (
-                scenario.hospital_performance[
-                    'lognorm_mu_scan_needle_mins_ivt'
-                    ].loc[patient.first_unit]
-                )
-            sigma = (
-                scenario.hospital_performance[
-                    'lognorm_sigma_scan_needle_mins_ivt'
-                    ].loc[patient.first_unit]
-                )
+            if np.isnan(self.scenario.process_time_scan_to_needle[0]):
+                mu = (
+                    self.scenario.hospital_performance[
+                        'lognorm_mu_scan_needle_mins_ivt'
+                        ].loc[patient.first_unit]
+                    )
+            else:
+                mu = self.scenario.process_time_scan_to_needle[0]
+            if np.isnan(self.scenario.process_time_scan_to_needle[1]):
+                sigma = (
+                    self.scenario.hospital_performance[
+                        'lognorm_sigma_scan_needle_mins_ivt'
+                        ].loc[patient.first_unit]
+                    )
+            else:
+                sigma = patient.process_time_scan_to_needle[1]
 
             duration = np.random.lognormal(mu, sigma)
             yield self.env.timeout(duration)
-            patient.time_thrombolysis = np.round(
+            patient.time_needle = np.round(
                 self.env.now - patient.time_onset, 1)
         else:
             # Leave default value when thrombolysis not given.

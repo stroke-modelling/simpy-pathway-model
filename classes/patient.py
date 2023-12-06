@@ -36,7 +36,7 @@ class Patient():
     def __init__(self, scenario, id):
         """Constructor class for patient"""
 
-        p = np.NaN # Placeholder value
+        p = np.NaN  # Placeholder value for attributes.
 
         self.id = id
 
@@ -67,4 +67,4 @@ class Patient():
         self.time_ambulance_arrives = p
         self.time_unit_arrival = p
         self.time_scan = p
-        self.time_thrombolysis = p
+        self.time_needle = p

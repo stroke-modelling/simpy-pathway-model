@@ -75,6 +75,9 @@ class Scenario(object):
         # Set process times
         self.process_time_ambulance_response = (10, 40)
         self.process_time_call_ambulance = (5, 60)
+        # Lognorm mu and sigma parameters:
+        self.process_time_arrival_to_scan = (np.NaN, np.NaN)
+        self.process_time_scan_to_needle = (np.NaN, np.NaN)
 
         # Overwrite default values (can take named arguments or a dictionary)
 
