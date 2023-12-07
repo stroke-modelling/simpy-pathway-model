@@ -45,6 +45,10 @@ class Patient():
         frequencies = scenario.lsoa_relative_frequency
         self.lsoa = random.choices(elements, weights=frequencies)[0]
 
+        # Select stroke type:
+        self.stroke_type = self.generate_stroke_type()
+        print(self.stroke_type)
+
         # Get unit details
         self.closest_ivt_unit = scenario.lsoa_ivt_unit[self.lsoa]
         self.closest_ivt_duration = scenario.lsoa_ivt_travel_time[self.lsoa]
@@ -68,3 +72,44 @@ class Patient():
         self.time_unit_arrival = p
         self.time_scan = p
         self.time_needle = p
+
+    def generate_stroke_type(self):
+        """
+        Randomly choose the stroke type.
+        """
+        # Decide whether the patient is a mimic.
+        prob_mimic = 0.33
+        mimic = np.random.binomial(1, prob_mimic)
+        if mimic == 1:
+            # This patient is a mimic.
+            stroke_type_code = 3
+            return stroke_type_code
+        else:
+            # This patient is not a mimic.
+            pass
+
+        # If the patient is not a mimic, now do an independent
+        # check on whether the patient is haemorrhagic or ischaemic.
+        prob_haemo = 0.136
+        haemo = np.random.binomial(1, prob_haemo)
+        if haemo == 1:
+            # This patient has a haemorrhage.
+            stroke_type_code = 0
+            return stroke_type_code
+        else:
+            # This patient has an ischaemic stroke.
+            pass
+
+        # If the patient has an ischaemic stroke, do another
+        # independent check of whether this is a large or non-large
+        # vessel occlusion.
+        prob_lvo = 0.326
+        lvo = np.random.binomial(1, prob_lvo)
+        if lvo == 1:
+            # This patient has a large vessel occlusion.
+            stroke_type_code = 2
+            return stroke_type_code
+        else:
+            # This patient has a non-large vessel occlusion.
+            stroke_type_code = 1
+            return stroke_type_code
