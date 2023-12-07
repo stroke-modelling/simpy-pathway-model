@@ -132,6 +132,7 @@ class Scenario(object):
             # If given, use only these MT units.
 
             # Which IVT units are feeder units for these MT units?
+            # These lines also pick out the MT units themselves.
             df_feeders = pd.read_csv('./data/nearest_mt_each_hospital.csv')
             df_feeders = df_feeders[
                 np.any([df_feeders['name_nearest_MT'].str.contains(s) for s in self.mt_hub_postcodes], axis=0)

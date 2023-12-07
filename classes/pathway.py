@@ -212,7 +212,7 @@ class Pathway(object):
         """
         Time from onset to arrival at unit.
         """
-        if patient.mt_transfer_required:
+        if (patient.thrombectomy & patient.mt_transfer_required):
             duration = (self.scenario.transfer_time_delay +
                         patient.mt_transfer_duration)
             yield self.env.timeout(duration)
