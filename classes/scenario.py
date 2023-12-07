@@ -114,10 +114,11 @@ class Scenario(object):
             mt_transfer_unit
             total_admissions
         """
-
-        # Load and parse admissions data
-        admissions = pd.read_csv("./data/admissions_2017-2019.csv")
-
+        # Load and parse hospital data
+        hospitals = pd.read_csv("./data/stroke_hospitals_2022.csv")
+        hospitals["Use"] = hospitals[["Use_IVT", "Use_MT"]].max(axis=1)
+        mask = hospitals["Use"] == 1
+        hospitals = hospitals[mask]
         if len(self.mt_hub_postcodes) > 0:
             # If given, use only these MT units.
 
@@ -126,15 +127,33 @@ class Scenario(object):
             df_feeders = df_feeders[
                 np.any([df_feeders['name_nearest_MT'].str.contains(s) for s in self.mt_hub_postcodes], axis=0)
                 ]
-            ivt_feeder_postcodes = df_feeders['from_postcode'].values
-            self.ivt_feeder_postcodes = ivt_feeder_postcodes
+            # Match these postcodes to the "hospitals" dataframe:
+            hospitals = pd.merge(
+                left=hospitals,
+                right=df_feeders,
+                left_on='Postcode',
+                right_on='from_postcode',
+                how='inner'
+            )[hospitals.columns]
+        elif self.limit_to_england:
+            mask = hospitals["Country"] == "England"
+            hospitals = hospitals[mask]
+        else:
+            # Use the full "hospitals" data.
+            pass
+        self.hospitals = hospitals
+
+        # Load and parse admissions data
+        admissions = pd.read_csv("./data/admissions_2017-2019.csv")
+
+        if len(self.mt_hub_postcodes) > 0:
             # Which LSOAs are in the catchment areas for these IVT units?
             df_nearest_teams = pd.read_csv('./data/lsoa_nearest_stroke_team.csv')
             df_nearest_teams = df_nearest_teams[
                 np.any(
                     [df_nearest_teams[
                         'postcode_nearest_stroke_team'].str.contains(s)
-                     for s in ivt_feeder_postcodes],
+                     for s in hospitals['Postcode'].values],
                      axis=0
                     )
                 ]
@@ -164,45 +183,24 @@ class Scenario(object):
 
         self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions
 
-        # Load and parse hospital data
-        hospitals = pd.read_csv("./data/stroke_hospitals_2022.csv")
-        hospitals["Use"] = hospitals[["Use_IVT", "Use_MT"]].max(axis=1)
-        mask = hospitals["Use"] == 1
-        hospitals = hospitals[mask]
-        if self.limit_to_england:
-            mask = hospitals["Country"] == "England"
-            hospitals = hospitals[mask]
-        self.hospitals = hospitals
 
         # Load and parse LSOA travel matrix
-        travel_matrix = pd.read_csv(
-            "./data/lsoa_travel_time_matrix_calibrated.csv", index_col="LSOA"
+        df_travel = pd.read_csv(
+            "./data/lsoa_nearest_stroke_team.csv", index_col="LSOA11NM"
         )
+        self.lsoa_ivt_travel_time = dict(df_travel['time_nearest_stroke_team'])
+        self.lsoa_ivt_unit = dict(df_travel['postcode_nearest_stroke_team'])
 
-        ivt_hospitals = list(hospitals[hospitals["Use_IVT"] == 1]["Postcode"])
-        self.lsoa_ivt_travel_time = dict(
-            travel_matrix[ivt_hospitals].min(axis=1))
-        self.lsoa_ivt_unit = dict(travel_matrix[ivt_hospitals].idxmin(axis=1))
-
-        mt_hospitals = list(hospitals[hospitals["Use_MT"] == 1]["Postcode"])
-        self.lsoa_mt_travel_time = dict(
-            travel_matrix[mt_hospitals].min(axis=1))
-        self.lsoa_mt_unit = dict(travel_matrix[mt_hospitals].idxmin(axis=1))
+        self.lsoa_mt_travel_time = dict(df_travel['time_nearest_MT'])
+        self.lsoa_mt_unit = dict(df_travel['postcode_nearest_MT'])
 
         # Load and parse inter_hospital travel time for MT
         inter_hospital_time = pd.read_csv(
             "./data/inter_hospital_time_calibrated.csv", index_col="from_postcode"
         )
-
+        ivt_hospitals = list(hospitals[hospitals["Use_IVT"] == 1]["Postcode"])
+        mt_hospitals = list(hospitals[hospitals["Use_MT"] == 1]["Postcode"])
         inter_hospital_time = inter_hospital_time.loc[ivt_hospitals][mt_hospitals]
-
-        # Set distance between same hospitals to zero
-        rows = list(inter_hospital_time.index)
-        cols = list(inter_hospital_time)
-        for row in rows:
-            for col in cols:
-                if row == col:
-                    inter_hospital_time.loc[row][col] = 0
 
         self.mt_transfer_time = dict(inter_hospital_time.min(axis=1))
         self.mt_transfer_unit = dict(inter_hospital_time.idxmin(axis=1))
