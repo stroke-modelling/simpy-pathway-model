@@ -47,7 +47,6 @@ class Patient():
 
         # Select stroke type:
         self.stroke_type = self.generate_stroke_type()
-        print(self.stroke_type)
 
         # Get unit details
         self.closest_ivt_unit = scenario.lsoa_ivt_unit[self.lsoa]
@@ -69,9 +68,12 @@ class Patient():
         self.time_onset = p
         self.time_ambulance_called = p
         self.time_ambulance_arrives = p
+        self.time_ambulance_on_scene = p
         self.time_unit_arrival = p
-        self.time_scan = p
+        # self.time_scan = p
         self.time_needle = p
+        self.time_transfer_unit_arrival = p
+        self.time_puncture = p
 
     def generate_stroke_type(self):
         """

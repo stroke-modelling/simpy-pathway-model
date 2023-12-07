@@ -48,12 +48,11 @@ class Pathway(object):
         # Call ambulance
         yield self.env.process(self.call_ambulance(patient))
 
-        # Delay before ambulance call
-        # ??????????????????????????????????????????????????????????????????????????
+        # Ambulance travels to patient
         yield self.env.process(self.ambulance_response(patient))
 
-        # Ambulance response
-        yield self.env.process(self.ambulance_response(patient))
+        # Ambulance on scene
+        yield self.env.process(self.ambulance_on_scene(patient))
 
         # Choose unit
         self.choose_unit(patient)
@@ -61,29 +60,20 @@ class Pathway(object):
         # Travel to unit
         yield self.env.process(self.go_to_unit(patient))
 
-        # Go to scanner
-        yield self.env.process(self.go_to_scanner(patient))
-
-        # Choose whether patient thrombolysed.
+        # Choose which treatments will be given.
         self.choose_whether_thrombolysis(patient)
+        self.choose_whether_thrombectomy(patient)
 
         # Go to thrombolysis
         yield self.env.process(self.go_to_thrombolysis(patient))
+        # Travel to unit
+        yield self.env.process(self.go_to_transfer_unit(patient))
+        # Go to thrombectomy.
+        yield self.env.process(self.go_to_thrombectomy(patient))
 
         # Record patient info and delete patient
         self.completed_patients.append(patient.__dict__)
         del patient
-
-    def ambulance_response(self, patient):
-        """
-        Time from calling ambulance to arrival of ambulance
-        """
-        min_duration = self.scenario.process_time_ambulance_response[0]
-        max_duration = self.scenario.process_time_ambulance_response[1]
-        duration = random.uniform(min_duration, max_duration)
-        yield self.env.timeout(duration)
-        patient.time_ambulance_arrives = np.round(
-            self.env.now - patient.time_onset, 1)
 
     def call_ambulance(self, patient):
         """
@@ -96,6 +86,28 @@ class Pathway(object):
         patient.time_ambulance_called = np.round(
             self.env.now - patient.time_onset, 1)
 
+    def ambulance_response(self, patient):
+        """
+        Time from calling ambulance to arrival of ambulance
+        """
+        min_duration = self.scenario.process_time_ambulance_response[0]
+        max_duration = self.scenario.process_time_ambulance_response[1]
+        duration = random.uniform(min_duration, max_duration)
+        yield self.env.timeout(duration)
+        patient.time_ambulance_arrives = np.round(
+            self.env.now - patient.time_onset, 1)
+
+    def ambulance_on_scene(self, patient):
+        """
+        Time ambulance is initially with patient.
+        """
+        min_duration = self.scenario.process_time_ambulance_on_scene[0]
+        max_duration = self.scenario.process_time_ambulance_on_scene[1]
+        duration = random.uniform(min_duration, max_duration)
+        yield self.env.timeout(duration)
+        patient.time_ambulance_on_scene = np.round(
+            self.env.now - patient.time_onset, 1)
+
     def choose_unit(self, patient):
         """
         Choose whether to travel to nearest IVT or nearest MT unit.
@@ -104,9 +116,15 @@ class Pathway(object):
         Perhaps later we'll use other patient attributes to make
         a realistic choice.
         """
-        # PLACEHOLDER selection:
-        c = 0.25  # Chance of the MT unit being picked
-        ivt_chosen = (np.random.binomial(1, c) == 0)
+        if self.scenario.destination_decision_type == 0:
+            # Drip and ship model.
+            ivt_chosen = True
+        else:
+            # TO DO - implement mothership or other ways to pick
+            # and choose in some known ratio.
+            # PLACEHOLDER selection:
+            c = 0.25  # Chance of the MT unit being picked
+            ivt_chosen = (np.random.binomial(1, c) == 0)
 
         # Pick out either the IVT or MT unit info:
         if ivt_chosen:
@@ -128,35 +146,6 @@ class Pathway(object):
         patient.time_unit_arrival = np.round(
             self.env.now - patient.time_onset, 1)
 
-    def go_to_scanner(self, patient):
-        """
-        Time from arrival at hospital to scan.
-
-        Uses lognorm distribution from hospital performance
-        unless user gave their own values.
-        """
-        if np.isnan(self.scenario.process_time_arrival_to_scan[0]):
-            mu = (
-                self.scenario.hospital_performance[
-                    'lognorm_mu_arrival_scan_arrival_mins_ivt'
-                    ].loc[patient.first_unit]
-                )
-        else:
-            mu = self.scenario.process_time_arrival_to_scan[0]
-        if np.isnan(self.scenario.process_time_arrival_to_scan[1]):
-            sigma = (
-                self.scenario.hospital_performance[
-                    'lognorm_sigma_arrival_scan_arrival_mins_ivt'
-                    ].loc[patient.first_unit]
-                )
-        else:
-            sigma = self.scenario.process_time_arrival_to_scan[1]
-
-        duration = np.random.lognormal(mu, sigma)
-        yield self.env.timeout(duration)
-        patient.time_scan = np.round(
-            self.env.now - patient.time_onset, 1)
-
     def choose_whether_thrombolysis(self, patient):
         """
         Choose whether this patient receives thrombolysis.
@@ -165,23 +154,41 @@ class Pathway(object):
         thrombolysis is zero. Otherwise the chance is read from
         file or provided by the user.
         """
-        if patient.time_scan < 4*60:
-            # If scan was within 4 hours,
-            # see if there was a user input:
-            # if np.isnan(patient.) # ---------------------------------------------- what's this?
-            # Use the chance of
-            # thrombolysis from the hospital performance stats.
-            c = (
-                self.scenario.hospital_performance[
-                    'proportion6_of_mask5_with_treated_ivt'
-                    ].loc[patient.first_unit]
-                )
+        if patient.stroke_type in [1, 2]:
+            # This patient has ischaemic stroke.
+            # Flat chance of thrombolysis regardless of pathway
+            # timings and other patient characteristics.
+            c = self.scenario.probability_ivt
+            b = np.random.binomial(1, c)
         else:
-            c = 0.0
-        b = np.random.binomial(1, c)
+            # This patient does not have ischaemic stroke.
+            # They must not receive thrombolysis.
+            b = 0
 
         # Store in self:
         patient.thrombolysis = (b == 1)  # Convert to bool
+
+    def choose_whether_thrombectomy(self, patient):
+        """
+        Choose whether this patient receives thrombolysis.
+
+        If the patient arrives after 4 hours, the chance of
+        thrombolysis is zero. Otherwise the chance is read from
+        file or provided by the user.
+        """
+        if patient.stroke_type == 2:
+            # This patient has an LVO.
+            # Flat chance of thrombectomy regardless of pathway
+            # timings and other patient characteristics.
+            c = self.scenario.probability_mt
+            b = np.random.binomial(1, c)
+        else:
+            # This patient does not have an LVO.
+            # They must not receive thrombectomy.
+            b = 0
+
+        # Store in self:
+        patient.thrombectomy = (b == 1)  # Convert to bool
 
     def go_to_thrombolysis(self, patient):
         """
@@ -191,26 +198,53 @@ class Pathway(object):
         unless user gave their own values.
         """
         if patient.thrombolysis:
-            if np.isnan(self.scenario.process_time_scan_to_needle[0]):
-                mu = (
-                    self.scenario.hospital_performance[
-                        'lognorm_mu_scan_needle_mins_ivt'
-                        ].loc[patient.first_unit]
-                    )
-            else:
-                mu = self.scenario.process_time_scan_to_needle[0]
-            if np.isnan(self.scenario.process_time_scan_to_needle[1]):
-                sigma = (
-                    self.scenario.hospital_performance[
-                        'lognorm_sigma_scan_needle_mins_ivt'
-                        ].loc[patient.first_unit]
-                    )
-            else:
-                sigma = patient.process_time_scan_to_needle[1]
-
-            duration = np.random.lognormal(mu, sigma)
+            min_duration = self.scenario.process_time_arrival_to_needle[0]
+            max_duration = self.scenario.process_time_arrival_to_needle[1]
+            duration = random.uniform(min_duration, max_duration)
             yield self.env.timeout(duration)
             patient.time_needle = np.round(
+                self.env.now - patient.time_onset, 1)
+        else:
+            # Leave default value when thrombolysis not given.
+            pass
+
+    def go_to_transfer_unit(self, patient):
+        """
+        Time from onset to arrival at unit.
+        """
+        if patient.mt_transfer_required:
+            duration = (self.scenario.transfer_time_delay +
+                        patient.mt_transfer_duration)
+            yield self.env.timeout(duration)
+            patient.time_transfer_unit_arrival = np.round(
+                self.env.now - patient.time_onset, 1)
+        else:
+            pass
+
+    def go_to_thrombectomy(self, patient):
+        """
+        Time from scan to thrombectomy.
+
+        Uses lognorm distribution from hospital performance
+        unless user gave their own values.
+        """
+        if patient.thrombectomy:
+            if patient.mt_transfer_required:
+                min_duration = self.scenario.process_time_transfer_arrival_to_puncture[0]
+                max_duration = self.scenario.process_time_transfer_arrival_to_puncture[1]
+                duration = random.uniform(min_duration, max_duration)
+            else:
+                # How long has it been since arrival at first unit?
+                time_in_first_unit = self.env.now - patient.time_unit_arrival
+                min_duration = self.scenario.process_time_arrival_to_puncture[0]
+                max_duration = self.scenario.process_time_arrival_to_puncture[1]
+                duration = random.uniform(min_duration, max_duration)
+                # Subtract this amount from the requested duration
+                # (which is the time from arrival at first unit to
+                # treatment).
+                duration = np.max(((duration - time_in_first_unit), 0.0))
+            yield self.env.timeout(duration)
+            patient.time_puncture = np.round(
                 self.env.now - patient.time_onset, 1)
         else:
             # Leave default value when thrombolysis not given.

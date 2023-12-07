@@ -69,19 +69,28 @@ class Scenario(object):
         self.mt_hub_postcodes = []
         self.limit_to_england = True
 
-        self.run_duration = 365 #Days
+
+        self.run_duration = 365  # Days
         self.warm_up = 50
 
 
+        # Which stroke team choice model will we use?
+        self.destination_decision_type = 0  # 'drip-and-ship'
+
+        # What are the chances of treatment?
+        self.probability_ivt = 0.20
+        self.probability_mt = 0.10
+
         # Set process times
-        self.process_time_ambulance_response = (10, 40)
-        self.process_time_call_ambulance = (5, 60)
-        # Lognorm mu and sigma parameters:
-        self.process_time_arrival_to_scan = (np.NaN, np.NaN)
-        self.process_time_scan_to_needle = (np.NaN, np.NaN)
+        self.process_time_call_ambulance = (30, 30)
+        self.process_time_ambulance_response = (30, 30)
+        self.process_time_ambulance_on_scene = (20, 20)
+        self.process_time_arrival_to_needle = (30, 30)
+        self.process_time_arrival_to_puncture = (45, 45)
+        self.transfer_time_delay = 30
+        self.process_time_transfer_arrival_to_puncture = (60, 60)
 
         # Overwrite default values (can take named arguments or a dictionary)
-
         for dictionary in initial_data:
             for key in dictionary:
                 setattr(self, key, dictionary[key])
