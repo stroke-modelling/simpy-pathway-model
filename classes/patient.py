@@ -4,6 +4,9 @@ Patient class for storing stroke pathway details of a single patient.
 import random
 import numpy as np
 
+# For type hinting:
+from classes.scenario import Scenario
+
 
 class Patient():
     """

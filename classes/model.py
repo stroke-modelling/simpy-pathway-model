@@ -7,6 +7,8 @@ import simpy
 
 from classes.patient import Patient
 from classes.pathway import Pathway
+# For type hinting:
+from classes.scenario import Scenario
 
 
 class Model(object):

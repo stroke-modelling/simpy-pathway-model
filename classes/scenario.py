@@ -233,6 +233,7 @@ class Scenario(object):
         else:
             # Use the full "hospitals" data.
             pass
+        self.hospitals = hospitals
 
     def _load_admissions(self):
         """

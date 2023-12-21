@@ -4,6 +4,11 @@ Pathway class for processing patients with stroke.
 import numpy as np
 import random
 
+# For type hinting:
+from classes.patient import Patient
+from classes.scenario import Scenario
+import simpy
+
 
 class Pathway(object):
     """
@@ -70,7 +75,7 @@ class Pathway(object):
 
     def __init__(
             self,
-            env: type[Environment],
+            env: type[simpy.core.Environment],
             scenario: type[Scenario]
             ):
         """Constructor class"""
