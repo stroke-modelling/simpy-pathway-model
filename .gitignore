@@ -23,5 +23,7 @@ temp/
 # Ignore pycache folders
 **/__pycache__/
 
+Ignore notes file
+notes.md
 
 
