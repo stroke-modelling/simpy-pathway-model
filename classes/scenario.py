@@ -95,8 +95,8 @@ class Scenario(object):
         # 0 is 'drip-and-ship'
 
         # What are the chances of treatment?
-        self.probability_ivt = 0.20
-        self.probability_mt = 0.10
+        self.probability_ivt = 1.0
+        self.probability_mt = 1.0
 
         # Set process times.
         # Each tuple contains (minimum time, maximum time).
