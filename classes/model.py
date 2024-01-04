@@ -7,8 +7,8 @@ import simpy
 
 from classes.patient import Patient
 from classes.pathway import Pathway
-# For type hinting:
 from classes.scenario import Scenario
+from stroke_outcome.continuous_outcome import Continuous_outcome
 
 
 class Model(object):
@@ -85,19 +85,26 @@ class Model(object):
         # with shared keys.
         # Get all names in the completed patient dictionaries:
         completed_patients_keys = self.pathway.completed_patients[0].keys()
-        # Keep only those that begin with "time":
-        time_cols = [x for x in completed_patients_keys if x[0:4] == 'time']
-        # Remove the onset time key:
-        time_cols.remove('time_onset')
+        
 
         # Convert results into DataFrames
         # self.pathway.completed_patients is a list of dictionaries
         # with shared keys so can be converted to DataFrame:
         self.results_all = pd.DataFrame(self.pathway.completed_patients)
-        # Take only the columns relating to time
-        # and take only their means and standard deviations:
+
+
+        # Get outcomes
+        self.get_outcomes()
+
+        # Keep only those that begin with "time":
+        aggregate_cols = [x for x in completed_patients_keys if x[0:4] == 'time']
+        # Remove the onset time key:
+        aggregate_cols.remove('time_onset')
+        # Add outcomes
+        aggregate_cols.extend(['mRS shift', 'utility_shift', 'mRS 0-2'])
+  
         self.results_summary_all = (
-            self.results_all[time_cols].agg(['mean', 'std']))
+            self.results_all[aggregate_cols].agg(['mean', 'std']))
         # Rename the index column:
         self.results_summary_all.index.name = 'statistic'
 
@@ -105,7 +112,7 @@ class Model(object):
         # Group by unit, then take only the columns relating to time,
         # then take only their means and standard deviations.
         self.results_summary_by_admitting_unit = self.results_all.groupby(
-            by='closest_ivt_unit')[time_cols].agg(['mean', 'std'])
+            by='closest_ivt_unit')[aggregate_cols].agg(['mean', 'std'])
 
     def generate_patient_arrival(self):
         """
@@ -136,6 +143,35 @@ class Model(object):
             # SimPy delay to next arrival (using environment timeout)
             yield self.env.timeout(time_to_next)
 
+    
+    def get_outcomes(self):
+        """
+        Get outcomes for all patients from self.results(all)
+        """
+        outcome_inputs_dict = {
+            'stroke_type_code':self.results_all['stroke_type'],
+            'stroke_type_code_on_input':self.results_all['stroke_type'],
+            'onset_to_needle_mins':self.results_all['time_needle'],
+            'ivt_chosen_bool':self.results_all['thrombolysis'],
+            'onset_to_puncture_mins':self.results_all['time_puncture'],
+            'mt_chosen_bool':self.results_all['thrombectomy']
+        }
+        outcome_inputs_df = pd.DataFrame(
+            np.array(list(outcome_inputs_dict.values())).T,
+            columns=list(outcome_inputs_dict.keys())
+            )
+
+        continuous_outcome = Continuous_outcome()
+        continuous_outcome.assign_patients_to_trial(outcome_inputs_df)
+
+        patient_data_dict, outcomes_by_stroke_type, full_cohort_outcomes = (
+            continuous_outcome.calculate_outcomes())
+        
+        self.results_all['mRS shift'] = full_cohort_outcomes['each_patient_mrs_shift']
+        self.results_all['utility_shift'] = full_cohort_outcomes['each_patient_utility_shift']
+        self.results_all['mRS 0-2'] = full_cohort_outcomes['each_patient_mrs_dist_post_stroke'][:, 2]
+        
+    
     def run(self):
         """
         Model run: Initialise processes needed at model start,
