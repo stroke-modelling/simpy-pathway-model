@@ -10,7 +10,7 @@ from classes.scenario import Scenario
 import simpy
 
 
-class Pathway(object):
+class Pathway_msu(object):
     """
     Stroke pathway processes.
 

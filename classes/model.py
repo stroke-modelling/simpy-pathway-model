@@ -6,7 +6,7 @@ import pandas as pd
 import simpy
 
 from classes.patient import Patient
-from classes.pathway import Pathway
+from classes.pathway_msu import Pathway_msu
 from classes.scenario import Scenario
 from stroke_outcome.continuous_outcome import Continuous_outcome
 
@@ -55,7 +55,7 @@ class Model(object):
         self.env = simpy.Environment()
 
         # Set up pathway
-        self.pathway = Pathway(self.env, self.scenario)
+        self.pathway = Pathway_msu(self.env, self.scenario)
 
     def end_run_routine(self):
         """

@@ -90,6 +90,9 @@ class Scenario(object):
         self.run_duration = 365  # Days
         self.warm_up = 50
 
+        # Specifiy use of msu
+        self.use_msu = False
+
         # Which stroke team choice model will we use?
         self.destination_decision_type = 0
         # 0 is 'drip-and-ship'
