@@ -108,6 +108,10 @@ class Scenario(object):
         self.process_time_call_ambulance = (30, 30)
         self.process_time_ambulance_response = (30, 30)
         self.process_ambulance_on_scene_duration = (20, 20)
+        self.process_msu_dispatch = (10, 15)
+        self.process_msu_thrombolysis = (10, 20)
+        self.process_msu_post_thrombolysis = (5, 10)
+        self.process_msu_on_scene_no_thrombolysis = (30, 30)
         self.process_time_arrival_to_needle = (30, 30)
         self.process_time_arrival_to_puncture = (45, 45)
         self.transfer_time_delay = 30

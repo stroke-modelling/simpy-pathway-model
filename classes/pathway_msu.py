@@ -83,6 +83,7 @@ class Pathway_msu(object):
         self.env = env
         self.scenario = scenario
         self.completed_patients = []
+        
 
     def process_patient(self, patient: type[Patient]):
         """
@@ -96,6 +97,22 @@ class Pathway_msu(object):
 
         # Call ambulance
         yield self.env.process(self.call_ambulance(patient))
+
+        msu_free = True # Placeholder for MSU availability
+
+        if msu_free:
+            # MSU is free
+            yield self.env.process(self.msu_process_patient(patient))
+        else:
+            # MSU is not free
+            yield self.env.process(self.non_msu_process_patient(patient))
+
+    def msu_process_patient(self, patient: type[Patient]):
+
+        yield self.env.process(self.call_msu(patient))
+        
+    def non_msu_process_patient(self, patient: type[Patient]):  
+       
 
         # Ambulance travels to patient
         yield self.env.process(self.ambulance_response(patient))
@@ -156,7 +173,7 @@ class Pathway_msu(object):
         # Store this length of time with this patient's details.
         patient.time_ambulance_called = np.round(
             self.env.now - patient.time_onset, 1)
-
+  
     def ambulance_response(self, patient: type[Patient]):
         """
         Time from calling ambulance to arrival of ambulance.
@@ -521,3 +538,63 @@ class Pathway_msu(object):
             # Store this length of time with this patient's details.
             patient.time_puncture = np.round(
                 self.env.now - patient.time_onset, 1)
+
+    def msu_response(self, patient: type[Patient]):
+        """
+        Time from calling msu to arrival of msu.
+
+        Inputs
+        ------
+
+        patient:
+            Patient object.
+
+        Result
+        ------
+
+        patient.time_msu_arrival:
+            float. Time from onset to msu arrival at onset location.
+        """
+
+        # MSU dispatch process:
+        min_duration = self.scenario.process_msu_dispatch[0]
+        max_duration = self.scenario.process_msu_dispatch[1]
+        duration = random.uniform(min_duration, max_duration)
+
+        # Add travel time (from MSU as MSU location)
+        travel_time = patient.closest_mt_travel_duration
+        duration = duration + travel_time
+
+        # Let this time pass in the simulation.
+        yield self.env.timeout(duration)
+        patient.time_msu_arrival = np.round(
+            self.env.now - patient.time_onset, 1)
+        
+        # Check whether thrombolysis given
+        self.choose_whether_thrombolysis(patient)
+
+        # Get timings depending on whether patients receives thrombolysis
+        if patient.thrombolysis:
+            # Time to thrombolysis in the MSU
+            min_duration = self.scenario.process_msu_dispatch[0]
+            max_duration = self.scenario.process_msu_dispatch[1]
+            duration = random.uniform(min_duration, max_duration)
+            # Let this time pass in the simulation.
+            yield self.env.timeout(duration)
+            patient.time_needle = np.round(self.env.now - patient.time_onset, 1)
+            # Post thrombolyis time in MSU
+            min_duration = self.scenario.process_msu_post_thrombolysis[0]
+            max_duration = self.scenario.process_msu_post_thrombolysis[1]
+            duration = random.uniform(min_duration, max_duration)
+            # Let this time pass in the simulation.
+            yield self.env.timeout(duration)
+        else:
+            # Time in MSU
+            min_duration = self.scenario.process_msu_on_scene_no_thrombolysis[0]
+            max_duration = self.scenario.process_msu_on_scene_no_thrombolysis[1]
+            duration = random.uniform(min_duration, max_duration)
+            # Let this time pass in the simulation.
+            yield self.env.timeout(duration)
+
+
+        
