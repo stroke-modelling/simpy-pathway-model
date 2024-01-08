@@ -189,6 +189,7 @@ class Patient():
             + 2 - LVO
             + 3 - mimic
         """
+        
         # Decide whether the patient is a mimic.
         prob_mimic = 0.33
         mimic = np.random.binomial(1, prob_mimic)

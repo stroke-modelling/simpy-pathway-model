@@ -10,7 +10,7 @@ from classes.scenario import Scenario
 import simpy
 
 
-class Pathway(object):
+class Pathway_msu(object):
     """
     Stroke pathway processes.
 
@@ -77,7 +77,7 @@ class Pathway(object):
             self,
             env: type[simpy.core.Environment],
             scenario: type[Scenario]
-            ):
+    ):
         """Constructor class"""
 
         self.env = env
@@ -96,6 +96,44 @@ class Pathway(object):
 
         # Call ambulance
         yield self.env.process(self.call_ambulance(patient))
+
+        msu_free = True  # Placeholder for MSU availability
+
+        if msu_free:
+            # MSU is free
+            yield self.env.process(self.msu_process_patient(patient))
+        else:
+            # MSU is not free
+            yield self.env.process(self.non_msu_process_patient(patient))
+
+    def msu_process_patient(self, patient: type[Patient]):
+
+        yield self.env.process(self.msu_response(patient))
+
+        # Does patient require thrombectomy?
+        self.choose_whether_thrombectomy(patient)
+
+        if patient.thrombectomy:
+            # Use MT
+            patient.mt_transfer_required = False
+            patient.admitting_unit = patient.closest_mt_unit
+            patient.admitting_unit_travel_duration = patient.closest_mt_travel_duration
+            yield self.env.process(self.go_to_admitting_unit(patient))
+            yield self.env.process(self.go_to_thrombectomy(patient))
+
+        else:
+        # Use IVT unit details.
+            patient.admitting_unit = patient.closest_ivt_unit
+            patient.admitting_unit_travel_duration = patient.closest_ivt_travel_duration
+            yield self.env.process(self.go_to_admitting_unit(patient))
+            # No need for thrombolysis call as already happened
+            # Later may need to route for thrombectomy of first go to IVT unit
+        # The end.
+        # Record patient info and delete patient
+        self.completed_patients.append(patient.__dict__)
+        del patient
+
+    def non_msu_process_patient(self, patient: type[Patient]):
 
         # Ambulance travels to patient
         yield self.env.process(self.ambulance_response(patient))
@@ -329,7 +367,7 @@ class Pathway(object):
 
         # Store the selection with this patient's details:
         patient.thrombolysis = (b == 1)  # Convert to bool
-
+    
     def choose_whether_thrombectomy(self, patient: type[Patient]):
         """
         Choose whether this patient receives thrombolysis.
@@ -521,3 +559,63 @@ class Pathway(object):
             # Store this length of time with this patient's details.
             patient.time_puncture = np.round(
                 self.env.now - patient.time_onset, 1)
+
+    def msu_response(self, patient: type[Patient]):
+        """
+        Time from calling msu to arrival of msu.
+
+        Inputs
+        ------
+
+        patient:
+            Patient object.
+
+        Result
+        ------
+
+        patient.time_msu_arrival:
+            float. Time from onset to msu arrival at onset location.
+        """
+
+        # MSU dispatch process:
+        min_duration = self.scenario.process_msu_dispatch[0]
+        max_duration = self.scenario.process_msu_dispatch[1]
+        duration = random.uniform(min_duration, max_duration)
+
+        # Add travel time (from MT unit as MSU location)
+        travel_time = patient.closest_mt_travel_duration
+        duration = duration + travel_time
+
+        # Let this time pass in the simulation.
+        yield self.env.timeout(duration)
+        patient.time_msu_arrival = np.round(
+            self.env.now - patient.time_onset, 1)
+
+        # Check whether thrombolysis given
+        self.choose_whether_thrombolysis(patient)
+
+        # Get timings depending on whether patients receives thrombolysis
+        if patient.thrombolysis:
+            # Time to thrombolysis in the MSU
+            min_duration = self.scenario.process_msu_dispatch[0]
+            max_duration = self.scenario.process_msu_dispatch[1]
+            duration = random.uniform(min_duration, max_duration)
+            # Let this time pass in the simulation.
+            yield self.env.timeout(duration)
+            patient.time_needle = np.round(
+                self.env.now - patient.time_onset, 1)
+            # Post thrombolyis time in MSU
+            min_duration = self.scenario.process_msu_post_thrombolysis[0]
+            max_duration = self.scenario.process_msu_post_thrombolysis[1]
+            duration = random.uniform(min_duration, max_duration)
+            # Let this time pass in the simulation.
+            yield self.env.timeout(duration)
+        else:
+            # Time in MSU
+            min_duration = self.scenario.process_msu_on_scene_no_thrombolysis[0]
+            max_duration = self.scenario.process_msu_on_scene_no_thrombolysis[1]
+            duration = random.uniform(min_duration, max_duration)
+            # Let this time pass in the simulation.
+            yield self.env.timeout(duration)
+
+
