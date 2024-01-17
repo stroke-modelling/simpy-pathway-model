@@ -114,6 +114,24 @@ class Scenario(object):
         self.transfer_time_delay = 30
         self.process_time_transfer_arrival_to_puncture = (60, 60)
 
+        # Stroke unit services updates.
+        # Change which units provide IVT, MT, and MSU by changing
+        # their 'Use_IVT' flags in the services dataframe.
+        # Example:
+        # self.services_updates = {
+        #     'hospital_name1': {'Use_MT': 0},
+        #     'hospital_name2': {'Use_IVT': 0, 'Use_MSU': None},
+        #     }
+        self.services_updates = {}
+
+        # Set up paths to files.
+        # TO DO - check if output folder already exists,
+        # make a new output folder for each run.
+        self.paths_dict = dict(
+            data_read_path='./data/',
+            output_folder='./output/',
+        )
+
         # Overwrite default values
         # (can take named arguments or a dictionary)
         for dictionary in initial_data:
@@ -195,8 +213,10 @@ class Scenario(object):
         to the nearest unit even if that's Cornwall.
 
         """
-        # Import list of all hospital names:
-        hospitals = pd.read_csv("./data/stroke_hospitals_2022.csv")
+        # Load default stroke unit services:
+        dir_input = self.paths_dict['data_read_path']
+        services = pd.read_csv(
+            f'{dir_input}stroke_unit_services.csv', index_col='Postcode')
 
         # Overwrite hospital info if given.
         # Keep the same list of hospitals nationally but update
@@ -204,35 +224,35 @@ class Scenario(object):
         # new unit because the travel times need to be calculated
         # outside of this class.
 
-        """
-        # Change list if required...?
-
-        If remove hospital, set use_mt or other flag to 0
-        so that it's not picked up.
-
-        Set it up so that if possible, just read from file,
-        otherwise recalculate everything.
-
-        
-        """
-        # Save output to output folder.
-
-
-        # Limit stored info to just hospital names and services:
-        cols = [
-            'Postcode',
-            'SSNAP name',
-            'Use_IVT',
-            'Use_MT',
-            'Use_MSU'
-        ]
-        hospitals = hospitals[cols]
+        # Define "kv" to shorten following line:
+        kv = zip(self.services_updates.keys(),
+                 self.services_updates.values())
+        for hospital, service_dict in kv:
+            for key, value in service_dict:
+                success = True
+                try:
+                    value = int(value)
+                except TypeError:
+                    if value is None:
+                        # Nothing to see here.
+                        pass
+                    else:
+                        # This shouldn't happen.
+                        # TO DO - flag up an error or something?
+                        success = False
+                if success:
+                    # Get the right row with services.loc[hospital],
+                    # then the right column with [key],
+                    # and overwrite the existing value.
+                    services.loc[hospital][key] = value
 
         # Store national hospitals and their services in self.
-        self.national_hospital_services = hospitals
+        self.national_hospital_services = services
 
-        # Save to file:
-        # TO DO 
+        # Save output to output folder.
+        dir_output = self.paths_dict['output_folder']
+        file_name = 'national_stroke_unit_services.csv'
+        services.to_csv(f'{dir_output}{file_name}')
 
     def _find_national_lsoa_nearest_units(self):
         """
@@ -364,9 +384,13 @@ class Scenario(object):
                 ]
         df_results = df_results[cols_order]
 
-        # Save this to the output folder.
-        # TO DO
+        # Save this to self.
         self.national_lsoa_nearest_units = df_results
+
+        # Save output to output folder.
+        dir_output = self.paths_dict['output_folder']
+        file_name = 'national_travel_lsoa_stroke_units.csv'
+        df_results.to_csv(f'{dir_output}{file_name}')
 
     def _find_national_mt_catchment_areas(self):
         """
@@ -406,10 +430,13 @@ class Scenario(object):
         df_nearest_mt['name_nearest_MT'] = (
             df_time_inter_hospital.idxmin(axis='columns'))
 
-        # Save to file:
-        # TO DO
-        # df_nearest_mt.to_csv('../data_tabular/nearest_mt_each_hospital.csv')
+        # Store in self:
         self.national_inter_hospital_time = df_nearest_mt
+
+        # Save output to output folder.
+        dir_output = self.paths_dict['output_folder']
+        file_name = 'national_stroke_unit_nearest_mt.csv'
+        df_nearest_mt.to_csv(f'{dir_output}{file_name}')
 
     # ##########################
     # ##### SELECTED UNITS #####
@@ -474,6 +501,11 @@ class Scenario(object):
             # Use the full "hospitals" data.
             pass
         self.hospitals = hospitals
+
+        # Save output to output folder.
+        dir_output = self.paths_dict['output_folder']
+        file_name = 'selected_stroke_units.csv'
+        hospitals.to_csv(f'{dir_output}{file_name}')
 
     def _load_lsoa_names(self):
         """
@@ -541,6 +573,11 @@ class Scenario(object):
 
         # Store in self:
         self.lsoa_names = lsoas_to_include
+
+        # Save output to output folder.
+        dir_output = self.paths_dict['output_folder']
+        file_name = 'selected_lsoas.csv'
+        lsoas_to_include.to_csv(f'{dir_output}{file_name}')
 
     def _load_admissions(self):
         """
@@ -682,4 +719,3 @@ class Scenario(object):
         # (i.e. minimum travel time) to each IVT unit.
         self.mt_transfer_time = dict(inter_hospital_time.min(axis=1))
         self.mt_transfer_unit = dict(inter_hospital_time.idxmin(axis=1))
-
