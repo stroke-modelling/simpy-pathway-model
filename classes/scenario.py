@@ -253,44 +253,62 @@ class Scenario(object):
         lsoa_names:
             np.array. Names of all LSOAs considered.
         """
-        # Import list of all LSOA names:
-        admissions = pd.read_csv("./data/admissions_2017-2019.csv")
+        # Take list of all LSOA names and travel times:
+        df_travel = self.lsoa_national_nearest_units
+        # This has one row for each LSOA nationally and columns
+        # for LSOA name and ONS code (LSOA11NM and LSOA11CD),
+        # and time, postcode, and SSNAP name of the nearest unit
+        # for each unit type (IVT, MT, MSU).
+        # Columns:
+        # + LSOA11NM
+        # + LSOA11CD
+        # + time_nearest_IVT
+        # + postcode_nearest_IVT
+        # + ssnap_name_nearest_IVT
+        # + time_nearest_MT
+        # + postcode_nearest_MT
+        # + ssnap_name_nearest_MT
+        # + time_nearest_MSU
+        # + postcode_nearest_MSU
+        # + ssnap_name_nearest_MSU
 
         # Limit the available hospitals if required.
         if len(self.mt_hub_postcodes) > 0:
             # If a list of MT units was given, limit the admissions
             # data to just those MT units and feeder IVT units
             # that we saved earlier as self.hospitals.
-            # Load data about which stroke unit is nearest each LSOA.
-            df_nearest_teams = pd.read_csv(
-                './data/lsoa_nearest_stroke_team.csv')
+
             # Which LSOAs are in the catchment areas for these IVT units?
             # For each stroke team, make a long list of True/False for
             # whether each LSOA has this as its nearest unit.
-            col = 'postcode_nearest_stroke_team'
+            postcode_cols = [
+                'postcode_nearest_IVT',
+                'postcode_nearest_MT',
+                'postcode_nearest_MSU',
+            ]
             lsoa_bool = [
-                df_nearest_teams[col].str.contains(s)
+                df_travel[col].str.contains(s)
+                for col in postcode_cols
                 for s in self.hospitals['Postcode'].values
                 ]
             # Mask is True for any LSOA that is True in any of the
             # lists in lsoa_bool.
             mask = np.any(lsoa_bool, axis=0)
-            # Limit the dataframe to just these LSOAs...
-            df_nearest_teams = df_nearest_teams[mask]
-            # ... and keep the names separate.
-            lsoas_to_include = df_nearest_teams['LSOA11NM']
-
+            # Limit the data to just these LSOAs:
+            lsoas_to_include = df_travel['LSOA11NM'][mask]
         elif self.limit_to_england:
             # Limit the data to English LSOAs only.
-            mask = admissions["England"] == 1
-            lsoas_to_include = admissions['area'][mask]
+            # The LSOA11CD (ONS code for each LSOA) begins with
+            # an "E" for English and "W" for Welsh LSOAs.
+            # All other characters are numbers.
+            mask_england = df_travel['LSOA11CD'].str.contains('E')
+            lsoas_to_include = df_travel['LSOA11NM'][mask_england]
         else:
             # Just use all LSOAs in the file.
-            lsoas_to_include = admissions['area']
+            lsoas_to_include = df_travel['LSOA11NM']
+
         # Store in self:
         self.lsoa_names = lsoas_to_include
-
-
 
     def _load_admissions(self):
         """
@@ -363,33 +381,43 @@ class Scenario(object):
         lsoa_mt_unit:
             dict. Each LSOA's nearest MT unit name.
         """
-        # Load and parse LSOA travel matrix
-        travel_matrix = pd.read_csv(
-            "./data/lsoa_travel_time_matrix_calibrated.csv", index_col="LSOA"
-        )
-        # Limit to only LSOAs in the admissions area:
-        travel_matrix = pd.merge(
-            travel_matrix,
-            pd.DataFrame(self.lsoa_names, columns=['LSOA']),
-            left_on='LSOA',
-            right_on='LSOA'
+        # Use the list of LSOA names to include:
+        lsoa_names = self.lsoa_names
+
+        # Take list of all LSOA names and travel times:
+        df_travel = self.lsoa_national_nearest_units
+        # This has one row for each LSOA nationally and columns
+        # for LSOA name and ONS code (LSOA11NM and LSOA11CD),
+        # and time, postcode, and SSNAP name of the nearest unit
+        # for each unit type (IVT, MT, MSU).
+        # Columns:
+        # + LSOA11NM
+        # + LSOA11CD
+        # + time_nearest_IVT
+        # + postcode_nearest_IVT
+        # + ssnap_name_nearest_IVT
+        # + time_nearest_MT
+        # + postcode_nearest_MT
+        # + ssnap_name_nearest_MT
+        # + time_nearest_MSU
+        # + postcode_nearest_MSU
+        # + ssnap_name_nearest_MSU
+
+        # Limit the big DataFrame to just the LSOAs wanted:
+        df_travel = pd.merge(
+            df_travel,
+            pd.DataFrame(lsoa_names, columns=['LSOA11NM']),
+            left_on='LSOA11NM',
+            right_on='LSOA11NM'
             )
 
-        # Record each LSOA's nearest IVT unit name and travel time:
-        ivt_hospitals = list(self.hospitals[
-            self.hospitals["Use_IVT"] == 1]["Postcode"])
-        self.lsoa_ivt_travel_time = dict(
-            travel_matrix[ivt_hospitals].min(axis=1))
-        self.lsoa_ivt_unit = dict(
-            travel_matrix[ivt_hospitals].idxmin(axis=1))
-
-        # Record each LSOA's nearest MT unit name and travel time:
-        mt_hospitals = list(self.hospitals[
-            self.hospitals["Use_MT"] == 1]["Postcode"])
-        self.lsoa_mt_travel_time = dict(
-            travel_matrix[mt_hospitals].min(axis=1))
-        self.lsoa_mt_unit = dict(
-            travel_matrix[mt_hospitals].idxmin(axis=1))
+        # Separate out the columns and store in self:
+        self.lsoa_ivt_travel_time = dict(df_travel['time_nearest_IVT'])
+        self.lsoa_ivt_unit = dict(df_travel['postcode_nearest_IVT'])
+        self.lsoa_mt_travel_time = dict(df_travel['time_nearest_MT'])
+        self.lsoa_mt_unit = dict(df_travel['postcode_nearest_MT'])
+        self.lsoa_msu_travel_time = dict(df_travel['time_nearest_MSU'])
+        self.lsoa_msu_unit = dict(df_travel['postcode_nearest_MSU'])
 
     def _load_stroke_unit_travel(self):
         """
@@ -467,15 +495,13 @@ class Scenario(object):
         # Store national hospitals and their services in self.
         self.hospital_services = hospitals
 
+        # Save to file:
+        # TO DO 
+
     def _find_nearest_units_to_lsoa(self):
         """
         WIP
         """
-
-        # ????????????????????????????????????????????????????????????????????????????????????????????????????????????
-
-        # Add nearest MSU bits
-
         # Load travel time matrix:
         df_time_lsoa_hospital = pd.read_csv(
             '../data_tabular/lsoa_travel_time_matrix_calibrated.csv',
@@ -547,7 +573,7 @@ class Scenario(object):
             Add these columns to the DataFrame:
             ssnap_name_nearest_{label}
             """
-            # Why is this here?
+            # Why is this here? TO DO
             df_results['lsoa'] = df_results.index
 
             # Merge in other info about the nearest units:
@@ -604,11 +630,13 @@ class Scenario(object):
 
         # Save this to the output folder.
         # TO DO
-        return df_results
+        self.lsoa_national_nearest_units = df_results
 
-    def _find_nearest_mt_unit(self):
+    def _find_national_mt_catchment_areas(self):
         """
-        Find catchment areas for hospitals offering MT.
+        Find catchment areas for national hospitals offering MT.
+
+        All hospitals in data, not just those selected for simulation.
 
         Wheel-and-spoke model.
         """
