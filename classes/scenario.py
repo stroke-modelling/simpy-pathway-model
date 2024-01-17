@@ -169,6 +169,25 @@ class Scenario(object):
         More details on each attribute are given in the docstrings
         of the methods that create them.
         """
+        # ##### NATIONAL INFORMATION #####
+        # Load information about all stroke units nationally,
+        # whether they're being highlighted in the simulation or not.
+        # Find which stroke units provide IVT, MT, and MSU:
+        self._set_national_hospital_services()
+        # Stores:
+        # + self.national_hospital_services
+
+        # Find each LSOA's nearest IVT, MT, and MSU units:
+        self._find_national_lsoa_nearest_units()
+        # Stores:
+        # + self.national_lsoa_nearest_units
+
+        # Find which IVT units are feeders to each MT unit:
+        self._find_national_mt_feeder_units()
+        # Stores:
+        # + self.national_ivt_feeder_units
+
+        # ##### SELECTED UNITS #####
         # Import hospital names:
         self._load_hospitals()
         # Stores:
@@ -179,6 +198,13 @@ class Scenario(object):
         # Stores:
         # + self.lsoa_names
 
+        # Import admissions statistics for those hospitals:
+        self._load_admissions()
+        # Stores:
+        # + self.total_admissions
+        # + self.lsoa_relative_frequency
+        # + self.inter_arrival_time
+
         # Stroke unit data for each LSOA.
         self._load_lsoa_travel()
         # Stores:
@@ -186,13 +212,8 @@ class Scenario(object):
         # + self.lsoa_ivt_unit
         # + self.lsoa_mt_travel_time
         # + self.lsoa_mt_unit
-
-        # Import admissions statistics for those hospitals:
-        self._load_admissions()
-        # Stores:
-        # + self.total_admissions
-        # + self.lsoa_relative_frequency
-        # + self.inter_arrival_time
+        # + self.lsoa_msu_travel_time
+        # + self.lsoa_msu_unit
 
         # Transfer stroke unit data.
         self._load_transfer_travel()
@@ -392,7 +413,7 @@ class Scenario(object):
         file_name = 'national_travel_lsoa_stroke_units.csv'
         df_results.to_csv(f'{dir_output}{file_name}')
 
-    def _find_national_mt_catchment_areas(self):
+    def _find_national_mt_feeder_units(self):
         """
         Find catchment areas for national hospitals offering MT.
 
@@ -431,7 +452,7 @@ class Scenario(object):
             df_time_inter_hospital.idxmin(axis='columns'))
 
         # Store in self:
-        self.national_inter_hospital_time = df_nearest_mt
+        self.national_ivt_feeder_units = df_nearest_mt
 
         # Save output to output folder.
         dir_output = self.paths_dict['output_folder']
@@ -626,6 +647,7 @@ class Scenario(object):
         self.lsoa_relative_frequency = np.array(
             admissions["Admissions"] / self.total_admissions
         )
+        # TO DO - why do we overwrite this?
         self.lsoa_names = list(admissions["area"])
         # Average time between admissions to these hospitals in a year:
         self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions
@@ -703,11 +725,7 @@ class Scenario(object):
             dict. Each stroke unit's nearest MT transfer unit's name.
         """
         # Load and parse inter hospital travel time for MT
-        # inter_hospital_time = pd.read_csv(
-        #     "./data/inter_hospital_time_calibrated.csv",
-        #     index_col="from_postcode"
-        # )
-        inter_hospital_time = self.national_inter_hospital_time
+        inter_hospital_time = self.national_ivt_feeder_units
 
         ivt_hospitals = list(
             self.hospitals[self.hospitals["Use_IVT"] == 1]["Postcode"])
