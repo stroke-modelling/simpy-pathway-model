@@ -274,7 +274,7 @@ class Scenario(object):
         kv = zip(self.services_updates.keys(),
                  self.services_updates.values())
         for hospital, service_dict in kv:
-            for key, value in service_dict:
+            for key, value in zip(service_dict.keys(), service_dict.values()):
                 success = True
                 try:
                     value = int(value)
@@ -290,7 +290,7 @@ class Scenario(object):
                     # Get the right row with services.loc[hospital],
                     # then the right column with [key],
                     # and overwrite the existing value.
-                    services.loc[hospital][key] = value
+                    services.loc[hospital, key] = value
 
         # Save output to output folder.
         dir_output = self.paths_dict['output_folder']
