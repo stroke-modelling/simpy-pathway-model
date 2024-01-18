@@ -154,17 +154,22 @@ class Scenario(object):
         Load required data.
 
         Stores the following in the Globvars object:
+        + national_hospital_services
+        + national_lsoa_nearest_units
+        + national_ivt_feeder_units
         + hospitals
+        + lsoa_names
+        + total_admissions
+        + lsoa_relative_frequency
+        # + self.inter_arrival_time
         + lsoa_ivt_travel_time
         + lsoa_ivt_unit
         + lsoa_mt_travel_time
         + lsoa_mt_unit
-        + lsoa_names
-        + lsoa_relative_frequency
-        + lsoa_travel_time
+        + lsoa_msu_travel_time
+        + lsoa_msu_unit
         + mt_transfer_time
         + mt_transfer_unit
-        + total_admissions
 
         More details on each attribute are given in the docstrings
         of the methods that create them.
@@ -186,6 +191,12 @@ class Scenario(object):
         self._find_national_mt_feeder_units()
         # Stores:
         # + self.national_ivt_feeder_units
+
+        # Transfer stroke unit data.
+        self._find_national_transfer_travel()
+        # Stores:
+        # + self.national_mt_transfer_time
+        # + self.national_mt_transfer_unit
 
         # ##### SELECTED UNITS #####
         # Import hospital names:
@@ -215,24 +226,33 @@ class Scenario(object):
         # + self.lsoa_msu_travel_time
         # + self.lsoa_msu_unit
 
-        # Transfer stroke unit data.
-        self._load_transfer_travel()
-        # Stores:
-        # + self.mt_transfer_time
-        # + self.mt_transfer_unit
-
     # ################################
     # ##### NATIONAL INFORMATION #####
     # ################################
     def _set_national_hospital_services(self):
         """
-        WIP
+        Make table of which stroke units provide which treatments.
 
-        Have some "national" units that always quietly exist
-        even if we're not directly simulating them here,
-        because otherwise patients from Newcastle will be sent
-        to the nearest unit even if that's Cornwall.
+        Each stroke unit has a flag in this table for each of:
+        + Use_IVT
+        + Use_MT
+        + Use_MSU
+        The value is set to either 0 (not provided) or 1 (provided).
 
+        Most of the values are stored in a reference file but
+        they can be updated by the user with the dictionary
+        self.services_updates.
+
+        These values should be set for all units nationally,
+        because otherwise patients from e.g. Newcastle will have their
+        nearest stroke unit set to e.g. Cornwall.
+
+        Stores
+        ------
+
+        national_hospital_services:
+            pd.DataFrame. Each stroke team's services provided.
+            Columns for whether a team provides IVT, MT, and MSU.
         """
         # Load default stroke unit services:
         dir_input = self.paths_dict['data_read_path']
@@ -240,6 +260,9 @@ class Scenario(object):
             f'{dir_input}stroke_unit_services.csv',
             index_col='Postcode'
             )
+        # Each row is a stroke unit. The columns are 'Postcode' and
+        # 'SSNAP name' (str), and 'Use_IVT', 'Use_MT', and 'Use_MSU'
+        # (int | bool).
 
         # Overwrite hospital info if given.
         # Keep the same list of hospitals nationally but update
@@ -282,7 +305,18 @@ class Scenario(object):
 
     def _find_national_lsoa_nearest_units(self):
         """
-        WIP
+        Find each LSOA's nearest stroke units providing each service.
+
+        Find the name, postcode and travel time to the nearest
+        stroke unit providing each of IVT, MT, and an MSU.
+
+        Stores
+        ------
+
+        national_lsoa_nearest_units:
+            pd.DataFrame. One row for each LSOA nationally
+            and columns containing the nearest units providing
+            IVT, MT, and MSU for each LSOA and the travel times.
         """
         # Load travel time matrix:
         df_time_lsoa_hospital = pd.read_csv(
@@ -324,14 +358,36 @@ class Scenario(object):
                 df_results: pd.DataFrame = pd.DataFrame()
                 ):
             """
-            WIP
+            Find the nearest units from the travel time matrix.
 
-            Index must be LSOA
+            Index must be LSOA names.
 
+            Inputs
+            ------
+            df_time_lsoa_hospital:
+                pd.DataFrame. Travel time matrix between LSOAs
+                and stroke units.
+            teams:
+                list. List of teams for slicing the travel time
+                DataFrame, only consider a subset of teams.
+            label:
+                str. A label for the resulting columns.
+            df_results:
+                pd.DataFrame. The DataFrame to store results in.
+                If none is given, a new one is created.
+
+            Result
+            ------
             Add these columns to the DataFrame:
             time_nearest_{label}
             postcode_nearest_{label}
             """
+            if (df_results.index != df_time_lsoa_hospital.index).any():
+                # If a new dataframe was made, make sure the
+                # index column contains the LSOA names.
+                df_results.index = df_time_lsoa_hospital.index
+            else:
+                pass
             # The smallest time in each row:
             df_results[f'time_nearest_{label}'] = (
                 df_time_lsoa_hospital[teams].min(axis='columns'))
@@ -352,10 +408,23 @@ class Scenario(object):
 
             Index must be LSOA name
 
+            Inputs
+            ------
+            df_results:
+                pd.DataFrame. Contains columns for nearest stroke unit
+                and travel time from each LSOA. New results here will
+                be stored in this DataFrame.
+            df_stroke_teams:
+                pd.DataFrame. Contains information on the stroke units
+                such as their region and SSNAP name.
+            label:
+                str. A label for the resulting columns.
+
+            Result
+            ------
             Add these columns to the DataFrame:
             ssnap_name_nearest_{label}
             """
-            # Why is this here? TO DO
             df_results['lsoa'] = df_results.index
 
             # Merge in other info about the nearest units:
@@ -428,9 +497,17 @@ class Scenario(object):
         """
         Find catchment areas for national hospitals offering MT.
 
-        All hospitals in data, not just those selected for simulation.
+        For each stroke unit, find the name of and travel time to
+        its nearest MT unit. Wheel-and-spoke model. If the unit
+        is an MT unit then the travel time is zero.
 
-        Wheel-and-spoke model.
+        Stores
+        ------
+
+        national_ivt_feeder_units:
+            pd.DataFrame. Each row is a stroke unit. Columns are
+            its postcode, the postcode of the nearest MT unit,
+            and travel time to that MT unit.
         """
         # Get list of services that each stroke team provides:
         df_stroke_teams = self.national_hospital_services
@@ -469,6 +546,28 @@ class Scenario(object):
         dir_output = self.paths_dict['output_folder']
         file_name = 'national_stroke_unit_nearest_mt.csv'
         df_nearest_mt.to_csv(f'{dir_output}{file_name}')
+
+    def _find_national_transfer_travel(self):
+        """
+        Data for the transfer stroke unit of each national stroke unit.
+
+        Stores
+        ------
+
+        national_mt_transfer_time:
+            dict. Each stroke unit's travel time to their nearest
+            MT transfer unit.
+
+        national_mt_transfer_unit:
+            dict. Each stroke unit's nearest MT transfer unit's name.
+        """
+        # Load and parse inter hospital travel time for MT
+        inter_hospital_time = self.national_ivt_feeder_units
+
+        self.national_mt_transfer_time = dict(
+            inter_hospital_time['time_nearest_MT'])
+        self.national_mt_transfer_unit = dict(
+            inter_hospital_time['name_nearest_MT'])
 
     # ##########################
     # ##### SELECTED UNITS #####
@@ -658,7 +757,8 @@ class Scenario(object):
         self.lsoa_relative_frequency = np.array(
             admissions["Admissions"] / self.total_admissions
         )
-        # TO DO - why do we overwrite this?
+        # Overwrite this to make sure the LSOA names are in the
+        # same order as the LSOA relative frequency array.
         self.lsoa_names = list(admissions["area"])
         # Average time between admissions to these hospitals in a year:
         self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions
@@ -721,23 +821,3 @@ class Scenario(object):
         self.lsoa_mt_unit = dict(df_travel['postcode_nearest_MT'])
         self.lsoa_msu_travel_time = dict(df_travel['time_nearest_MSU'])
         self.lsoa_msu_unit = dict(df_travel['postcode_nearest_MSU'])
-
-    def _load_transfer_travel(self):
-        """
-        Data for the transfer stroke unit of each selected stroke unit.
-
-        Stores
-        ------
-
-        mt_transfer_time:
-            dict. Each stroke unit's travel time to their nearest
-            MT transfer unit.
-
-        mt_transfer_unit:
-            dict. Each stroke unit's nearest MT transfer unit's name.
-        """
-        # Load and parse inter hospital travel time for MT
-        inter_hospital_time = self.national_ivt_feeder_units
-
-        self.mt_transfer_time = dict(inter_hospital_time['time_nearest_MT'])
-        self.mt_transfer_unit = dict(inter_hospital_time['name_nearest_MT'])

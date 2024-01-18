@@ -129,9 +129,9 @@ class Patient():
             scenario.lsoa_mt_travel_time[self.lsoa])
 
         self.mt_transfer_unit = (
-            scenario.mt_transfer_unit[self.closest_ivt_unit])
+            scenario.national_mt_transfer_unit[self.closest_ivt_unit])
         self.mt_transfer_travel_duration = (
-            scenario.mt_transfer_time[self.closest_ivt_unit])
+            scenario.national_mt_transfer_time[self.closest_ivt_unit])
         self.mt_transfer_required = (
             self.closest_ivt_unit != self.closest_mt_unit)
 
@@ -189,7 +189,7 @@ class Patient():
             + 2 - LVO
             + 3 - mimic
         """
-        
+
         # Decide whether the patient is a mimic.
         prob_mimic = 0.33
         mimic = np.random.binomial(1, prob_mimic)
