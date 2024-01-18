@@ -133,7 +133,7 @@ class Patient():
         self.mt_transfer_travel_duration = (
             scenario.mt_transfer_time[self.closest_ivt_unit])
         self.mt_transfer_required = (
-            self.closest_mt_unit != self.mt_transfer_unit)
+            self.closest_ivt_unit != self.closest_mt_unit)
 
         # These will be selected later:
         self.admitting_unit = ''
