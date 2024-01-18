@@ -1,0 +1,143 @@
+Postcode,SSNAP name,Use_IVT,Use_MT,Use_MSU
+RM70AG,Queens Hospital Romford HASU,1,1,1
+E11BB,Royal London Hospital HASU,1,1,1
+SW66SX,Charing Cross Hospital HASU,1,1,1
+SE59RW,King's College Hospital HASU,1,1,1
+BR68ND,Princess Royal University Hospital HASU,1,0,0
+HA13UJ,Northwick Park Hospital HASU,1,0,0
+SW170QT,St George's Hospital HASU,1,1,1
+NW12BU,University College Hospital HASU,1,1,1
+DE223NE,Royal Derby Hospital,1,0,0
+NN15BD,Northampton General Hospital,1,0,0
+NG72UH,Queen's Medical Centre - Nottingham,1,1,1
+NG51PB,None (for 72h care),0,0,0
+NG174JL,Kings Mill Hospital,1,0,0
+LN25QY,Lincoln County Hospital,1,0,0
+PE219QS,Pilgrim Hospital,0,0,0
+LE15WW,Leicester Royal Infirmary,1,0,0
+SS165NL,Basildon University Hospital,1,0,0
+MK429DJ,Bedford Hospital,0,0,0
+CB20QQ,Addenbrooke's Hospital,1,1,1
+CO45JL,Colchester General Hospital,1,0,0
+SG14AB,Lister Hospital,1,0,0
+IP45PD,Ipswich Hospital,1,0,0
+NR316LA,James Paget Hospital,1,0,0
+LU40DZ,Luton and Dunstable Hospital,1,0,0
+CM17ET,Broomfield Hospital,1,0,0
+NR47UY,Norfolk and Norwich University Hospital,1,0,0
+PE39GZ,Peterborough City Hospital,1,0,0
+PE304ET,Queen Elizabeth Hospital Kings Lynn,1,0,0
+SS00RY,Southend Hospital,1,0,0
+WD180HB,Watford General Hospital,1,0,0
+IP332QZ,West Suffolk Hospital,1,0,0
+CM201QX,Princess Alexandra Hospital,0,0,0
+DE130RB,Queens Hospital Burton upon Trent,0,0,0
+DY12HQ,Russells Hall Hospital,1,0,0
+CV107DJ,George Eliot Hospital,0,0,0
+B95SS,Birmingham Heartlands Hospital,0,0,0
+WV100QP,New Cross Hospital,1,0,0
+B714HJ,Sandwell District Hospital,1,0,0
+TF16TF,Princess Royal Hospital Telford,1,0,0
+CV345BW,Warwick Hospital,0,0,0
+B152TH,Queen Elizabeth Hospital Edgbaston,1,1,1
+CV22DX,University Hospital Coventry,1,1,1
+ST46QG,Royal Stoke University Hospital,1,1,1
+WS29PS,None (for 72h care),0,0,0
+WR51DD,Worcestershire Royal Hospital,1,0,0
+HR12ER,Hereford County Hospital,1,0,0
+L97AL,University Hospital Aintree,1,1,1
+CH21UL,Countess of Chester Hospital,1,0,0
+CW14QJ,Leighton Hospital,1,0,0
+L78XP,Royal Liverpool University Hospital,0,0,0
+PR86PN,Southport and Formby District General,0,0,0
+L355DR,Whiston Hospital HASU,1,0,0
+WA51QG,Warrington Hospital,0,0,0
+CH495PE,Wirral Arrowe Park Hospital,1,0,0
+FY38NR,Blackpool Victoria Hospital,1,0,0
+BB23HH,Royal Blackburn Hospital,1,0,0
+PR29HT,Royal Preston Hospital,1,1,1
+BL97TD,Fairfield General Hospital,1,0,0
+M68HD,Salford Royal Hospital,1,1,1
+SK27JE,Stepping Hill Hospital,1,0,0
+LA144LF,Furness General Hospital,1,0,0
+LA14RP,Royal Lancaster Infirmary,1,0,0
+SR47TP,Sunderland Royal Hospital,1,0,0
+DH15TW,University Hospital of North Durham,1,0,0
+NE96SX,None (for 72h care),0,0,0
+NE14LP,Royal Victoria Infirmary,1,1,1
+CA27HY,Cumberland Infirmary,1,0,0
+CA288JG,West Cumberland Hospital,0,0,0
+TS198PE,University Hospitals of North Tees and Hartlepool,1,0,0
+NE236NZ,Northumbria Specialist Emergency Care Hospital HASU,1,0,0
+TS43BW,James Cook University Hospital,1,1,0
+NE340PL,None (for 72h care),0,0,0
+S752EP,Barnsley Hospital,0,0,0
+BD96RJ,Bradford and Airedale SU,1,0,0
+HX30PW,Calderdale Royal Hospital,1,0,0
+S445BL,Chesterfield Royal,1,0,0
+DN25LT,Doncaster Royal Infirmary,1,0,0
+HG27SX,Harrogate District Hospital,0,0,0
+HU32JZ,Hull Royal Infirmary,1,1,1
+LS13EX,Leeds General Infirmary,1,1,1
+WF14DG,Pinderfields Hospital,1,0,0
+DN157BH,Scunthorpe General Hospital,1,0,0
+S602UD,Rotherham Hospital,0,0,0
+S102JF,Royal Hallamshire Hospital,1,1,1
+YO318HE,York Hospital,1,0,0
+KT160PZ,St Peter's Hospital,1,0,0
+RH164EX,Princess Royal Hospital Haywards Heath,0,0,0
+BN25BE,Royal Sussex County Hospital,1,1,1
+DA28DA,Darent Valley Hospital,1,0,0
+CT13NG,Invicta Ward Kent and Canterbury Hospital,1,0,0
+CT94AN,Queen Elizabeth the Queen Mother Hospital,0,0,0
+TN240LZ,William Harvey Hospital,0,0,0
+BN212UD,Eastbourne District General Hospital,1,0,0
+KT187EG,Epsom Hospital,1,0,0
+GU167UJ,Frimley Park Hospital,1,0,0
+ME169QQ,Maidstone District General Hospital,1,0,0
+TN24QJ,None (for 72h care),0,0,0
+ME75NY,Medway Maritime Hospital,0,0,0
+GU27XX,None (for 72h care),0,0,0
+RH15RH,East Surrey Hospital,1,0,0
+PO196SE,St Richards Hospital,1,0,0
+BN112DH,Worthing Hospital,1,0,0
+GL13NN,Gloucestershire Royal Hospital,1,0,0
+SN36BB,Great Western Hospital Swindon,1,0,0
+BS105NB,North Bristol Hospitals,1,1,1
+EX314JB,North Devon District Hospital,1,0,0
+PL68DH,Derriford Hospital,1,1,1
+TR13LQ,Royal Cornwall Hospital,1,0,0
+EX25DW,Royal Devon and Exeter Hospital,1,0,0
+BA13NG,Royal United Hospital Bath,1,0,0
+SP28BJ,Salisbury District Hospital,1,0,0
+TA15DA,Musgrove Park Hospital,1,0,0
+TQ27AA,Torbay Hospital,1,0,0
+BS28HW,University Hospitals Bristol Inpatient Team,0,0,0
+BS234TQ,Weston General Hospital,1,0,0
+BA214AT,Yeovil District Hospital,1,0,0
+HP112TT,Wycombe General Hospital,1,0,0
+SL24HL,Wexham Park Hospital,0,0,0
+MK65LD,Milton Keynes General Hospital,1,0,0
+OX169AL,None (for 72h care),0,0,0
+OX39DU,John Radcliffe Hospital,1,1,1
+RG15AN,Royal Berkshire Hospital,1,0,0
+DT12JY,Dorset County Hospital,1,0,0
+SO225DG,Royal Hampshire County Hospital,1,0,0
+PO305TG,St Mary's Hospital Newport,1,0,0
+BH152JB,Poole Hospital,0,0,0
+PO63LY,Queen Alexandra Hospital Portsmouth,1,0,0
+BH77DW,University Hospitals Dorset Stroke Service,1,0,0
+SO166YD,Southampton General Hospital,1,1,1
+NP448YN,Grange University Hospital,1,0,0
+LL185UJ,Glan Clwyd District General Hospital,1,0,0
+LL137TD,Maelor Hospital,1,0,0
+LL572PW,Ysbyty Gwynedd,1,0,0
+CF144XW,University Hospital of Wales,1,1,1
+CF479DT,Prince Charles Hospital,1,0,0
+CF311RQ,Princess Of Wales Hospital,1,0,0
+SY231ER,Bronglais Hospital,1,0,0
+SA148QF,Prince Philip Hospital,1,0,0
+SA312AF,West Wales General,1,0,0
+SA612PZ,Withybush General Hospital,1,0,0
+SA66NL,Morriston Hospital,1,0,0
+NP202UB,Royal Gwent Hospital,0,0,0
