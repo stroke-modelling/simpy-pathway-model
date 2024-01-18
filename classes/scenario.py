@@ -237,7 +237,9 @@ class Scenario(object):
         # Load default stroke unit services:
         dir_input = self.paths_dict['data_read_path']
         services = pd.read_csv(
-            f'{dir_input}stroke_unit_services.csv', index_col='Postcode')
+            f'{dir_input}stroke_unit_services.csv',
+            index_col='Postcode'
+            )
 
         # Overwrite hospital info if given.
         # Keep the same list of hospitals nationally but update
@@ -267,13 +269,16 @@ class Scenario(object):
                     # and overwrite the existing value.
                     services.loc[hospital][key] = value
 
-        # Store national hospitals and their services in self.
-        self.national_hospital_services = services
-
         # Save output to output folder.
         dir_output = self.paths_dict['output_folder']
         file_name = 'national_stroke_unit_services.csv'
         services.to_csv(f'{dir_output}{file_name}')
+
+        # Remove index column:
+        services = services.reset_index()
+
+        # Store national hospitals and their services in self.
+        self.national_hospital_services = services
 
     def _find_national_lsoa_nearest_units(self):
         """
@@ -281,7 +286,7 @@ class Scenario(object):
         """
         # Load travel time matrix:
         df_time_lsoa_hospital = pd.read_csv(
-            '../data_tabular/lsoa_travel_time_matrix_calibrated.csv',
+            './data/lsoa_travel_time_matrix_calibrated.csv',
             index_col='LSOA'
             )
         # Each column is a postcode of a stroke team and
@@ -366,6 +371,8 @@ class Scenario(object):
             df_results = df_results.rename(columns={
                 'SSNAP name': f'ssnap_name_nearest_{label}',
             })
+
+            df_results = df_results.set_index('lsoa')
             return df_results
 
         # Run these functions for the groups of stroke units.
@@ -375,12 +382,12 @@ class Scenario(object):
         # Fill in the nearest stroke unit info:
         for label, teams in zip(teams_dict.keys(), teams_dict.values()):
             df_results = _find_nearest_units(
-                df_time_lsoa_hospital, teams, label, df_results)
+                df_time_lsoa_hospital.copy(), teams, label, df_results)
             df_results = _merge_unit_info(
                 df_results, df_stroke_teams, label)
 
         # Load data on LSOA names, codes, regions...
-        df_regions = pd.read_csv('../data_tabular/LSOA_regions.csv')
+        df_regions = pd.read_csv('./data/lsoa_to_msoa.csv')
         # Each row is a different LSOA and the columns include
         # LSOA11NM, LSOA11CD, longitude and latitude, and larger
         # regional groupings (e.g. Clinical Care Group names).
@@ -388,13 +395,17 @@ class Scenario(object):
         # Add in extra identifiers - LSOA11CD from ONS data.
         df_results = pd.merge(
             df_results,
-            df_regions[['LSOA11NM', 'LSOA11CD']],
+            df_regions[['lsoa11nm', 'lsoa11cd']],
             left_on='lsoa',
-            right_on='LSOA11NM'
+            right_on='lsoa11nm'
         )
-        # Remove the repeat column:
-        df_results = df_results.drop('lsoa', axis=1)
-
+        # # Remove the repeat column:
+        # df_results = df_results.drop('lsoa', axis=1)
+        # Rename columns:
+        df_results = df_results.rename(columns={
+            'lsoa11nm': 'LSOA11NM',
+            'lsoa11cd': 'LSOA11CD',
+            })
         # Reorder columns:
         cols_order = ['LSOA11NM', 'LSOA11CD']
         for label in list(teams_dict.keys()):
@@ -429,7 +440,7 @@ class Scenario(object):
 
         # Travel time matrix between hospitals:
         df_time_inter_hospital = pd.read_csv(
-            '../data_tabular/inter_hospital_time_calibrated.csv',
+            './data/inter_hospital_time_calibrated.csv',
             index_col='from_postcode'
             )
 
@@ -701,6 +712,7 @@ class Scenario(object):
             left_on='LSOA11NM',
             right_on='LSOA11NM'
             )
+        df_travel = df_travel.set_index('LSOA11NM')
 
         # Separate out the columns and store in self:
         self.lsoa_ivt_travel_time = dict(df_travel['time_nearest_IVT'])
@@ -727,13 +739,5 @@ class Scenario(object):
         # Load and parse inter hospital travel time for MT
         inter_hospital_time = self.national_ivt_feeder_units
 
-        ivt_hospitals = list(
-            self.hospitals[self.hospitals["Use_IVT"] == 1]["Postcode"])
-        mt_hospitals = list(
-            self.hospitals[self.hospitals["Use_MT"] == 1]["Postcode"])
-        inter_hospital_time = (
-            inter_hospital_time.loc[ivt_hospitals][mt_hospitals])
-        # Take the MT transfer unit as being the closest one
-        # (i.e. minimum travel time) to each IVT unit.
-        self.mt_transfer_time = dict(inter_hospital_time.min(axis=1))
-        self.mt_transfer_unit = dict(inter_hospital_time.idxmin(axis=1))
+        self.mt_transfer_time = dict(inter_hospital_time['time_nearest_MT'])
+        self.mt_transfer_unit = dict(inter_hospital_time['name_nearest_MT'])
