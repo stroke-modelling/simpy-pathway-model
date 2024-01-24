@@ -1,4 +1,4 @@
-name: simpy
+name: muster
 channels:
   - defaults
 dependencies:
@@ -12,8 +12,12 @@ dependencies:
   - pytest
   - python=3.10
   - scipy
+  - scikit-learn
   - pip:
-    - stroke-outcome
+    - geopandas
+    - contextily
+    - mapclassify
     - simpy==4.0
+    - shap
     - stroke-outcome
-
+    - xgboost

@@ -36,7 +36,7 @@ St Albans 010C,1.333333333,1
 St Albans 011C,0.666666667,1
 St Albans 011B,2,1
 St Albans 010A,0.666666667,1
-St Albans 013B,0,1
+St Albans 013B,0.1,1
 St Albans 016A,2.666666667,1
 St Albans 016C,1.666666667,1
 St Albans 016B,1.666666667,1
@@ -154,7 +154,7 @@ Welwyn Hatfield 014C,3.666666667,1
 Welwyn Hatfield 015A,1.333333333,1
 Birmingham 058D,2,1
 Birmingham 070C,2,1
-Birmingham 070D,0,1
+Birmingham 070D,0.1,1
 Birmingham 071E,2,1
 Birmingham 070E,0.666666667,1
 Birmingham 063F,1.333333333,1
@@ -184,7 +184,7 @@ Birmingham 090D,2,1
 Birmingham 140D,0.666666667,1
 Birmingham 090C,1.666666667,1
 Birmingham 140F,2,1
-Birmingham 140E,0,1
+Birmingham 140E,0.1,1
 Birmingham 093B,2.333333333,1
 Birmingham 140C,1.666666667,1
 Birmingham 082D,2,1
@@ -205,7 +205,7 @@ Birmingham 084B,2.666666667,1
 Birmingham 134B,0.333333333,1
 Birmingham 138D,0.666666667,1
 Birmingham 137A,3,1
-Birmingham 137B,0,1
+Birmingham 137B,0.1,1
 Birmingham 105A,1,1
 Birmingham 110B,3.333333333,1
 Birmingham 105B,2,1
@@ -256,7 +256,7 @@ Birmingham 104D,2.666666667,1
 Birmingham 110D,3.333333333,1
 Birmingham 104C,2.333333333,1
 Birmingham 104B,1.333333333,1
-Birmingham 136B,0,1
+Birmingham 136B,0.1,1
 Birmingham 134D,1.333333333,1
 Birmingham 136A,1.666666667,1
 Birmingham 074B,2,1
@@ -270,9 +270,9 @@ Birmingham 079F,5,1
 Birmingham 053C,3.333333333,1
 Birmingham 053B,3,1
 Birmingham 053A,0.666666667,1
-Birmingham 060D,0,1
+Birmingham 060D,0.1,1
 Birmingham 137C,0.333333333,1
-Birmingham 136C,0,1
+Birmingham 136C,0.1,1
 Birmingham 137E,1,1
 Birmingham 136D,2.666666667,1
 Birmingham 064B,2,1
@@ -319,7 +319,7 @@ Birmingham 041D,0.666666667,1
 Birmingham 049F,1,1
 Birmingham 049B,1.333333333,1
 Birmingham 050B,3,1
-Birmingham 049E,0,1
+Birmingham 049E,0.1,1
 Birmingham 138C,1,1
 Birmingham 138B,0.333333333,1
 Birmingham 050C,1.333333333,1
@@ -331,7 +331,7 @@ Birmingham 032C,3,1
 Birmingham 032A,2.666666667,1
 Birmingham 032E,4.666666667,1
 Birmingham 032D,1.333333333,1
-Birmingham 133A,0,1
+Birmingham 133A,0.1,1
 Birmingham 133D,2.666666667,1
 Birmingham 032B,3,1
 Birmingham 033A,2.333333333,1
@@ -454,7 +454,7 @@ Birmingham 108B,1.333333333,1
 Birmingham 108D,1,1
 Birmingham 132B,3.333333333,1
 Birmingham 132A,0.666666667,1
-Solihull 030D,0,1
+Solihull 030D,0.1,1
 Birmingham 132E,3.333333333,1
 Birmingham 115D,3.666666667,1
 Birmingham 132D,0.666666667,1
@@ -474,12 +474,12 @@ Birmingham 113D,2,1
 Birmingham 109A,1.333333333,1
 Birmingham 101E,2.666666667,1
 Birmingham 101D,4.666666667,1
-Birmingham 095D,0,1
+Birmingham 095D,0.1,1
 Birmingham 101C,1.333333333,1
 Birmingham 101B,1.666666667,1
 Birmingham 095B,1.333333333,1
 Birmingham 095E,3.333333333,1
-Birmingham 096G,0,1
+Birmingham 096G,0.1,1
 Birmingham 096E,0.666666667,1
 Birmingham 096F,0.333333333,1
 Birmingham 096A,1.333333333,1
@@ -545,7 +545,7 @@ Birmingham 119B,1.333333333,1
 Birmingham 119A,1,1
 Birmingham 080B,1,1
 Birmingham 080D,2,1
-Birmingham 080C,0,1
+Birmingham 080C,0.1,1
 Birmingham 080F,1.666666667,1
 Birmingham 094E,1.333333333,1
 Birmingham 085C,3.333333333,1
@@ -678,7 +678,7 @@ Birmingham 016E,2.333333333,1
 Birmingham 016B,1.666666667,1
 Birmingham 019C,1.666666667,1
 Birmingham 019D,1.333333333,1
-Birmingham 033F,0,1
+Birmingham 033F,0.1,1
 Birmingham 017C,2.333333333,1
 Sandwell 012B,2,1
 Sandwell 012D,3.666666667,1
@@ -732,7 +732,7 @@ Bromsgrove 006C,5,1
 Birmingham 129D,2.666666667,1
 Birmingham 129B,1.666666667,1
 Birmingham 130D,2.333333333,1
-Birmingham 129C,0,1
+Birmingham 129C,0.1,1
 Bromsgrove 006A,1.333333333,1
 Bromsgrove 003B,1.666666667,1
 Bromsgrove 003D,1,1
@@ -772,8 +772,8 @@ Stratford-on-Avon 012D,1.333333333,1
 Stratford-on-Avon 012B,2,1
 Stratford-on-Avon 012C,3,1
 Birmingham 138A,0.333333333,1
-Birmingham 135B,0,1
-Birmingham 135C,0,1
+Birmingham 135B,0.1,1
+Birmingham 135C,0.1,1
 Birmingham 135D,1.666666667,1
 Birmingham 134E,1.666666667,1
 Birmingham 074C,3,1
@@ -788,7 +788,7 @@ Bromsgrove 012E,1.333333333,1
 Bromsgrove 012B,4,1
 Bromsgrove 014G,1,1
 Bromsgrove 012A,1,1
-Bromsgrove 012D,0,1
+Bromsgrove 012D,0.1,1
 Bromsgrove 013C,3.333333333,1
 Bromsgrove 013B,2.333333333,1
 Bromsgrove 014F,1.333333333,1
@@ -1134,7 +1134,7 @@ Birmingham 048C,0.333333333,1
 Birmingham 051B,1,1
 Birmingham 055D,2.666666667,1
 Birmingham 044C,2.333333333,1
-Birmingham 044D,0,1
+Birmingham 044D,0.1,1
 Birmingham 044E,2.666666667,1
 Birmingham 044F,2.333333333,1
 Birmingham 055E,4.333333333,1
@@ -1498,7 +1498,7 @@ Bath and North East Somerset 019B,2.666666667,1
 Bath and North East Somerset 012C,2,1
 Bath and North East Somerset 012F,0.666666667,1
 Bath and North East Somerset 013A,1,1
-Bath and North East Somerset 014A,0,1
+Bath and North East Somerset 014A,0.1,1
 Bath and North East Somerset 014B,2,1
 Bath and North East Somerset 013C,0.333333333,1
 Bath and North East Somerset 012E,2,1
@@ -1513,7 +1513,7 @@ Bath and North East Somerset 012B,3,1
 Bath and North East Somerset 012A,2,1
 Bath and North East Somerset 006D,1,1
 Bath and North East Somerset 010E,2.333333333,1
-Bath and North East Somerset 010H,0,1
+Bath and North East Somerset 010H,0.1,1
 Wiltshire 023C,4.333333333,1
 Bath and North East Somerset 010G,2.666666667,1
 Mendip 001E,2.666666667,1
@@ -1644,7 +1644,7 @@ Burnley 006B,3,1
 Burnley 004F,2,1
 Burnley 011B,1.333333333,1
 Ribble Valley 005B,1,1
-Ribble Valley 005C,0,1
+Ribble Valley 005C,0.1,1
 Burnley 004C,4.333333333,1
 Burnley 004E,2,1
 Burnley 004A,3.333333333,1
@@ -1730,7 +1730,7 @@ Blackburn with Darwen 010E,1.666666667,1
 Blackburn with Darwen 002D,2.333333333,1
 Blackburn with Darwen 005B,1.333333333,1
 Blackburn with Darwen 002E,2.333333333,1
-Blackburn with Darwen 005D,0,1
+Blackburn with Darwen 005D,0.1,1
 Blackburn with Darwen 005A,4.666666667,1
 Blackburn with Darwen 010D,1.333333333,1
 Blackburn with Darwen 010A,4.666666667,1
@@ -1742,7 +1742,7 @@ Blackburn with Darwen 014B,4.333333333,1
 Blackburn with Darwen 016A,7.333333333,1
 Blackburn with Darwen 014C,3,1
 Blackburn with Darwen 011C,0.333333333,1
-Blackburn with Darwen 013B,0,1
+Blackburn with Darwen 013B,0.1,1
 Blackburn with Darwen 016D,2,1
 Blackburn with Darwen 014A,3.333333333,1
 Blackburn with Darwen 014E,1.333333333,1
@@ -2039,7 +2039,7 @@ Craven 008F,2.666666667,1
 Craven 008C,2,1
 Craven 008E,3.333333333,1
 Craven 007A,2,1
-Craven 008D,0,1
+Craven 008D,0.1,1
 Craven 008B,5,1
 Bradford 004G,3,1
 Craven 008A,2,1
@@ -2106,7 +2106,7 @@ Craven 004A,3.333333333,1
 Craven 004B,3,1
 Bradford 032A,2,1
 Bradford 032C,1.333333333,1
-Bradford 032D,0,1
+Bradford 032D,0.1,1
 Bradford 027D,1.666666667,1
 Bradford 032B,3.333333333,1
 Bradford 027A,1.666666667,1
@@ -2179,7 +2179,7 @@ Bradford 059D,0.333333333,1
 Bradford 059E,0.666666667,1
 Bradford 059A,1.666666667,1
 Bradford 059G,0.666666667,1
-Bradford 059F,0,1
+Bradford 059F,0.1,1
 Bradford 059H,4.666666667,1
 Bradford 054D,2.333333333,1
 Bradford 055E,3,1
@@ -2738,7 +2738,7 @@ Bolton 031B,2.666666667,1
 Bolton 035B,1.333333333,1
 Bolton 028B,1.333333333,1
 Bolton 028C,2.333333333,1
-Bolton 028F,0,1
+Bolton 028F,0.1,1
 Bolton 028A,1.333333333,1
 Bolton 031A,3.333333333,1
 Bolton 031C,3.333333333,1
@@ -2765,7 +2765,7 @@ Bolton 004C,1.666666667,1
 Bolton 004D,4,1
 Bolton 004B,6,1
 Blackburn with Darwen 018F,2,1
-Blackburn with Darwen 018E,0,1
+Blackburn with Darwen 018E,0.1,1
 Blackburn with Darwen 018D,1.666666667,1
 Bolton 002C,3.666666667,1
 Bolton 001E,3.666666667,1
@@ -2862,7 +2862,7 @@ Worthing 012E,1.666666667,1
 Worthing 012C,3.333333333,1
 Brighton and Hove 027E,1,1
 Brighton and Hove 027F,1,1
-Brighton and Hove 027A,0,1
+Brighton and Hove 027A,0.1,1
 Worthing 012B,3,1
 Worthing 013C,3.333333333,1
 Worthing 013D,7.666666667,1
@@ -3096,7 +3096,7 @@ Eastbourne 001C,1.333333333,1
 Eastbourne 001E,0.666666667,1
 Brighton and Hove 022A,0.333333333,1
 Brighton and Hove 022B,3.333333333,1
-Brighton and Hove 018A,0,1
+Brighton and Hove 018A,0.1,1
 Brighton and Hove 015B,0.666666667,1
 Brighton and Hove 015D,1.333333333,1
 Brighton and Hove 015A,1,1
@@ -3182,11 +3182,11 @@ Brighton and Hove 033E,3.333333333,1
 Brighton and Hove 033A,4,1
 Lewes 006A,1.333333333,1
 Brighton and Hove 030C,2.666666667,1
-Brighton and Hove 030D,0,1
+Brighton and Hove 030D,0.1,1
 Brighton and Hove 022C,0.666666667,1
 Brighton and Hove 022D,0.333333333,1
 Brighton and Hove 022E,1.333333333,1
-Brighton and Hove 018B,0,1
+Brighton and Hove 018B,0.1,1
 Brighton and Hove 018E,1,1
 Brighton and Hove 025F,1.666666667,1
 Brighton and Hove 029A,1,1
@@ -3205,7 +3205,7 @@ Brighton and Hove 026C,1,1
 Brighton and Hove 020B,6,1
 Brighton and Hove 026E,2.666666667,1
 Brighton and Hove 019B,1.666666667,1
-Brighton and Hove 019C,0,1
+Brighton and Hove 019C,0.1,1
 Brighton and Hove 019A,1.333333333,1
 Brighton and Hove 028D,4,1
 Brighton and Hove 023B,2.666666667,1
@@ -3245,7 +3245,7 @@ Adur 004B,3,1
 Brighton and Hove 012E,1.666666667,1
 Brighton and Hove 013F,1,1
 Brighton and Hove 012D,1.666666667,1
-Brighton and Hove 005D,0,1
+Brighton and Hove 005D,0.1,1
 Brighton and Hove 005E,1.666666667,1
 Brighton and Hove 012C,1,1
 Brighton and Hove 012A,1.333333333,1
@@ -3347,7 +3347,7 @@ Bromley 008B,2.666666667,1
 Bromley 008F,0.333333333,1
 Bromley 008D,3.333333333,1
 Bromley 008A,1.666666667,1
-Lewisham 038A,0,1
+Lewisham 038A,0.1,1
 Bromley 040E,3.666666667,1
 Lewisham 038E,1.666666667,1
 Lewisham 038D,1,1
@@ -3377,7 +3377,7 @@ Bromley 033B,2.666666667,1
 Bromley 034D,1.666666667,1
 Bromley 034E,2.333333333,1
 Bromley 027C,1.666666667,1
-Bromley 027D,0,1
+Bromley 027D,0.1,1
 Bromley 027A,2,1
 Bromley 027B,2.333333333,1
 Bromley 026C,2.666666667,1
@@ -3442,7 +3442,7 @@ Bromley 023D,1.666666667,1
 Bromley 031C,2.333333333,1
 Bromley 025A,1,1
 Bromley 025B,2,1
-Bromley 022C,0,1
+Bromley 022C,0.1,1
 Bromley 025E,2,1
 Bromley 028B,2,1
 Bromley 023E,3.666666667,1
@@ -3550,7 +3550,7 @@ Bristol 008F,3.333333333,1
 Bristol 008C,3,1
 Bristol 008B,3,1
 Bristol 008D,2.333333333,1
-Bristol 054C,0,1
+Bristol 054C,0.1,1
 Bristol 032B,1.666666667,1
 Bristol 032F,0.333333333,1
 Bristol 025E,0.666666667,1
@@ -3758,7 +3758,7 @@ North Somerset 021A,1.666666667,1
 North Somerset 021C,2.333333333,1
 North Somerset 020E,1,1
 North Somerset 021E,1.333333333,1
-North Somerset 021D,0,1
+North Somerset 021D,0.1,1
 North Somerset 027A,2,1
 North Somerset 022B,10,1
 North Somerset 022C,1.333333333,1
@@ -3768,7 +3768,7 @@ North Somerset 025D,1.333333333,1
 North Somerset 025A,3.666666667,1
 Sedgemoor 002C,3,1
 North Somerset 023F,4.666666667,1
-North Somerset 027D,0,1
+North Somerset 027D,0.1,1
 North Somerset 023D,3.333333333,1
 North Somerset 023C,2.333333333,1
 North Somerset 025C,1,1
@@ -3832,7 +3832,7 @@ Bristol 036F,3,1
 Bristol 036D,2.666666667,1
 South Gloucestershire 009D,1.333333333,1
 South Gloucestershire 009A,0.333333333,1
-South Gloucestershire 009F,0,1
+South Gloucestershire 009F,0.1,1
 South Gloucestershire 009C,0.333333333,1
 South Gloucestershire 005B,5,1
 South Gloucestershire 009E,1.666666667,1
@@ -3874,7 +3874,7 @@ South Gloucestershire 015B,1.333333333,1
 South Gloucestershire 017B,3,1
 Bristol 040B,1,1
 Bristol 040C,0.666666667,1
-Bristol 037B,0,1
+Bristol 037B,0.1,1
 South Gloucestershire 001B,2.666666667,1
 South Gloucestershire 001C,1.333333333,1
 South Gloucestershire 004C,1.333333333,1
@@ -4045,7 +4045,7 @@ Bristol 025D,0.333333333,1
 Bristol 025A,1.333333333,1
 Bristol 022A,0.333333333,1
 Bristol 022B,2,1
-Bristol 022D,0,1
+Bristol 022D,0.1,1
 Bristol 022E,0.333333333,1
 Bristol 025C,1.333333333,1
 Bristol 022C,3.333333333,1
@@ -4093,7 +4093,7 @@ Bristol 030B,2,1
 Bristol 030A,0.666666667,1
 North Somerset 004A,3,1
 Bristol 030D,1.333333333,1
-Bristol 030C,0,1
+Bristol 030C,0.1,1
 Bristol 034A,1.666666667,1
 Bristol 034B,1,1
 Bristol 034C,1.666666667,1
@@ -4332,7 +4332,7 @@ Uttlesford 002C,1.666666667,1
 Uttlesford 001A,2,1
 Uttlesford 004C,2,1
 Uttlesford 004D,3,1
-Cambridge 006A,0,1
+Cambridge 006A,0.1,1
 Uttlesford 002F,5.333333333,1
 Uttlesford 003C,4,1
 Uttlesford 002G,1.333333333,1
@@ -4347,7 +4347,7 @@ Cambridge 008E,1.666666667,1
 Cambridge 008A,1.333333333,1
 Cambridge 008B,0.666666667,1
 Cambridge 008C,1.333333333,1
-Cambridge 008D,0,1
+Cambridge 008D,0.1,1
 Cambridge 009D,0.666666667,1
 Cambridge 009B,1,1
 Cambridge 009A,2.666666667,1
@@ -4769,7 +4769,7 @@ Wirral 028B,2.666666667,1
 Wirral 028A,1,1
 Cheshire West and Chester 043A,2.333333333,1
 Cheshire West and Chester 044B,0.666666667,1
-Cheshire West and Chester 044C,0,1
+Cheshire West and Chester 044C,0.1,1
 Cheshire West and Chester 044D,3,1
 Cheshire West and Chester 044A,1.333333333,1
 Wirral 023A,2.666666667,1
@@ -4889,7 +4889,7 @@ Cheshire West and Chester 016B,3.333333333,1
 Cheshire West and Chester 013A,2.666666667,1
 Cheshire West and Chester 016A,2.333333333,1
 Cheshire West and Chester 013B,1.666666667,1
-Cheshire West and Chester 016D,0,1
+Cheshire West and Chester 016D,0.1,1
 Cheshire West and Chester 013C,1.333333333,1
 Cheshire West and Chester 009F,1,1
 Cheshire West and Chester 016C,4,1
@@ -4916,7 +4916,7 @@ Maldon 008D,1,1
 Maldon 008F,2,1
 Basildon 003A,2.333333333,1
 Basildon 001A,1,1
-Basildon 001B,0,1
+Basildon 001B,0.1,1
 Chelmsford 018D,4.333333333,1
 Basildon 003B,3.333333333,1
 Basildon 003D,1.666666667,1
@@ -5127,9 +5127,9 @@ East Hertfordshire 007A,1.333333333,1
 East Hertfordshire 008F,0.333333333,1
 East Hertfordshire 008A,1,1
 East Hertfordshire 008D,1.333333333,1
-East Hertfordshire 003C,0,1
+East Hertfordshire 003C,0.1,1
 East Hertfordshire 007F,0.666666667,1
-East Hertfordshire 003A,0,1
+East Hertfordshire 003A,0.1,1
 East Hertfordshire 005C,2,1
 East Hertfordshire 005B,1,1
 East Hertfordshire 005D,1.333333333,1
@@ -5169,7 +5169,7 @@ Chelmsford 015C,0.666666667,1
 Chelmsford 012E,2.666666667,1
 Chelmsford 014G,2.666666667,1
 Chelmsford 015E,1.333333333,1
-Chelmsford 015D,0,1
+Chelmsford 015D,0.1,1
 Chelmsford 012D,2.333333333,1
 Chelmsford 014C,2.333333333,1
 Chelmsford 001C,2.666666667,1
@@ -5274,7 +5274,7 @@ Braintree 007A,0.666666667,1
 Braintree 017H,1,1
 Braintree 017E,2.666666667,1
 Braintree 017F,1.333333333,1
-Braintree 017G,0,1
+Braintree 017G,0.1,1
 Braintree 016A,3,1
 Braintree 018E,0.666666667,1
 Braintree 016C,1,1
@@ -5430,7 +5430,7 @@ Tendring 007E,5.666666667,1
 Tendring 007D,1.666666667,1
 Tendring 007C,5,1
 Colchester 018E,3.333333333,1
-Colchester 016B,0,1
+Colchester 016B,0.1,1
 Colchester 019B,1.333333333,1
 Colchester 019C,1,1
 Colchester 013A,1,1
@@ -5452,7 +5452,7 @@ Colchester 015C,1.666666667,1
 Colchester 015E,1.666666667,1
 Colchester 015A,3.333333333,1
 Colchester 015D,0.333333333,1
-Colchester 015G,0,1
+Colchester 015G,0.1,1
 Colchester 012B,4.333333333,1
 Colchester 012E,1.333333333,1
 Colchester 012A,1,1
@@ -5481,7 +5481,7 @@ Colchester 022I,3.333333333,1
 Colchester 008B,6,1
 Colchester 008A,0.666666667,1
 Colchester 008D,3.333333333,1
-Colchester 008C,0,1
+Colchester 008C,0.1,1
 Colchester 008H,1,1
 Colchester 008E,1.333333333,1
 Colchester 002G,0.666666667,1
@@ -5549,7 +5549,7 @@ Colchester 017C,1.333333333,1
 Colchester 017B,2.333333333,1
 Colchester 017D,2,1
 Colchester 017E,2.333333333,1
-Colchester 017A,0,1
+Colchester 017A,0.1,1
 Braintree 002C,3.666666667,1
 Babergh 006A,2.666666667,1
 Braintree 004C,1.333333333,1
@@ -5667,7 +5667,7 @@ Croydon 031D,1,1
 Croydon 028E,7,1
 Croydon 031A,2,1
 Croydon 029E,2.666666667,1
-Croydon 031C,0,1
+Croydon 031C,0.1,1
 Croydon 027E,4.333333333,1
 Croydon 028C,2.666666667,1
 Croydon 029B,0.333333333,1
@@ -5747,7 +5747,7 @@ Croydon 044D,3.666666667,1
 Croydon 044C,2,1
 Croydon 044B,2.666666667,1
 Croydon 044E,1.333333333,1
-Reigate and Banstead 004E,0,1
+Reigate and Banstead 004E,0.1,1
 Croydon 044A,2.666666667,1
 Croydon 038D,0.666666667,1
 Croydon 041C,4,1
@@ -5773,7 +5773,7 @@ Croydon 011F,1.666666667,1
 Croydon 011E,1.333333333,1
 Croydon 013A,1.666666667,1
 Croydon 009F,1.666666667,1
-Croydon 010C,0,1
+Croydon 010C,0.1,1
 Croydon 009D,4,1
 Croydon 009C,1.333333333,1
 Croydon 015D,1.666666667,1
@@ -5995,7 +5995,7 @@ Shepway 010A,4.333333333,1
 Shepway 010B,5,1
 Shepway 010D,3.333333333,1
 Shepway 009B,2.666666667,1
-Canterbury 013B,0,1
+Canterbury 013B,0.1,1
 Canterbury 013A,1.333333333,1
 Canterbury 013D,1.333333333,1
 Canterbury 013C,1.333333333,1
@@ -6075,7 +6075,7 @@ Canterbury 001C,4.666666667,1
 Canterbury 003C,4,1
 Thanet 007A,2.333333333,1
 Thanet 008E,5,1
-Thanet 004A,0,1
+Thanet 004A,0.1,1
 Thanet 014C,3.333333333,1
 Thanet 008C,3,1
 Thanet 008B,5.333333333,1
@@ -6196,7 +6196,7 @@ Coventry 028B,1.333333333,1
 Coventry 028C,1.666666667,1
 Coventry 031A,2,1
 Hinckley and Bosworth 004C,3,1
-Hinckley and Bosworth 004B,0,1
+Hinckley and Bosworth 004B,0.1,1
 Hinckley and Bosworth 004D,4.333333333,1
 Hinckley and Bosworth 004A,2.666666667,1
 Hinckley and Bosworth 008B,2.333333333,1
@@ -6313,7 +6313,7 @@ Coventry 027D,1,1
 Coventry 033F,2,1
 Warwick 010E,1.666666667,1
 Warwick 010G,1,1
-Warwick 010C,0,1
+Warwick 010C,0.1,1
 Warwick 010B,2.333333333,1
 Warwick 010D,1,1
 Warwick 005F,1.666666667,1
@@ -6396,7 +6396,7 @@ Warwick 011E,2,1
 Warwick 011G,0.333333333,1
 Warwick 011H,2,1
 Warwick 012F,1.666666667,1
-Warwick 012A,0,1
+Warwick 012A,0.1,1
 Coventry 038F,4.333333333,1
 Stratford-on-Avon 013D,0.666666667,1
 Stratford-on-Avon 013B,1.666666667,1
@@ -6448,7 +6448,7 @@ Stratford-on-Avon 010C,2.666666667,1
 Stratford-on-Avon 010F,2.333333333,1
 Stratford-on-Avon 010A,2.333333333,1
 Stratford-on-Avon 010D,1.666666667,1
-Stratford-on-Avon 010E,0,1
+Stratford-on-Avon 010E,0.1,1
 Stratford-on-Avon 014A,6.666666667,1
 Stratford-on-Avon 014D,2,1
 Stratford-on-Avon 012E,2,1
@@ -6595,7 +6595,7 @@ Warwick 003D,2,1
 Solihull 017D,2.333333333,1
 Warwick 001A,1.666666667,1
 Warwick 003A,6.333333333,1
-Warwick 002D,0,1
+Warwick 002D,0.1,1
 Warwick 003E,3.666666667,1
 Warwick 002A,2.666666667,1
 Warwick 002E,1.666666667,1
@@ -6735,7 +6735,7 @@ Cheshire East 050A,3,1
 Cheshire East 047B,3,1
 Cheshire East 047C,1,1
 Cheshire East 047D,5,1
-Cheshire East 049G,0,1
+Cheshire East 049G,0.1,1
 Cheshire East 047E,4.333333333,1
 Cheshire East 046B,1.333333333,1
 Cheshire East 048D,1.333333333,1
@@ -6999,7 +6999,7 @@ Dartford 005C,1.333333333,1
 Dartford 011C,1.666666667,1
 Dartford 011D,2.666666667,1
 Dartford 011B,2,1
-Dartford 012A,0,1
+Dartford 012A,0.1,1
 Dartford 012C,2.333333333,1
 Dartford 010A,2.333333333,1
 Dartford 011A,3.333333333,1
@@ -7349,7 +7349,7 @@ Derbyshire Dales 006C,4,1
 Derbyshire Dales 006D,4,1
 Derbyshire Dales 005B,2.666666667,1
 Derbyshire Dales 005C,2,1
-Derbyshire Dales 005D,0,1
+Derbyshire Dales 005D,0.1,1
 Derbyshire Dales 006B,3,1
 Derbyshire Dales 006A,1.666666667,1
 Derbyshire Dales 008B,5.666666667,1
@@ -7484,7 +7484,7 @@ Erewash 008A,7,1
 Erewash 009D,2.333333333,1
 Derby 030G,4.333333333,1
 Derby 030F,1.666666667,1
-Derby 031C,0,1
+Derby 031C,0.1,1
 Derby 030E,2,1
 Derby 031D,2,1
 Derby 031A,4.333333333,1
@@ -7651,7 +7651,7 @@ County Durham 027D,3,1
 County Durham 027F,2,1
 County Durham 034D,2.333333333,1
 County Durham 034C,2.666666667,1
-County Durham 021F,0,1
+County Durham 021F,0.1,1
 County Durham 034A,4.666666667,1
 County Durham 040D,3.333333333,1
 County Durham 040B,6,1
@@ -7957,7 +7957,7 @@ Richmondshire 006E,2,1
 Richmondshire 006G,2.333333333,1
 Richmondshire 006D,2.666666667,1
 Richmondshire 006F,3,1
-Richmondshire 004G,0,1
+Richmondshire 004G,0.1,1
 Richmondshire 004C,0.666666667,1
 Richmondshire 004E,1.666666667,1
 Richmondshire 004H,0.333333333,1
@@ -8202,7 +8202,7 @@ North East Lincolnshire 002B,4.666666667,1
 North East Lincolnshire 006C,2,1
 North East Lincolnshire 006A,1.333333333,1
 North East Lincolnshire 002C,2.666666667,1
-North East Lincolnshire 006B,0,1
+North East Lincolnshire 006B,0.1,1
 North East Lincolnshire 006D,1,1
 North East Lincolnshire 012A,2.666666667,1
 North East Lincolnshire 012B,0.666666667,1
@@ -8654,7 +8654,7 @@ Dudley 004E,1.666666667,1
 Dudley 020E,2.333333333,1
 Dudley 025E,2.666666667,1
 Dudley 020C,2,1
-Dudley 020B,0,1
+Dudley 020B,0.1,1
 Dudley 020A,0.666666667,1
 Dudley 017E,1.666666667,1
 Dudley 013B,1.666666667,1
@@ -8891,7 +8891,7 @@ Waltham Forest 027D,0.666666667,1
 Waltham Forest 024D,0.333333333,1
 Waltham Forest 027E,1.666666667,1
 Tower Hamlets 021D,0.333333333,1
-Tower Hamlets 021E,0,1
+Tower Hamlets 021E,0.1,1
 Tower Hamlets 021C,1.666666667,1
 Tower Hamlets 021F,0.333333333,1
 Tower Hamlets 021A,0.666666667,1
@@ -8925,7 +8925,7 @@ Tower Hamlets 025C,0.666666667,1
 Newham 026B,1.666666667,1
 Newham 026D,0.666666667,1
 Newham 027D,1.333333333,1
-Newham 027B,0,1
+Newham 027B,0.1,1
 Newham 021B,0.333333333,1
 Newham 016B,1.666666667,1
 Newham 021A,1,1
@@ -8947,7 +8947,7 @@ Newham 028C,1.666666667,1
 Newham 028D,3,1
 Newham 028B,1,1
 Tower Hamlets 016A,3.666666667,1
-Tower Hamlets 017C,0,1
+Tower Hamlets 017C,0.1,1
 Tower Hamlets 024D,1,1
 Tower Hamlets 024C,2.666666667,1
 Tower Hamlets 028B,0.666666667,1
@@ -8960,7 +8960,7 @@ Tower Hamlets 031B,1,1
 Tower Hamlets 031F,0.666666667,1
 Tower Hamlets 031G,0.333333333,1
 Tower Hamlets 030C,1.333333333,1
-Tower Hamlets 030D,0,1
+Tower Hamlets 030D,0.1,1
 Tower Hamlets 030B,1,1
 Tower Hamlets 030A,1.666666667,1
 Tower Hamlets 028D,1,1
@@ -8980,20 +8980,20 @@ Tower Hamlets 023B,1.333333333,1
 Tower Hamlets 019B,1,1
 Tower Hamlets 019C,3,1
 Tower Hamlets 023A,0.333333333,1
-Tower Hamlets 023C,0,1
+Tower Hamlets 023C,0.1,1
 Tower Hamlets 023D,1,1
 Tower Hamlets 032B,0.666666667,1
 Tower Hamlets 032C,1.333333333,1
 Tower Hamlets 033C,0.666666667,1
-Tower Hamlets 033D,0,1
-Tower Hamlets 032E,0,1
+Tower Hamlets 033D,0.1,1
+Tower Hamlets 032E,0.1,1
 Tower Hamlets 032A,1.666666667,1
-Tower Hamlets 032D,0,1
+Tower Hamlets 032D,0.1,1
 Tower Hamlets 033B,0.333333333,1
-Tower Hamlets 028H,0,1
+Tower Hamlets 028H,0.1,1
 Tower Hamlets 028I,0.333333333,1
 Tower Hamlets 028A,2.666666667,1
-Tower Hamlets 028E,0,1
+Tower Hamlets 028E,0.1,1
 Tower Hamlets 028F,1.333333333,1
 Tower Hamlets 031D,0.333333333,1
 Tower Hamlets 011A,1,1
@@ -9015,10 +9015,10 @@ Waltham Forest 028F,2.333333333,1
 Waltham Forest 027B,1,1
 Waltham Forest 026A,0.333333333,1
 Waltham Forest 027A,2,1
-Newham 013E,0,1
+Newham 013E,0.1,1
 Newham 013H,1,1
 Newham 020A,1.333333333,1
-Newham 027A,0,1
+Newham 027A,0.1,1
 Newham 020B,1.666666667,1
 Newham 021C,3,1
 Newham 020C,3,1
@@ -9038,17 +9038,17 @@ Tower Hamlets 015A,1.333333333,1
 Tower Hamlets 015D,2.333333333,1
 Tower Hamlets 013B,1,1
 Newham 034J,3.666666667,1
-Newham 034F,0,1
+Newham 034F,0.1,1
 Newham 034H,0.333333333,1
 Newham 034I,2.666666667,1
 Newham 036A,1.333333333,1
 Newham 037E,0.333333333,1
-Newham 037F,0,1
+Newham 037F,0.1,1
 Newham 037A,1.333333333,1
 Newham 037G,2.333333333,1
 Newham 037C,2,1
 Newham 037H,0.333333333,1
-Newham 034G,0,1
+Newham 034G,0.1,1
 Newham 034D,2.666666667,1
 Newham 036D,3,1
 Newham 036C,1,1
@@ -9056,14 +9056,14 @@ Newham 032C,3,1
 Newham 036B,1.333333333,1
 Newham 036E,1,1
 Newham 032E,1.666666667,1
-Newham 032D,0,1
+Newham 032D,0.1,1
 Newham 031B,1.666666667,1
 Newham 031C,2.666666667,1
 Newham 030D,3,1
 Newham 034A,1,1
 Newham 027C,2.666666667,1
 Newham 030C,2,1
-Tower Hamlets 015B,0,1
+Tower Hamlets 015B,0.1,1
 Waltham Forest 016C,2.666666667,1
 Waltham Forest 013A,2.333333333,1
 Waltham Forest 013C,1,1
@@ -9110,7 +9110,7 @@ Waltham Forest 022C,0.333333333,1
 Waltham Forest 018B,3.333333333,1
 Waltham Forest 018C,2.666666667,1
 Waltham Forest 016F,2.666666667,1
-Waltham Forest 016A,0,1
+Waltham Forest 016A,0.1,1
 Waltham Forest 020B,1,1
 Waltham Forest 015D,2,1
 Waltham Forest 015B,1,1
@@ -9175,10 +9175,10 @@ Tower Hamlets 004F,0.666666667,1
 Tower Hamlets 004E,0.333333333,1
 Tower Hamlets 001B,1,1
 Tower Hamlets 001C,1.666666667,1
-Tower Hamlets 004A,0,1
+Tower Hamlets 004A,0.1,1
 Tower Hamlets 008C,1.666666667,1
 Tower Hamlets 008A,0.333333333,1
-Newham 013F,0,1
+Newham 013F,0.1,1
 Tower Hamlets 008D,1.666666667,1
 Tower Hamlets 008B,0.666666667,1
 Tower Hamlets 008E,1,1
@@ -9335,7 +9335,7 @@ Newham 008E,1.333333333,1
 Newham 017D,3.666666667,1
 Hackney 017D,3,1
 Hackney 020B,1,1
-Hackney 023F,0,1
+Hackney 023F,0.1,1
 Hackney 017C,1,1
 Hackney 016D,2,1
 Hackney 016B,1.666666667,1
@@ -9394,12 +9394,12 @@ Islington 022C,2.333333333,1
 Islington 023B,1.666666667,1
 Islington 022B,1.333333333,1
 Islington 023A,1.333333333,1
-Hackney 027G,0,1
-Hackney 027I,0,1
+Hackney 027G,0.1,1
+Hackney 027I,0.1,1
 City of London 001C,2.333333333,1
 Islington 023D,1.333333333,1
 Islington 023E,1,1
-City of London 001F,0,1
+City of London 001F,0.1,1
 City of London 001B,1.333333333,1
 City of London 001E,0.666666667,1
 Broxbourne 005C,2.666666667,1
@@ -9483,7 +9483,7 @@ Enfield 007A,1,1
 Enfield 007C,1,1
 Enfield 006D,0.666666667,1
 Enfield 002A,2.333333333,1
-Enfield 006B,0,1
+Enfield 006B,0.1,1
 Enfield 006C,2.333333333,1
 Enfield 003D,1.333333333,1
 Enfield 003C,1,1
@@ -9533,7 +9533,7 @@ Barnet 004D,0.333333333,1
 Barnet 007B,4,1
 Barnet 007F,4.333333333,1
 Barnet 007E,3.333333333,1
-Barnet 001B,0,1
+Barnet 001B,0.1,1
 Barnet 001A,2,1
 Barnet 001D,2.666666667,1
 Barnet 002E,3,1
@@ -9574,7 +9574,7 @@ Broxbourne 009C,2.333333333,1
 Broxbourne 006B,1.666666667,1
 Broxbourne 006A,1.666666667,1
 Broxbourne 007B,1.666666667,1
-Broxbourne 007D,0,1
+Broxbourne 007D,0.1,1
 Broxbourne 008A,2.333333333,1
 Broxbourne 008B,1.666666667,1
 Broxbourne 006D,1,1
@@ -10231,7 +10231,7 @@ Tewkesbury 006B,2,1
 Tewkesbury 004C,3,1
 Malvern Hills 011A,3,1
 Tewkesbury 002E,3.666666667,1
-Tewkesbury 001H,0,1
+Tewkesbury 001H,0.1,1
 Tewkesbury 001G,0.333333333,1
 Tewkesbury 002C,1.666666667,1
 Tewkesbury 002D,3.666666667,1
@@ -10257,9 +10257,9 @@ Gloucester 003C,3,1
 Gloucester 003D,2.333333333,1
 Stroud 001A,1.666666667,1
 Gloucester 015F,1.333333333,1
-Gloucester 014D,0,1
+Gloucester 014D,0.1,1
 Gloucester 014B,0.333333333,1
-Gloucester 014A,0,1
+Gloucester 014A,0.1,1
 Stroud 001C,1.666666667,1
 Gloucester 015E,0.666666667,1
 Stroud 001B,0.666666667,1
@@ -10302,13 +10302,13 @@ Gloucester 012B,1.666666667,1
 Gloucester 013D,2.333333333,1
 Gloucester 015H,1.666666667,1
 Gloucester 013B,2,1
-Gloucester 015G,0,1
+Gloucester 015G,0.1,1
 Gloucester 013A,1,1
 Gloucester 007G,1.333333333,1
 Gloucester 007E,3.333333333,1
 Gloucester 006A,3.666666667,1
 Gloucester 010B,2.333333333,1
-Gloucester 007D,0,1
+Gloucester 007D,0.1,1
 Gloucester 007F,0.666666667,1
 Gloucester 007C,0.333333333,1
 Gloucester 007B,1.666666667,1
@@ -10353,7 +10353,7 @@ Cheltenham 013F,5.333333333,1
 Cheltenham 011E,3,1
 Cheltenham 013C,1.333333333,1
 Cheltenham 013A,2.333333333,1
-Cheltenham 013D,0,1
+Cheltenham 013D,0.1,1
 Cheltenham 013G,2,1
 Tewkesbury 008C,1.666666667,1
 Tewkesbury 008A,3.333333333,1
@@ -10548,13 +10548,13 @@ Rushmoor 009F,1,1
 Rushmoor 011A,1,1
 Rushmoor 011C,2.333333333,1
 Rushmoor 009A,1.666666667,1
-Rushmoor 009B,0,1
+Rushmoor 009B,0.1,1
 Rushmoor 012D,1.333333333,1
 Guildford 010B,4.333333333,1
 Guildford 004E,2,1
 Guildford 004B,2,1
 Guildford 004C,1.333333333,1
-Guildford 004D,0,1
+Guildford 004D,0.1,1
 Guildford 004A,1.333333333,1
 Guildford 010C,2.666666667,1
 Guildford 014A,2.333333333,1
@@ -10602,7 +10602,7 @@ Rushmoor 003A,0.666666667,1
 Rushmoor 003D,0.666666667,1
 Rushmoor 003E,2,1
 Rushmoor 005C,1.666666667,1
-Rushmoor 005E,0,1
+Rushmoor 005E,0.1,1
 Rushmoor 005D,1.666666667,1
 Guildford 013F,1.333333333,1
 Guildford 013C,0.333333333,1
@@ -10691,7 +10691,7 @@ Woking 003C,2.333333333,1
 Woking 008A,2,1
 Woking 009D,1.333333333,1
 Woking 009C,1.666666667,1
-Woking 009A,0,1
+Woking 009A,0.1,1
 Woking 009B,2,1
 Woking 010B,0.333333333,1
 Woking 011A,2.666666667,1
@@ -10726,7 +10726,7 @@ Surrey Heath 001C,2.333333333,1
 Surrey Heath 001A,2.666666667,1
 Surrey Heath 006A,3.666666667,1
 Surrey Heath 006B,1.333333333,1
-Surrey Heath 006E,0,1
+Surrey Heath 006E,0.1,1
 Surrey Heath 006C,0.333333333,1
 Surrey Heath 006D,1.333333333,1
 Guildford 016B,0.666666667,1
@@ -10853,11 +10853,11 @@ Hart 001D,2,1
 Bracknell Forest 015E,1.333333333,1
 Bracknell Forest 015C,1.666666667,1
 Bracknell Forest 013E,0.333333333,1
-Bracknell Forest 013D,0,1
-Bracknell Forest 013B,0,1
+Bracknell Forest 013D,0.1,1
+Bracknell Forest 013B,0.1,1
 Bracknell Forest 015D,1,1
 Bracknell Forest 015A,0.666666667,1
-Bracknell Forest 013C,0,1
+Bracknell Forest 013C,0.1,1
 Bracknell Forest 012C,2.666666667,1
 Bracknell Forest 014D,1.333333333,1
 Bracknell Forest 014B,2.333333333,1
@@ -10865,7 +10865,7 @@ Bracknell Forest 014A,3,1
 Bracknell Forest 014E,2,1
 Bracknell Forest 014C,1,1
 Guildford 008D,1.666666667,1
-Guildford 008A,0,1
+Guildford 008A,0.1,1
 Guildford 008B,2.333333333,1
 Guildford 011A,4.333333333,1
 Guildford 005F,3.666666667,1
@@ -10921,7 +10921,7 @@ Waverley 010C,2.666666667,1
 Waverley 007B,1,1
 Waverley 007D,1.666666667,1
 Waverley 010A,3.333333333,1
-Waverley 010B,0,1
+Waverley 010B,0.1,1
 Waverley 007C,3.333333333,1
 Waverley 005E,3.666666667,1
 Waverley 005D,1.333333333,1
@@ -11355,7 +11355,7 @@ Kirklees 052A,4.333333333,1
 Kirklees 052C,1,1
 Kirklees 052B,0.333333333,1
 Kirklees 052D,1.666666667,1
-Kirklees 046D,0,1
+Kirklees 046D,0.1,1
 Kirklees 032D,1.666666667,1
 Kirklees 046A,1.666666667,1
 Kirklees 046B,0.666666667,1
@@ -11780,7 +11780,7 @@ Chiltern 006E,2,1
 Chiltern 006F,1.333333333,1
 Chiltern 001D,2.333333333,1
 Chiltern 006A,1,1
-Chiltern 008D,0,1
+Chiltern 008D,0.1,1
 Chiltern 006C,2,1
 Chiltern 007D,0.333333333,1
 Chiltern 013D,1.333333333,1
@@ -11973,7 +11973,7 @@ East Riding of Yorkshire 032C,3.333333333,1
 East Riding of Yorkshire 032D,4.333333333,1
 East Riding of Yorkshire 032H,1,1
 East Riding of Yorkshire 032E,4.666666667,1
-East Riding of Yorkshire 032G,0,1
+East Riding of Yorkshire 032G,0.1,1
 East Riding of Yorkshire 032A,1.666666667,1
 East Riding of Yorkshire 032F,1.666666667,1
 East Riding of Yorkshire 024D,3,1
@@ -12104,7 +12104,7 @@ Kingston upon Hull 005A,3,1
 Kingston upon Hull 005B,1.666666667,1
 Kingston upon Hull 012B,2.666666667,1
 Kingston upon Hull 012A,0.333333333,1
-Kingston upon Hull 012C,0,1
+Kingston upon Hull 012C,0.1,1
 Kingston upon Hull 012D,2.666666667,1
 Kingston upon Hull 005C,3,1
 Kingston upon Hull 008B,3.333333333,1
@@ -12149,7 +12149,7 @@ Kingston upon Hull 001A,0.666666667,1
 Kingston upon Hull 004E,4.333333333,1
 Kingston upon Hull 006C,2.666666667,1
 Kingston upon Hull 006A,2.333333333,1
-Kingston upon Hull 013E,0,1
+Kingston upon Hull 013E,0.1,1
 Kingston upon Hull 011A,3,1
 Kingston upon Hull 013C,2.666666667,1
 Kingston upon Hull 013A,0.666666667,1
@@ -12349,7 +12349,7 @@ Barking and Dagenham 019A,2.666666667,1
 Barking and Dagenham 019B,1,1
 Barking and Dagenham 016A,1.333333333,1
 Barking and Dagenham 016E,1.333333333,1
-Redbridge 030H,0,1
+Redbridge 030H,0.1,1
 Redbridge 030G,4.333333333,1
 Redbridge 030D,1.333333333,1
 Redbridge 030F,0.666666667,1
@@ -12406,7 +12406,7 @@ Redbridge 020A,1,1
 Redbridge 024C,3,1
 Redbridge 024D,3,1
 Redbridge 024A,2.666666667,1
-Redbridge 024B,0,1
+Redbridge 024B,0.1,1
 Redbridge 022A,2.333333333,1
 Redbridge 022C,2.333333333,1
 Redbridge 022B,2.333333333,1
@@ -12738,7 +12738,7 @@ Ipswich 011C,1.333333333,1
 Ipswich 016B,1.666666667,1
 Ipswich 016D,0.666666667,1
 St Edmundsbury 001A,1.666666667,1
-St Edmundsbury 002C,0,1
+St Edmundsbury 002C,0.1,1
 St Edmundsbury 001E,4.666666667,1
 St Edmundsbury 002B,2.333333333,1
 St Edmundsbury 002D,1.666666667,1
@@ -12757,7 +12757,7 @@ St Edmundsbury 003B,1,1
 St Edmundsbury 003D,1.666666667,1
 St Edmundsbury 003C,2,1
 St Edmundsbury 003E,1,1
-St Edmundsbury 005B,0,1
+St Edmundsbury 005B,0.1,1
 St Edmundsbury 009F,1.333333333,1
 St Edmundsbury 005D,1,1
 St Edmundsbury 005C,1.333333333,1
@@ -13280,7 +13280,7 @@ Knowsley 008F,2,1
 Knowsley 008B,4.333333333,1
 Liverpool 017E,4.666666667,1
 Liverpool 025C,2.333333333,1
-Liverpool 060D,0,1
+Liverpool 060D,0.1,1
 Liverpool 038C,4,1
 Liverpool 035E,2.666666667,1
 Liverpool 035C,0.333333333,1
@@ -13312,7 +13312,7 @@ Liverpool 047C,1.333333333,1
 Liverpool 048D,3,1
 Liverpool 048C,4.333333333,1
 Liverpool 052A,4.666666667,1
-Liverpool 042F,0,1
+Liverpool 042F,0.1,1
 Liverpool 048E,3.666666667,1
 Liverpool 048F,1,1
 Liverpool 050H,1.333333333,1
@@ -13326,7 +13326,7 @@ Liverpool 052C,1,1
 Liverpool 052E,2.333333333,1
 Liverpool 037A,5,1
 Liverpool 041C,1,1
-Liverpool 042A,0,1
+Liverpool 042A,0.1,1
 Liverpool 042E,1,1
 Liverpool 049D,2.333333333,1
 Liverpool 041D,1.666666667,1
@@ -13420,7 +13420,7 @@ Sefton 025C,1.666666667,1
 Sefton 028A,2.666666667,1
 Sefton 022A,5,1
 Sefton 022D,1.333333333,1
-Sefton 022B,0,1
+Sefton 022B,0.1,1
 Sefton 022F,1.666666667,1
 Sefton 022C,3.333333333,1
 Sefton 022E,1.333333333,1
@@ -13495,7 +13495,7 @@ Sefton 027E,1.666666667,1
 Sefton 027D,2.333333333,1
 Sefton 033E,2.333333333,1
 Sefton 018C,3.333333333,1
-Sefton 026A,0,1
+Sefton 026A,0.1,1
 Sefton 026B,2.333333333,1
 Sefton 020D,3,1
 Sefton 017C,1,1
@@ -13721,11 +13721,11 @@ Liverpool 043C,7.333333333,1
 Liverpool 050G,2.333333333,1
 Liverpool 044E,5.666666667,1
 Liverpool 050J,1.666666667,1
-Liverpool 050I,0,1
+Liverpool 050I,0.1,1
 Liverpool 044C,3.666666667,1
 Liverpool 061A,0.333333333,1
 Liverpool 044A,5.666666667,1
-Liverpool 061D,0,1
+Liverpool 061D,0.1,1
 Liverpool 044B,1.666666667,1
 Liverpool 044D,2,1
 Liverpool 043D,3.333333333,1
@@ -13999,7 +13999,7 @@ Charnwood 002B,2.333333333,1
 Charnwood 002C,2.333333333,1
 Charnwood 009F,1.666666667,1
 Charnwood 009C,2.666666667,1
-Charnwood 009D,0,1
+Charnwood 009D,0.1,1
 Charnwood 009B,0.333333333,1
 Charnwood 009A,0.666666667,1
 Charnwood 010F,1,1
@@ -14110,7 +14110,7 @@ Rutland 005B,0.666666667,1
 Rutland 005D,3,1
 Rutland 005E,2.333333333,1
 Rutland 005F,1.666666667,1
-Leicester 041B,0,1
+Leicester 041B,0.1,1
 Harborough 007C,3.333333333,1
 Harborough 007B,2.333333333,1
 Harborough 008A,3,1
@@ -14502,7 +14502,7 @@ Blaby 011A,1.333333333,1
 Blaby 011B,1.666666667,1
 Blaby 011D,2.666666667,1
 Blaby 011C,0.666666667,1
-Blaby 009D,0,1
+Blaby 009D,0.1,1
 Blaby 009B,4,1
 Blaby 009C,1.666666667,1
 Blaby 009A,1,1
@@ -14762,7 +14762,7 @@ Leeds 090D,2.666666667,1
 Leeds 090B,3.333333333,1
 Leeds 082D,4,1
 Leeds 090E,3,1
-Leeds 111E,0,1
+Leeds 111E,0.1,1
 Leeds 082F,0.333333333,1
 Leeds 082E,0.666666667,1
 Leeds 111D,0.333333333,1
@@ -14809,7 +14809,7 @@ Leeds 051B,1,1
 Leeds 058D,1,1
 Leeds 051D,1,1
 Leeds 058A,2.333333333,1
-Leeds 058B,0,1
+Leeds 058B,0.1,1
 Leeds 067I,1,1
 Leeds 068A,1.333333333,1
 Leeds 080D,4.666666667,1
@@ -14833,7 +14833,7 @@ Leeds 041C,3,1
 Leeds 061B,4.333333333,1
 Leeds 050D,1.333333333,1
 Leeds 050B,2.666666667,1
-Leeds 050A,0,1
+Leeds 050A,0.1,1
 Leeds 050C,3.333333333,1
 Leeds 035D,4.666666667,1
 Leeds 035C,3.333333333,1
@@ -15102,9 +15102,9 @@ Bradford 002A,1.333333333,1
 Bradford 002F,4.333333333,1
 Bradford 002B,3.666666667,1
 Leeds 055H,1,1
-Leeds 063E,0,1
+Leeds 063E,0.1,1
 Leeds 063B,1.666666667,1
-Leeds 111A,0,1
+Leeds 111A,0.1,1
 Leeds 063D,1,1
 Leeds 056E,1.666666667,1
 Leeds 056C,1.666666667,1
@@ -15117,7 +15117,7 @@ Leeds 045C,2,1
 Leeds 033F,2,1
 Leeds 033G,1.333333333,1
 Leeds 033B,2.333333333,1
-Leeds 110B,0,1
+Leeds 110B,0.1,1
 Leeds 110G,4.333333333,1
 Leeds 110A,0.666666667,1
 Leeds 054B,1,1
@@ -15210,9 +15210,9 @@ Leeds 064E,1,1
 Leeds 065D,3,1
 Leeds 064D,1,1
 Leeds 064A,3.333333333,1
-Leeds 112D,0,1
-Leeds 112E,0,1
-Leeds 075G,0,1
+Leeds 112D,0.1,1
+Leeds 112E,0.1,1
+Leeds 075G,0.1,1
 Leeds 075E,4,1
 Leeds 070C,2.333333333,1
 Leeds 070A,4.666666667,1
@@ -15243,7 +15243,7 @@ Luton 020A,1.333333333,1
 Luton 020B,2,1
 Luton 018D,1.333333333,1
 Luton 018C,1,1
-Luton 016B,0,1
+Luton 016B,0.1,1
 Luton 016A,1.333333333,1
 Luton 016F,1.666666667,1
 Luton 018B,1,1
@@ -15253,7 +15253,7 @@ Luton 004C,2,1
 Luton 007E,1.666666667,1
 Luton 012D,2.666666667,1
 Luton 007D,1.666666667,1
-Luton 007A,0,1
+Luton 007A,0.1,1
 Luton 012E,0.333333333,1
 Luton 012A,2.333333333,1
 Luton 018A,3,1
@@ -15263,7 +15263,7 @@ Luton 008D,1,1
 Luton 008A,3.333333333,1
 Luton 008B,1,1
 Luton 008C,1.666666667,1
-Luton 014E,0,1
+Luton 014E,0.1,1
 North Hertfordshire 014D,0.666666667,1
 Luton 008F,2,1
 Luton 008E,0.333333333,1
@@ -15280,7 +15280,7 @@ Luton 017A,3.333333333,1
 Luton 010A,3,1
 Luton 017C,1,1
 Luton 010C,1,1
-Luton 007C,0,1
+Luton 007C,0.1,1
 Luton 010B,1,1
 Luton 010E,0.666666667,1
 Luton 010D,2.333333333,1
@@ -15289,7 +15289,7 @@ Luton 006F,1,1
 Luton 007B,2.333333333,1
 Luton 007F,1.333333333,1
 Luton 004B,5,1
-Luton 004A,0,1
+Luton 004A,0.1,1
 Luton 006E,2,1
 Luton 004D,4.333333333,1
 Luton 006C,0.333333333,1
@@ -15309,7 +15309,7 @@ Luton 003B,0.666666667,1
 Luton 003A,0.666666667,1
 Luton 003E,2,1
 Luton 003D,1,1
-Luton 001E,0,1
+Luton 001E,0.1,1
 Luton 001D,1.666666667,1
 Luton 001A,0.333333333,1
 Luton 001B,1.666666667,1
@@ -15415,7 +15415,7 @@ Central Bedfordshire 020B,0.666666667,1
 Central Bedfordshire 020C,1,1
 Central Bedfordshire 024E,1,1
 Central Bedfordshire 024D,1.666666667,1
-Central Bedfordshire 024F,0,1
+Central Bedfordshire 024F,0.1,1
 Central Bedfordshire 024C,2,1
 Aylesbury Vale 009F,2,1
 Aylesbury Vale 009E,2.666666667,1
@@ -15439,7 +15439,7 @@ Manchester 018A,2,1
 Manchester 020A,1,1
 Manchester 027D,4.666666667,1
 Manchester 027A,1.666666667,1
-Manchester 055C,0,1
+Manchester 055C,0.1,1
 Manchester 022G,1.333333333,1
 Manchester 022F,1.666666667,1
 Manchester 027F,1.666666667,1
@@ -15453,7 +15453,7 @@ Manchester 018B,0.666666667,1
 Manchester 018E,2,1
 Manchester 018D,2,1
 Manchester 055B,0.666666667,1
-Manchester 054C,0,1
+Manchester 054C,0.1,1
 Manchester 032C,0.666666667,1
 Manchester 025C,3.333333333,1
 Manchester 025B,2,1
@@ -15466,7 +15466,7 @@ Manchester 026C,1.666666667,1
 Manchester 025D,0.666666667,1
 Manchester 025E,2,1
 Manchester 035D,0.333333333,1
-Manchester 032E,0,1
+Manchester 032E,0.1,1
 Manchester 026B,2.666666667,1
 Manchester 032A,2,1
 Manchester 032B,0.333333333,1
@@ -15479,15 +15479,15 @@ Manchester 030E,0.666666667,1
 Manchester 030A,2.666666667,1
 Manchester 030C,2,1
 Manchester 025A,1,1
-Manchester 059C,0,1
-Manchester 059B,0,1
-Manchester 059D,0,1
+Manchester 059C,0.1,1
+Manchester 059B,0.1,1
+Manchester 059D,0.1,1
 Manchester 059A,1,1
 Trafford 001B,3,1
 Manchester 060B,0.333333333,1
 Manchester 060C,0.333333333,1
 Manchester 019A,1.666666667,1
-Manchester 057B,0,1
+Manchester 057B,0.1,1
 Manchester 060D,0.666666667,1
 Manchester 019D,1,1
 Manchester 057A,1,1
@@ -15500,7 +15500,7 @@ Trafford 004E,1.333333333,1
 Trafford 004B,2,1
 Trafford 004D,2.666666667,1
 Manchester 024B,3.666666667,1
-Manchester 028E,0,1
+Manchester 028E,0.1,1
 Manchester 024C,4,1
 Trafford 001D,1,1
 Trafford 001A,2.333333333,1
@@ -15514,9 +15514,9 @@ Trafford 001C,2.333333333,1
 Trafford 004A,4,1
 Trafford 004C,3,1
 Trafford 001F,2.333333333,1
-Salford 028E,0,1
+Salford 028E,0.1,1
 Trafford 006B,3.333333333,1
-Manchester 055A,0,1
+Manchester 055A,0.1,1
 Manchester 023E,3,1
 Manchester 020D,2.333333333,1
 Manchester 023C,1.666666667,1
@@ -15554,13 +15554,13 @@ Manchester 035A,3.666666667,1
 Manchester 035E,3.666666667,1
 Manchester 035B,3,1
 Manchester 039F,1.333333333,1
-Manchester 038B,0,1
+Manchester 038B,0.1,1
 Manchester 043F,1,1
 Manchester 042B,1.666666667,1
 Manchester 039A,1.666666667,1
 Manchester 043B,1.666666667,1
 Manchester 039D,0.333333333,1
-Manchester 039E,0,1
+Manchester 039E,0.1,1
 Manchester 042C,2.333333333,1
 Manchester 045C,0.666666667,1
 Manchester 038C,3,1
@@ -15668,7 +15668,7 @@ Rochdale 022D,2,1
 Rochdale 022A,3.333333333,1
 Rochdale 022C,2.333333333,1
 Rochdale 022B,2.333333333,1
-Rochdale 021A,0,1
+Rochdale 021A,0.1,1
 Rochdale 021D,3,1
 Rochdale 021C,2.333333333,1
 Rochdale 021B,2.666666667,1
@@ -15773,7 +15773,7 @@ Wigan 028C,1,1
 Wigan 028D,1,1
 Wigan 029A,3.333333333,1
 Wigan 029B,2.333333333,1
-Wigan 028B,0,1
+Wigan 028B,0.1,1
 Wigan 029E,1.666666667,1
 Wigan 028E,0.666666667,1
 Wigan 025C,2.333333333,1
@@ -15999,8 +15999,8 @@ Salford 029A,1,1
 Salford 029D,1.333333333,1
 Salford 029G,2.333333333,1
 Salford 030E,2,1
-Manchester 054B,0,1
-Manchester 054D,0,1
+Manchester 054B,0.1,1
+Manchester 054D,0.1,1
 Bury 021C,1.333333333,1
 Bury 021B,3.666666667,1
 Bury 022B,2,1
@@ -16033,8 +16033,8 @@ Wigan 017C,3,1
 Wigan 017E,2.666666667,1
 Manchester 013E,0.333333333,1
 Manchester 055E,0.666666667,1
-Manchester 013F,0,1
-Manchester 055D,0,1
+Manchester 013F,0.1,1
+Manchester 055D,0.1,1
 Manchester 054E,0.666666667,1
 Manchester 013D,4.333333333,1
 Salford 028G,2.666666667,1
@@ -16074,7 +16074,7 @@ Salford 016B,3.333333333,1
 Salford 022E,1.666666667,1
 Salford 022G,0.666666667,1
 Salford 022F,0.666666667,1
-Salford 022I,0,1
+Salford 022I,0.1,1
 Salford 022J,0.333333333,1
 Salford 022K,5.333333333,1
 Salford 016F,6.333333333,1
@@ -16132,7 +16132,7 @@ Manchester 004A,0.333333333,1
 Manchester 001E,1.666666667,1
 Swale 010A,0.666666667,1
 Swale 012B,0.666666667,1
-Swale 012A,0,1
+Swale 012A,0.1,1
 Swale 012C,5.333333333,1
 Swale 012D,3.333333333,1
 Swale 012E,2,1
@@ -16356,7 +16356,7 @@ Medway 001B,1.666666667,1
 Gravesham 010B,1.333333333,1
 Gravesham 010C,1.666666667,1
 Gravesham 010A,1.666666667,1
-Medway 002A,0,1
+Medway 002A,0.1,1
 Medway 002D,1.666666667,1
 Medway 004C,2.333333333,1
 Medway 002B,1,1
@@ -16384,7 +16384,7 @@ Medway 033B,2,1
 Medway 021D,1.333333333,1
 Medway 027A,5.333333333,1
 Medway 015B,2.666666667,1
-Medway 021C,0,1
+Medway 021C,0.1,1
 Medway 021A,1.666666667,1
 Medway 027B,2,1
 Medway 027C,1,1
@@ -16395,7 +16395,7 @@ Medway 037A,2,1
 Medway 033C,0.333333333,1
 Medway 033D,1.333333333,1
 Medway 020D,1.666666667,1
-Medway 020A,0,1
+Medway 020A,0.1,1
 Medway 019C,3,1
 Medway 020C,2.666666667,1
 Medway 034B,1.666666667,1
@@ -16416,7 +16416,7 @@ Maidstone 001A,1.333333333,1
 Medway 031B,1.333333333,1
 Tonbridge and Malling 001D,1.333333333,1
 Tonbridge and Malling 001B,2,1
-Maidstone 001B,0,1
+Maidstone 001B,0.1,1
 Medway 037D,2,1
 Maidstone 001D,0.666666667,1
 Tonbridge and Malling 001C,0.666666667,1
@@ -16437,7 +16437,7 @@ Medway 013C,2.666666667,1
 Medway 019D,2,1
 Medway 013B,1.333333333,1
 Medway 013A,1.333333333,1
-Medway 010D,0,1
+Medway 010D,0.1,1
 Medway 010B,0.666666667,1
 Medway 010C,2.666666667,1
 Medway 010A,2.333333333,1
@@ -16497,7 +16497,7 @@ Swale 008B,4.666666667,1
 Swale 008A,1.666666667,1
 Swale 009A,7.333333333,1
 Swale 009D,1,1
-Swale 007G,0,1
+Swale 007G,0.1,1
 Swale 007H,1,1
 Swale 016C,1.333333333,1
 Swale 013D,1.333333333,1
@@ -16505,7 +16505,7 @@ Swale 016E,1.666666667,1
 Swale 016D,2,1
 Milton Keynes 017H,1.333333333,1
 Milton Keynes 017E,1.666666667,1
-Milton Keynes 017G,0,1
+Milton Keynes 017G,0.1,1
 Milton Keynes 017I,0.333333333,1
 Milton Keynes 017J,0.666666667,1
 Milton Keynes 017A,0.666666667,1
@@ -16532,7 +16532,7 @@ Milton Keynes 006A,1,1
 Milton Keynes 006B,2.333333333,1
 Milton Keynes 013A,4,1
 Milton Keynes 013B,1.333333333,1
-Milton Keynes 013C,0,1
+Milton Keynes 013C,0.1,1
 Milton Keynes 013D,1.333333333,1
 Milton Keynes 011A,1.333333333,1
 Milton Keynes 011B,2,1
@@ -16545,7 +16545,7 @@ Milton Keynes 005E,2.666666667,1
 Milton Keynes 009D,2.666666667,1
 Milton Keynes 009A,0.666666667,1
 Milton Keynes 014A,0.333333333,1
-Milton Keynes 014E,0,1
+Milton Keynes 014E,0.1,1
 Milton Keynes 009C,1,1
 Milton Keynes 014D,1.666666667,1
 Milton Keynes 017F,1,1
@@ -16649,7 +16649,7 @@ Bedford 007C,3.666666667,1
 Bedford 007E,2.333333333,1
 Bedford 007F,1,1
 Bedford 011D,2.666666667,1
-Bedford 011C,0,1
+Bedford 011C,0.1,1
 Bedford 003C,2,1
 Bedford 003B,3.333333333,1
 Bedford 003D,0.333333333,1
@@ -16781,7 +16781,7 @@ Milton Keynes 019C,1,1
 Milton Keynes 020D,1.333333333,1
 Milton Keynes 025D,1.333333333,1
 Milton Keynes 025B,0.666666667,1
-Milton Keynes 025C,0,1
+Milton Keynes 025C,0.1,1
 Milton Keynes 020A,0.666666667,1
 Milton Keynes 020B,1.333333333,1
 Milton Keynes 018B,2,1
@@ -16789,18 +16789,18 @@ Milton Keynes 018A,2.333333333,1
 Milton Keynes 014B,2.333333333,1
 Milton Keynes 021B,2.666666667,1
 Milton Keynes 021A,1,1
-Milton Keynes 014F,0,1
+Milton Keynes 014F,0.1,1
 Milton Keynes 021C,2,1
 Milton Keynes 016D,3,1
 Milton Keynes 023C,2,1
-Milton Keynes 016A,0,1
+Milton Keynes 016A,0.1,1
 Milton Keynes 016B,3,1
 Milton Keynes 023B,2.333333333,1
 Milton Keynes 023F,0.666666667,1
 Milton Keynes 018C,2.333333333,1
 Milton Keynes 021D,1.666666667,1
 Milton Keynes 023D,1.666666667,1
-Milton Keynes 018D,0,1
+Milton Keynes 018D,0.1,1
 Milton Keynes 018E,3.666666667,1
 Milton Keynes 017C,0.666666667,1
 Milton Keynes 017D,2.333333333,1
@@ -16890,7 +16890,7 @@ Islington 014D,0.666666667,1
 Enfield 022B,3.666666667,1
 Enfield 029C,2,1
 Enfield 036E,4,1
-Enfield 036F,0,1
+Enfield 036F,0.1,1
 Enfield 029D,3.333333333,1
 Enfield 029E,4.333333333,1
 Enfield 036C,2,1
@@ -16984,11 +16984,11 @@ Hackney 004A,1.333333333,1
 Hackney 001A,0.333333333,1
 Hackney 004B,2.333333333,1
 Hackney 001C,1.666666667,1
-Hackney 001E,0,1
+Hackney 001E,0.1,1
 Hackney 006A,1.333333333,1
 Hackney 010A,2.333333333,1
 Hackney 009D,1.333333333,1
-Hackney 009E,0,1
+Hackney 009E,0.1,1
 Hackney 006E,3,1
 Hackney 014D,2.333333333,1
 Hackney 014B,2.666666667,1
@@ -17069,7 +17069,7 @@ Islington 020C,1.666666667,1
 Islington 018D,2.333333333,1
 Islington 018B,1,1
 Islington 001B,2,1
-Islington 002C,0,1
+Islington 002C,0.1,1
 Islington 001E,3.666666667,1
 Islington 002D,3.666666667,1
 Islington 002B,1,1
@@ -17185,12 +17185,12 @@ Haringey 027C,1.333333333,1
 Haringey 027B,3.333333333,1
 Haringey 032D,1.666666667,1
 Hackney 007F,1.333333333,1
-Islington 006F,0,1
+Islington 006F,0.1,1
 Islington 006B,1.333333333,1
 Hackney 002A,2.333333333,1
-Hackney 007C,0,1
-Hackney 007D,0,1
-Hackney 007A,0,1
+Hackney 007C,0.1,1
+Hackney 007D,0.1,1
+Hackney 007A,0.1,1
 Hackney 007B,2.333333333,1
 Islington 006C,1,1
 Hackney 002D,1.666666667,1
@@ -17205,7 +17205,7 @@ Islington 001F,1.666666667,1
 Haringey 036D,2,1
 Haringey 034D,2,1
 Haringey 036B,1.666666667,1
-Haringey 036A,0,1
+Haringey 036A,0.1,1
 Islington 011I,1.333333333,1
 Islington 006G,1.333333333,1
 Islington 006D,0.666666667,1
@@ -17218,7 +17218,7 @@ Islington 009A,3,1
 Islington 012D,2.666666667,1
 Islington 009C,2,1
 Islington 014F,0.666666667,1
-Islington 009D,0,1
+Islington 009D,0.1,1
 Islington 012C,2,1
 Islington 006A,2.666666667,1
 Islington 009B,0.666666667,1
@@ -17273,7 +17273,7 @@ Haringey 020F,3.333333333,1
 Haringey 022C,2.666666667,1
 Haringey 020C,2,1
 Haringey 020D,3,1
-Haringey 022A,0,1
+Haringey 022A,0.1,1
 Haringey 033B,1,1
 Haringey 028B,0.333333333,1
 Haringey 022D,4.666666667,1
@@ -17429,7 +17429,7 @@ County Durham 001B,2.333333333,1
 Gateshead 024C,2.666666667,1
 Gateshead 024B,5.666666667,1
 County Durham 003D,3,1
-Newcastle upon Tyne 024C,0,1
+Newcastle upon Tyne 024C,0.1,1
 Newcastle upon Tyne 024G,0.333333333,1
 Northumberland 034E,2.333333333,1
 Northumberland 033C,2.666666667,1
@@ -17469,7 +17469,7 @@ Northumberland 020G,5.666666667,1
 Northumberland 020E,4.666666667,1
 Northumberland 020F,2.333333333,1
 Northumberland 021B,6.666666667,1
-Newcastle upon Tyne 013B,0,1
+Newcastle upon Tyne 013B,0.1,1
 Newcastle upon Tyne 013D,2,1
 Newcastle upon Tyne 013A,0.666666667,1
 Newcastle upon Tyne 017B,0.333333333,1
@@ -17560,7 +17560,7 @@ North Tyneside 001D,4.666666667,1
 Northumberland 030C,4.666666667,1
 Northumberland 030A,3,1
 North Tyneside 011D,2,1
-North Tyneside 011E,0,1
+North Tyneside 011E,0.1,1
 North Tyneside 007C,4,1
 North Tyneside 011B,3,1
 North Tyneside 009A,1.333333333,1
@@ -18014,7 +18014,7 @@ Northumberland 003B,2.333333333,1
 Newcastle upon Tyne 007A,3.333333333,1
 Newcastle upon Tyne 012B,2.333333333,1
 Newcastle upon Tyne 007F,3.666666667,1
-Newcastle upon Tyne 007B,0,1
+Newcastle upon Tyne 007B,0.1,1
 Newcastle upon Tyne 012D,3,1
 Newcastle upon Tyne 012A,0.333333333,1
 Newcastle upon Tyne 012C,1.333333333,1
@@ -18117,8 +18117,8 @@ Nottingham 036B,3.333333333,1
 Nottingham 037A,3.666666667,1
 Nottingham 036A,3,1
 Nottingham 023G,0.666666667,1
-Nottingham 039F,0,1
-Nottingham 039C,0,1
+Nottingham 039F,0.1,1
+Nottingham 039C,0.1,1
 Nottingham 039D,0.333333333,1
 Rushcliffe 003D,2.333333333,1
 Rushcliffe 003F,2.333333333,1
@@ -18239,7 +18239,7 @@ Ashfield 011A,2,1
 Bolsover 010B,3,1
 Bolsover 010A,2.333333333,1
 Bolsover 010C,1.666666667,1
-Nottingham 039E,0,1
+Nottingham 039E,0.1,1
 Ashfield 005E,3.333333333,1
 Ashfield 005C,2.333333333,1
 Ashfield 006A,1,1
@@ -18681,9 +18681,9 @@ Nottingham 026H,0.666666667,1
 Nottingham 031C,0.333333333,1
 Nottingham 032A,1.333333333,1
 Nottingham 031E,1.666666667,1
-Nottingham 031G,0,1
+Nottingham 031G,0.1,1
 Nottingham 026B,2,1
-Nottingham 026G,0,1
+Nottingham 026G,0.1,1
 Nottingham 026D,2.666666667,1
 Nottingham 026E,1.333333333,1
 Nottingham 028E,0.333333333,1
@@ -18697,7 +18697,7 @@ Nottingham 026A,2.333333333,1
 Nottingham 018E,1,1
 Nottingham 018D,1.666666667,1
 Nottingham 017D,0.666666667,1
-Nottingham 017C,0,1
+Nottingham 017C,0.1,1
 Nottingham 012C,2,1
 Nottingham 012E,0.333333333,1
 Nottingham 017B,2.666666667,1
@@ -19120,12 +19120,12 @@ Daventry 002A,4.333333333,1
 Daventry 002C,3.333333333,1
 Daventry 005E,3.333333333,1
 Kettering 011I,3.666666667,1
-Kettering 011H,0,1
+Kettering 011H,0.1,1
 Daventry 002B,0.333333333,1
 South Northamptonshire 002D,2,1
 South Northamptonshire 002C,1.666666667,1
 South Northamptonshire 002B,1.666666667,1
-South Northamptonshire 003G,0,1
+South Northamptonshire 003G,0.1,1
 South Northamptonshire 003H,0.333333333,1
 South Northamptonshire 003E,2.666666667,1
 South Northamptonshire 003C,3,1
@@ -19158,7 +19158,7 @@ Wellingborough 005A,4.333333333,1
 Wellingborough 007B,3,1
 Wellingborough 005D,4.333333333,1
 Wellingborough 006D,3,1
-Wellingborough 002A,0,1
+Wellingborough 002A,0.1,1
 Wellingborough 006A,4,1
 Wellingborough 002C,5.333333333,1
 Wellingborough 002D,2.333333333,1
@@ -19185,7 +19185,7 @@ East Northamptonshire 005C,2.333333333,1
 East Northamptonshire 005A,3.666666667,1
 East Northamptonshire 004B,4,1
 East Northamptonshire 005E,1,1
-Forest of Dean 010B,0,1
+Forest of Dean 010B,0.1,1
 Forest of Dean 010E,0.666666667,1
 Forest of Dean 010C,1,1
 Forest of Dean 010D,1,1
@@ -19325,7 +19325,7 @@ Breckland 003A,7.666666667,1
 Breckland 003D,3.333333333,1
 Breckland 004C,3.333333333,1
 Breckland 004B,5.666666667,1
-Breckland 004D,0,1
+Breckland 004D,0.1,1
 Breckland 003C,5,1
 Breckland 006B,3,1
 Breckland 006A,4.666666667,1
@@ -19352,11 +19352,11 @@ Norwich 011E,0.666666667,1
 Norwich 011F,4,1
 North Norfolk 002B,5,1
 North Norfolk 002C,5.333333333,1
-Norwich 009F,0,1
+Norwich 009F,0.1,1
 Norwich 009C,2.666666667,1
 Norwich 009A,3.666666667,1
 Norwich 009B,0.333333333,1
-Norwich 009E,0,1
+Norwich 009E,0.1,1
 Norwich 009D,1.333333333,1
 Norwich 010B,2.666666667,1
 Norwich 006A,3,1
@@ -19823,7 +19823,7 @@ Camden 004E,3,1
 Camden 004D,1.666666667,1
 Camden 004A,3,1
 Barnet 038B,2,1
-Barnet 032C,0,1
+Barnet 032C,0.1,1
 Barnet 025A,1.333333333,1
 Barnet 032E,2,1
 Barnet 031C,1.333333333,1
@@ -20089,7 +20089,7 @@ Rochdale 014A,1,1
 Rochdale 013D,1.333333333,1
 Rochdale 013B,4,1
 Rochdale 013C,2.333333333,1
-Rochdale 013A,0,1
+Rochdale 013A,0.1,1
 Rochdale 014E,5.333333333,1
 Rochdale 016B,3,1
 Rochdale 016E,0.666666667,1
@@ -20275,7 +20275,7 @@ Vale of White Horse 015D,0.666666667,1
 South Oxfordshire 010B,1.666666667,1
 South Oxfordshire 009A,0.666666667,1
 South Oxfordshire 010C,2.666666667,1
-South Oxfordshire 009E,0,1
+South Oxfordshire 009E,0.1,1
 South Oxfordshire 009D,1,1
 South Oxfordshire 009C,1.333333333,1
 South Oxfordshire 010A,1.333333333,1
@@ -20292,7 +20292,7 @@ South Oxfordshire 013A,3,1
 Oxford 008B,2.333333333,1
 Vale of White Horse 011D,0.333333333,1
 Vale of White Horse 011E,2,1
-Vale of White Horse 011A,0,1
+Vale of White Horse 011A,0.1,1
 Vale of White Horse 014C,2.666666667,1
 Vale of White Horse 011B,4.666666667,1
 Vale of White Horse 011C,3.666666667,1
@@ -20304,7 +20304,7 @@ Vale of White Horse 014E,1,1
 Vale of White Horse 014D,1.666666667,1
 Vale of White Horse 014F,1.333333333,1
 Vale of White Horse 016G,5,1
-Oxford 009D,0,1
+Oxford 009D,0.1,1
 Vale of White Horse 007B,4,1
 Vale of White Horse 007A,5.666666667,1
 Vale of White Horse 001D,2.333333333,1
@@ -20823,7 +20823,7 @@ Boston 002D,4,1
 Boston 003A,4,1
 Boston 003B,3.333333333,1
 Boston 008D,0.666666667,1
-Boston 002E,0,1
+Boston 002E,0.1,1
 Boston 008C,5.333333333,1
 Boston 008A,2.666666667,1
 Boston 001C,1.666666667,1
@@ -20865,7 +20865,7 @@ East Lindsey 015D,4,1
 East Lindsey 014A,4,1
 Peterborough 018D,4.666666667,1
 Peterborough 021F,1.666666667,1
-Peterborough 021B,0,1
+Peterborough 021B,0.1,1
 Peterborough 022C,2,1
 Peterborough 022E,0.666666667,1
 Peterborough 021C,2,1
@@ -20888,7 +20888,7 @@ Huntingdonshire 003A,1.666666667,1
 Peterborough 018E,1.333333333,1
 Peterborough 018B,3,1
 Huntingdonshire 011E,1.666666667,1
-Huntingdonshire 011B,0,1
+Huntingdonshire 011B,0.1,1
 Huntingdonshire 013B,1.333333333,1
 Huntingdonshire 011C,0.666666667,1
 Huntingdonshire 011A,3.333333333,1
@@ -21070,7 +21070,7 @@ Peterborough 011D,2.333333333,1
 Peterborough 015E,3.666666667,1
 Peterborough 011E,0.666666667,1
 Peterborough 001D,1,1
-Peterborough 002A,0,1
+Peterborough 002A,0.1,1
 Peterborough 002D,2.333333333,1
 Peterborough 002C,1,1
 Peterborough 010E,2,1
@@ -21136,8 +21136,8 @@ East Northamptonshire 002F,3,1
 East Northamptonshire 002D,4.333333333,1
 East Northamptonshire 002C,0.666666667,1
 East Northamptonshire 002A,3,1
-Peterborough 004C,0,1
-Peterborough 004D,0,1
+Peterborough 004C,0.1,1
+Peterborough 004D,0.1,1
 East Northamptonshire 001C,2,1
 Huntingdonshire 002B,2.333333333,1
 East Northamptonshire 002B,1.333333333,1
@@ -21267,7 +21267,7 @@ South Hams 008B,5,1
 South Hams 005F,2.666666667,1
 South Hams 005A,3.333333333,1
 South Hams 008C,1.666666667,1
-South Hams 002A,0,1
+South Hams 002A,0.1,1
 South Hams 005E,1.666666667,1
 South Hams 005G,1.333333333,1
 Plymouth 020E,2,1
@@ -21399,7 +21399,7 @@ Plymouth 025B,2,1
 Plymouth 025C,1,1
 Plymouth 027F,0.666666667,1
 Plymouth 027B,1,1
-Plymouth 027A,0,1
+Plymouth 027A,0.1,1
 Plymouth 028A,4.666666667,1
 Plymouth 028B,1,1
 Plymouth 025E,1.333333333,1
@@ -21432,13 +21432,13 @@ Plymouth 003A,2.666666667,1
 Plymouth 007A,2,1
 Plymouth 003C,2.333333333,1
 Plymouth 003B,0.666666667,1
-Plymouth 004A,0,1
+Plymouth 004A,0.1,1
 Plymouth 003E,1.333333333,1
 Plymouth 008A,0.333333333,1
 Plymouth 002A,1.666666667,1
 Plymouth 008C,2,1
 Plymouth 012D,1.666666667,1
-Plymouth 010B,0,1
+Plymouth 010B,0.1,1
 Plymouth 012E,2.666666667,1
 Plymouth 008B,4.666666667,1
 Plymouth 010C,3,1
@@ -21454,7 +21454,7 @@ Plymouth 001C,1,1
 Plymouth 001B,5,1
 South Hams 001C,0.666666667,1
 South Hams 001A,1.666666667,1
-Plymouth 005C,0,1
+Plymouth 005C,0.1,1
 Plymouth 010D,0.666666667,1
 Plymouth 010E,3.666666667,1
 Plymouth 005B,1,1
@@ -21465,13 +21465,13 @@ Plymouth 019C,1.666666667,1
 Plymouth 022C,3.666666667,1
 Plymouth 019B,1.666666667,1
 Plymouth 019A,1,1
-Plymouth 022E,0,1
+Plymouth 022E,0.1,1
 Plymouth 022D,1.666666667,1
 Plymouth 015D,3.666666667,1
 Plymouth 022A,1.666666667,1
 Plymouth 018C,0.666666667,1
 Plymouth 022B,1,1
-Plymouth 018D,0,1
+Plymouth 018D,0.1,1
 Plymouth 018A,1.333333333,1
 Plymouth 018B,0.666666667,1
 Plymouth 015C,6.333333333,1
@@ -22022,7 +22022,7 @@ East Hampshire 016C,3,1
 East Hampshire 016B,2.333333333,1
 South Ribble 001C,3.333333333,1
 South Ribble 001B,2.666666667,1
-Preston 017B,0,1
+Preston 017B,0.1,1
 South Ribble 001A,1.333333333,1
 South Ribble 003C,1,1
 South Ribble 003D,3.333333333,1
@@ -22182,7 +22182,7 @@ Fylde 002G,3.666666667,1
 Fylde 002B,2,1
 Fylde 002F,3,1
 Fylde 002E,3.666666667,1
-Fylde 003C,0,1
+Fylde 003C,0.1,1
 Fylde 003D,2,1
 Fylde 001A,2.666666667,1
 South Ribble 010B,4,1
@@ -22398,7 +22398,7 @@ Bracknell Forest 006E,2.666666667,1
 Bracknell Forest 006C,3,1
 Bracknell Forest 006D,3.666666667,1
 Bracknell Forest 007A,0.333333333,1
-Bracknell Forest 005E,0,1
+Bracknell Forest 005E,0.1,1
 Reading 011H,0.666666667,1
 Reading 014A,0.666666667,1
 Reading 014D,2,1
@@ -22534,7 +22534,7 @@ Basingstoke and Deane 013B,3,1
 Basingstoke and Deane 018B,5,1
 Basingstoke and Deane 018D,3,1
 Basingstoke and Deane 013C,1.666666667,1
-Basingstoke and Deane 018C,0,1
+Basingstoke and Deane 018C,0.1,1
 Basingstoke and Deane 018E,3,1
 Basingstoke and Deane 014E,2.666666667,1
 Basingstoke and Deane 014A,2.666666667,1
@@ -22547,7 +22547,7 @@ Basingstoke and Deane 015A,1.333333333,1
 Basingstoke and Deane 015D,3.333333333,1
 Basingstoke and Deane 015B,1.666666667,1
 Basingstoke and Deane 015C,2.333333333,1
-Basingstoke and Deane 021E,0,1
+Basingstoke and Deane 021E,0.1,1
 Basingstoke and Deane 010C,2,1
 Basingstoke and Deane 013E,3.333333333,1
 Basingstoke and Deane 010F,1.666666667,1
@@ -22568,7 +22568,7 @@ Basingstoke and Deane 007C,1.333333333,1
 Basingstoke and Deane 007J,2,1
 Basingstoke and Deane 007H,1.666666667,1
 Basingstoke and Deane 007I,0.666666667,1
-Basingstoke and Deane 007E,0,1
+Basingstoke and Deane 007E,0.1,1
 Basingstoke and Deane 007B,1.333333333,1
 Basingstoke and Deane 022A,2.333333333,1
 Basingstoke and Deane 017B,5.666666667,1
@@ -22734,7 +22734,7 @@ Wokingham 020C,2.333333333,1
 Bracknell Forest 013A,4,1
 Bracknell Forest 012B,3.666666667,1
 Bracknell Forest 012A,3,1
-Bracknell Forest 012D,0,1
+Bracknell Forest 012D,0.1,1
 Reading 004E,1.666666667,1
 Reading 004D,1,1
 Reading 003E,1,1
@@ -22768,7 +22768,7 @@ Wokingham 007E,0.333333333,1
 Wokingham 007F,3.666666667,1
 Wokingham 007D,2.333333333,1
 Wokingham 007B,1,1
-Wokingham 007C,0,1
+Wokingham 007C,0.1,1
 Wokingham 005C,1.666666667,1
 Wokingham 007A,2,1
 Wokingham 004E,1,1
@@ -22874,7 +22874,7 @@ Crawley 009A,2.666666667,1
 Crawley 009C,3.333333333,1
 Crawley 005B,2.666666667,1
 Crawley 005C,2,1
-Crawley 002D,0,1
+Crawley 002D,0.1,1
 Crawley 008B,1,1
 Crawley 008C,0.333333333,1
 Crawley 009F,0.666666667,1
@@ -22960,7 +22960,7 @@ Horsham 008A,3.666666667,1
 Horsham 006D,1.666666667,1
 Horsham 004A,3.666666667,1
 Horsham 006B,4,1
-Horsham 004B,0,1
+Horsham 004B,0.1,1
 Horsham 004E,4,1
 Horsham 008B,1.333333333,1
 Horsham 008D,0.666666667,1
@@ -23009,7 +23009,7 @@ Mid Sussex 012A,1.333333333,1
 Mid Sussex 012D,3.333333333,1
 Mid Sussex 014D,5.333333333,1
 Mid Sussex 015C,2.333333333,1
-Mid Sussex 015D,0,1
+Mid Sussex 015D,0.1,1
 Mid Sussex 014F,0.666666667,1
 Mid Sussex 014E,1.666666667,1
 Mid Sussex 012B,0.666666667,1
@@ -23097,7 +23097,7 @@ Horsham 013C,4.666666667,1
 Horsham 013B,5,1
 Horsham 012C,3,1
 Reigate and Banstead 009F,4,1
-Reigate and Banstead 009D,0,1
+Reigate and Banstead 009D,0.1,1
 Reigate and Banstead 010B,4,1
 Reigate and Banstead 009C,4.333333333,1
 Reigate and Banstead 012E,2.333333333,1
@@ -23322,9 +23322,9 @@ Thurrock 012F,3.666666667,1
 Thurrock 012E,4.333333333,1
 Thurrock 020C,1.666666667,1
 Thurrock 019B,0.333333333,1
-Thurrock 020B,0,1
+Thurrock 020B,0.1,1
 Thurrock 019A,0.333333333,1
-Thurrock 019D,0,1
+Thurrock 019D,0.1,1
 Thurrock 020D,1.333333333,1
 Thurrock 020A,1,1
 Thurrock 020E,2.333333333,1
@@ -23409,7 +23409,7 @@ Havering 003D,1.333333333,1
 Havering 009D,1.666666667,1
 Havering 009A,4,1
 Havering 003A,2.333333333,1
-Havering 009C,0,1
+Havering 009C,0.1,1
 Havering 003B,1.666666667,1
 Redbridge 019B,1,1
 Redbridge 034G,1.666666667,1
@@ -23457,7 +23457,7 @@ Barking and Dagenham 008A,1,1
 Barking and Dagenham 008C,0.666666667,1
 Barking and Dagenham 012B,1.333333333,1
 Barking and Dagenham 008E,1.666666667,1
-Barking and Dagenham 023A,0,1
+Barking and Dagenham 023A,0.1,1
 Barking and Dagenham 023B,3.666666667,1
 Barking and Dagenham 008B,1.333333333,1
 Barking and Dagenham 008D,1,1
@@ -23487,7 +23487,7 @@ Barking and Dagenham 018D,0.666666667,1
 Barking and Dagenham 018A,2.666666667,1
 Barking and Dagenham 013D,0.666666667,1
 Barking and Dagenham 013C,0.333333333,1
-Barking and Dagenham 013F,0,1
+Barking and Dagenham 013F,0.1,1
 Barking and Dagenham 020A,2,1
 Barking and Dagenham 018C,1.333333333,1
 Sheffield 030D,2.333333333,1
@@ -23499,14 +23499,14 @@ Sheffield 024C,0.666666667,1
 Sheffield 029D,2,1
 Sheffield 029C,3,1
 Sheffield 029B,0.666666667,1
-Sheffield 036E,0,1
+Sheffield 036E,0.1,1
 Sheffield 040F,0.333333333,1
-Sheffield 074D,0,1
+Sheffield 074D,0.1,1
 Sheffield 074E,0.333333333,1
 Sheffield 074B,2,1
 Sheffield 036B,2.333333333,1
 Sheffield 030A,0.666666667,1
-Sheffield 036A,0,1
+Sheffield 036A,0.1,1
 Sheffield 038C,0.666666667,1
 Sheffield 038A,2,1
 Sheffield 038B,2.333333333,1
@@ -23530,7 +23530,7 @@ Sheffield 047B,2.333333333,1
 Sheffield 047F,2,1
 Sheffield 055F,2,1
 Sheffield 040C,3,1
-Sheffield 040E,0,1
+Sheffield 040E,0.1,1
 Sheffield 040A,1,1
 Sheffield 040D,0.666666667,1
 Sheffield 036D,0.333333333,1
@@ -23596,10 +23596,10 @@ Sheffield 051C,2.666666667,1
 Sheffield 054A,1,1
 Sheffield 060A,4,1
 Sheffield 074C,0.333333333,1
-Sheffield 073D,0,1
+Sheffield 073D,0.1,1
 Sheffield 074A,1.333333333,1
 Sheffield 042F,2.333333333,1
-Sheffield 042G,0,1
+Sheffield 042G,0.1,1
 Sheffield 068E,4.333333333,1
 Sheffield 068B,4.666666667,1
 Sheffield 071C,2,1
@@ -23636,7 +23636,7 @@ Sheffield 063D,0.333333333,1
 Sheffield 072E,4.333333333,1
 Sheffield 072B,2.666666667,1
 Sheffield 065D,3.333333333,1
-Sheffield 072A,0,1
+Sheffield 072A,0.1,1
 Sheffield 072C,2.333333333,1
 Sheffield 072D,4,1
 Sheffield 061C,3.666666667,1
@@ -23759,7 +23759,7 @@ Sheffield 001D,2,1
 Sheffield 002A,0.666666667,1
 Sheffield 002B,1.666666667,1
 Sheffield 002D,1.333333333,1
-Sheffield 002C,0,1
+Sheffield 002C,0.1,1
 Barnsley 024E,2.333333333,1
 Barnsley 024C,7,1
 Barnsley 024D,3.666666667,1
@@ -23769,7 +23769,7 @@ Barnsley 016D,4,1
 Barnsley 027B,2.333333333,1
 Barnsley 027D,2.666666667,1
 Barnsley 024A,0.333333333,1
-Sheffield 073E,0,1
+Sheffield 073E,0.1,1
 Sheffield 073C,0.333333333,1
 Sheffield 073A,0.333333333,1
 Sheffield 026B,2,1
@@ -23777,7 +23777,7 @@ Sheffield 022G,1.666666667,1
 Sheffield 022B,1.333333333,1
 Sheffield 073B,0.333333333,1
 Sheffield 019A,3.333333333,1
-Sheffield 022H,0,1
+Sheffield 022H,0.1,1
 Chesterfield 010B,0.333333333,1
 Chesterfield 009C,3.666666667,1
 Chesterfield 009D,3.333333333,1
@@ -23827,7 +23827,7 @@ Chesterfield 001D,3,1
 Chesterfield 001E,2,1
 Chesterfield 001C,3.333333333,1
 North East Derbyshire 009A,1.666666667,1
-North East Derbyshire 009B,0,1
+North East Derbyshire 009B,0.1,1
 North East Derbyshire 011A,3.333333333,1
 North East Derbyshire 009E,2,1
 North East Derbyshire 011C,3.333333333,1
@@ -24134,7 +24134,7 @@ Sheffield 023C,2,1
 Sheffield 023A,3.333333333,1
 Sheffield 023D,2.333333333,1
 Sheffield 023B,4,1
-Barnsley 013B,0,1
+Barnsley 013B,0.1,1
 Barnsley 013D,1,1
 Barnsley 017A,3.333333333,1
 Barnsley 017B,3.666666667,1
@@ -24191,7 +24191,7 @@ Sheffield 042E,1.666666667,1
 Sheffield 050E,2,1
 Sheffield 050A,1.666666667,1
 Sheffield 050F,1.333333333,1
-Sheffield 053D,0,1
+Sheffield 053D,0.1,1
 Barnsley 020G,4,1
 Barnsley 020B,2.666666667,1
 Barnsley 006A,1.333333333,1
@@ -24313,7 +24313,7 @@ Bassetlaw 009D,0.666666667,1
 Bassetlaw 004B,4,1
 Bassetlaw 004D,2.666666667,1
 Bassetlaw 004A,1,1
-Bassetlaw 004C,0,1
+Bassetlaw 004C,0.1,1
 Bassetlaw 004F,1.666666667,1
 Bassetlaw 004E,3,1
 Sheffield 066C,1.666666667,1
@@ -24383,7 +24383,7 @@ Lambeth 002C,4,1
 Lambeth 003D,1.666666667,1
 Southwark 034C,1.666666667,1
 Lambeth 003C,2,1
-Lambeth 004G,0,1
+Lambeth 004G,0.1,1
 Lambeth 004F,2.666666667,1
 Lambeth 003E,4,1
 Lambeth 003B,4,1
@@ -24416,7 +24416,7 @@ Lewisham 031B,0.666666667,1
 Southwark 003F,0.333333333,1
 Southwark 003I,1.666666667,1
 Southwark 003H,0.666666667,1
-Southwark 003G,0,1
+Southwark 003G,0.1,1
 Southwark 003K,0.333333333,1
 Southwark 004E,2.333333333,1
 Southwark 003E,1.666666667,1
@@ -24465,7 +24465,7 @@ Southwark 009F,4.666666667,1
 Southwark 006A,1.666666667,1
 Southwark 006B,1.333333333,1
 Southwark 006D,5.333333333,1
-Southwark 009A,0,1
+Southwark 009A,0.1,1
 Southwark 006C,1.333333333,1
 Southwark 022F,3.666666667,1
 Lewisham 003D,2.666666667,1
@@ -24532,11 +24532,11 @@ Southwark 001E,0.666666667,1
 Southwark 008B,0.333333333,1
 Southwark 001B,0.666666667,1
 Southwark 007C,4.333333333,1
-Southwark 008D,0,1
+Southwark 008D,0.1,1
 Southwark 008C,0.666666667,1
 Southwark 009B,0.666666667,1
 Southwark 034B,2.333333333,1
-Southwark 009C,0,1
+Southwark 009C,0.1,1
 Southwark 012F,3.333333333,1
 Southwark 016A,4,1
 Southwark 012A,0.666666667,1
@@ -24583,7 +24583,7 @@ Greenwich 020A,1,1
 Greenwich 020E,0.666666667,1
 Greenwich 020D,2.666666667,1
 Greenwich 015A,1.333333333,1
-Greenwich 011E,0,1
+Greenwich 011E,0.1,1
 Greenwich 015B,1,1
 Greenwich 015C,2.333333333,1
 Greenwich 015D,0.666666667,1
@@ -24757,17 +24757,17 @@ Lambeth 031A,2.666666667,1
 Lambeth 031B,2,1
 Greenwich 007G,3,1
 Greenwich 004F,0.333333333,1
-Greenwich 004H,0,1
+Greenwich 004H,0.1,1
 Greenwich 002A,0.666666667,1
 Greenwich 007F,0.666666667,1
-Greenwich 002E,0,1
+Greenwich 002E,0.1,1
 Greenwich 002F,0.333333333,1
 Greenwich 002G,3.333333333,1
 Greenwich 001C,1.666666667,1
 Greenwich 001D,1.666666667,1
 Greenwich 001B,1,1
 Greenwich 002I,1,1
-Bexley 001B,0,1
+Bexley 001B,0.1,1
 Greenwich 002B,4.666666667,1
 Bexley 001D,0.333333333,1
 Greenwich 001A,2.666666667,1
@@ -24800,7 +24800,7 @@ Greenwich 034A,2,1
 Greenwich 034B,2,1
 Lewisham 009C,2.666666667,1
 Greenwich 025C,2.666666667,1
-Lewisham 009A,0,1
+Lewisham 009A,0.1,1
 Lewisham 015A,1,1
 Lewisham 005D,2.333333333,1
 Lewisham 015D,2.666666667,1
@@ -24836,13 +24836,13 @@ Southwark 020A,1.333333333,1
 Southwark 024A,3.333333333,1
 Southwark 024E,0.666666667,1
 Southwark 027D,0.666666667,1
-Southwark 027B,0,1
+Southwark 027B,0.1,1
 Southwark 027C,3,1
 Southwark 024C,3.666666667,1
 Southwark 024D,1.666666667,1
 Southwark 024B,2,1
 Southwark 027E,1.666666667,1
-Lambeth 014D,0,1
+Lambeth 014D,0.1,1
 Lambeth 009C,2.333333333,1
 Lambeth 009D,0.666666667,1
 Lambeth 014C,1.333333333,1
@@ -24975,7 +24975,7 @@ Stevenage 005B,0.666666667,1
 East Hertfordshire 016B,0.666666667,1
 East Hertfordshire 018C,2,1
 East Hertfordshire 016C,1.666666667,1
-East Hertfordshire 016A,0,1
+East Hertfordshire 016A,0.1,1
 East Hertfordshire 017C,1.666666667,1
 East Hertfordshire 017B,1.666666667,1
 East Hertfordshire 017A,2.666666667,1
@@ -25004,19 +25004,19 @@ Stevenage 001D,2.333333333,1
 Stevenage 001A,2.333333333,1
 Stevenage 001B,3,1
 Stevenage 001C,2.333333333,1
-North Hertfordshire 005H,0,1
+North Hertfordshire 005H,0.1,1
 North Hertfordshire 005I,0.666666667,1
 Stevenage 002D,0.333333333,1
 Stevenage 002E,5,1
 Central Bedfordshire 010C,2.666666667,1
-Central Bedfordshire 010A,0,1
+Central Bedfordshire 010A,0.1,1
 Central Bedfordshire 010B,1.666666667,1
 Stevenage 006E,3.666666667,1
 Stevenage 006D,2,1
 Stevenage 003B,2,1
 Stevenage 006C,1.333333333,1
 Stevenage 003D,2.666666667,1
-Stevenage 003C,0,1
+Stevenage 003C,0.1,1
 Stevenage 003A,2,1
 Central Bedfordshire 013E,1.666666667,1
 Central Bedfordshire 013D,3,1
@@ -25229,7 +25229,7 @@ Cheshire East 019A,1.666666667,1
 Cheshire East 018F,3.666666667,1
 Cheshire East 018B,2.666666667,1
 Cheshire East 018G,4,1
-Cheshire East 017D,0,1
+Cheshire East 017D,0.1,1
 Cheshire East 017E,2.666666667,1
 Cheshire East 019D,4,1
 Cheshire East 019B,3,1
@@ -25391,7 +25391,7 @@ Stockport 021C,2.333333333,1
 Stockport 024C,3.333333333,1
 Stockport 019A,2,1
 Stockport 023C,0.333333333,1
-Stockport 027C,0,1
+Stockport 027C,0.1,1
 Stockport 027D,1.666666667,1
 Stockport 027F,2.333333333,1
 Stockport 027B,1.333333333,1
@@ -25513,7 +25513,7 @@ Stockport 031A,4,1
 Stockport 031B,4.333333333,1
 Stockport 033B,4.666666667,1
 Stockport 033C,1.666666667,1
-Stockport 033A,0,1
+Stockport 033A,0.1,1
 Stockport 035D,2.666666667,1
 Stockport 038A,2,1
 Stockport 035B,2,1
@@ -25904,7 +25904,7 @@ Sutton 010E,2,1
 Sutton 015C,3,1
 Sutton 015E,1.666666667,1
 Sutton 015B,2.333333333,1
-Sutton 020A,0,1
+Sutton 020A,0.1,1
 Sutton 015A,1.333333333,1
 Sutton 020D,3.333333333,1
 Sutton 024C,2,1
@@ -26035,7 +26035,7 @@ Swindon 024D,3.333333333,1
 Swindon 021D,1.333333333,1
 Swindon 021F,1.666666667,1
 Swindon 021B,1,1
-Swindon 021E,0,1
+Swindon 021E,0.1,1
 Wiltshire 009D,1.666666667,1
 Wiltshire 011B,2.666666667,1
 Wiltshire 009C,1.333333333,1
@@ -26048,7 +26048,7 @@ Wiltshire 018E,2,1
 Wiltshire 014A,2,1
 Wiltshire 011D,3.333333333,1
 Wiltshire 014B,0.666666667,1
-Wiltshire 014E,0,1
+Wiltshire 014E,0.1,1
 Wiltshire 011E,5.333333333,1
 Wiltshire 014D,0.666666667,1
 Wiltshire 014C,0.666666667,1
@@ -26085,16 +26085,16 @@ Swindon 026B,1.333333333,1
 Swindon 026C,0.333333333,1
 Swindon 026A,1.666666667,1
 Swindon 006A,0.333333333,1
-Swindon 027C,0,1
+Swindon 027C,0.1,1
 Swindon 004A,1.333333333,1
 Swindon 004C,1,1
 Swindon 027A,0.666666667,1
 Swindon 004D,2.333333333,1
 Swindon 028E,0.666666667,1
-Swindon 028A,0,1
+Swindon 028A,0.1,1
 Swindon 027B,1.333333333,1
-Swindon 027D,0,1
-Swindon 027E,0,1
+Swindon 027D,0.1,1
+Swindon 027E,0.1,1
 Swindon 003A,3.333333333,1
 Swindon 006C,1.333333333,1
 Swindon 006B,2,1
@@ -26108,7 +26108,7 @@ Swindon 003C,0.666666667,1
 Swindon 003D,1,1
 Swindon 008B,2,1
 Swindon 026D,0.333333333,1
-Swindon 026E,0,1
+Swindon 026E,0.1,1
 Swindon 026F,1,1
 Swindon 005F,2.666666667,1
 Swindon 005D,1.666666667,1
@@ -26239,7 +26239,7 @@ Southampton 022D,0.333333333,1
 Southampton 022C,2.333333333,1
 Southampton 029E,0.333333333,1
 Southampton 029A,1.333333333,1
-Southampton 029F,0,1
+Southampton 029F,0.1,1
 Southampton 029G,0.333333333,1
 Southampton 029H,2.333333333,1
 Southampton 029C,0.666666667,1
@@ -26408,7 +26408,7 @@ Test Valley 008C,2,1
 Winchester 008B,4,1
 Winchester 008A,2.333333333,1
 Winchester 008C,1.333333333,1
-Winchester 009C,0,1
+Winchester 009C,0.1,1
 Winchester 009D,3.666666667,1
 Winchester 009B,0.333333333,1
 Winchester 007C,2.666666667,1
@@ -26595,7 +26595,7 @@ Eastleigh 004A,3.666666667,1
 Eastleigh 005D,3.333333333,1
 Eastleigh 005E,2.666666667,1
 Eastleigh 005F,1.666666667,1
-Eastleigh 008D,0,1
+Eastleigh 008D,0.1,1
 Eastleigh 008E,2.666666667,1
 Eastleigh 008B,1.666666667,1
 Eastleigh 008G,2,1
@@ -26729,7 +26729,7 @@ Wiltshire 049C,1.666666667,1
 Wiltshire 049B,3.666666667,1
 Wiltshire 049D,2,1
 Wiltshire 048F,4.333333333,1
-Wiltshire 048C,0,1
+Wiltshire 048C,0.1,1
 Wiltshire 048B,3.666666667,1
 Wiltshire 048A,5,1
 Wiltshire 048E,2.666666667,1
@@ -27242,7 +27242,7 @@ Castle Point 008A,1.666666667,1
 Castle Point 011A,3,1
 Castle Point 010C,3.666666667,1
 Castle Point 010A,2.333333333,1
-Castle Point 010B,0,1
+Castle Point 010B,0.1,1
 Castle Point 008C,1.666666667,1
 Castle Point 008D,1.666666667,1
 Castle Point 010E,1.333333333,1
@@ -27486,7 +27486,7 @@ Stoke-on-Trent 022C,3.333333333,1
 Stoke-on-Trent 025D,2,1
 Stoke-on-Trent 031E,0.333333333,1
 Stoke-on-Trent 025E,2,1
-Stoke-on-Trent 021D,0,1
+Stoke-on-Trent 021D,0.1,1
 Stoke-on-Trent 025B,2.666666667,1
 Stoke-on-Trent 028A,2.333333333,1
 Stoke-on-Trent 024B,2.666666667,1
@@ -27617,7 +27617,7 @@ Stoke-on-Trent 006A,3,1
 Stoke-on-Trent 003C,1.666666667,1
 Stoke-on-Trent 001D,2.666666667,1
 Stoke-on-Trent 001A,1.333333333,1
-Stoke-on-Trent 001B,0,1
+Stoke-on-Trent 001B,0.1,1
 Stoke-on-Trent 006D,3.333333333,1
 Stoke-on-Trent 006C,3.666666667,1
 Stoke-on-Trent 006B,2,1
@@ -27707,7 +27707,7 @@ Wandsworth 004E,0.666666667,1
 Wandsworth 008B,1.666666667,1
 Wandsworth 004G,0.333333333,1
 Wandsworth 007D,4.333333333,1
-Wandsworth 008A,0,1
+Wandsworth 008A,0.1,1
 Wandsworth 007C,4,1
 Wandsworth 012D,0.666666667,1
 Wandsworth 007A,1.333333333,1
@@ -27747,12 +27747,12 @@ Lambeth 023F,2.333333333,1
 Wandsworth 021B,2.333333333,1
 Wandsworth 021C,1,1
 Wandsworth 017D,4.333333333,1
-Wandsworth 021E,0,1
+Wandsworth 021E,0.1,1
 Wandsworth 017C,1.333333333,1
 Wandsworth 021A,1.333333333,1
 Wandsworth 021D,2,1
 Wandsworth 017A,1.333333333,1
-Wandsworth 027B,0,1
+Wandsworth 027B,0.1,1
 Wandsworth 026F,1.333333333,1
 Wandsworth 026E,0.666666667,1
 Wandsworth 026C,0.333333333,1
@@ -27793,7 +27793,7 @@ Wandsworth 014E,2,1
 Wandsworth 010C,0.333333333,1
 Wandsworth 010B,0.666666667,1
 Wandsworth 010F,0.666666667,1
-Wandsworth 020A,0,1
+Wandsworth 020A,0.1,1
 Wandsworth 016E,5,1
 Wandsworth 023D,1.333333333,1
 Wandsworth 014D,0.333333333,1
@@ -27894,7 +27894,7 @@ Wandsworth 035C,1,1
 Wandsworth 035F,1.333333333,1
 Wandsworth 035B,1.333333333,1
 Merton 007D,0.666666667,1
-Wandsworth 035E,0,1
+Wandsworth 035E,0.1,1
 Merton 008B,0.666666667,1
 Merton 007C,2,1
 Wandsworth 036C,0.333333333,1
@@ -27971,12 +27971,12 @@ Merton 001C,2,1
 Merton 004A,0.333333333,1
 Merton 003D,1,1
 Merton 004E,1.333333333,1
-Merton 001A,0,1
+Merton 001A,0.1,1
 Merton 001B,0.666666667,1
 Merton 001E,1,1
 Merton 003E,1,1
 Merton 003B,1.666666667,1
-Merton 003C,0,1
+Merton 003C,0.1,1
 Merton 006C,0.666666667,1
 Merton 006D,0.666666667,1
 Merton 001D,2.333333333,1
@@ -27996,7 +27996,7 @@ Westminster 022A,2,1
 Westminster 024F,3,1
 Westminster 024A,1,1
 Westminster 023G,0.333333333,1
-Wandsworth 002F,0,1
+Wandsworth 002F,0.1,1
 Westminster 023D,1.333333333,1
 Westminster 024B,1,1
 Westminster 024E,3,1
@@ -28066,7 +28066,7 @@ Lambeth 015E,0.666666667,1
 Lambeth 016A,0.666666667,1
 Kensington and Chelsea 012B,1,1
 Kensington and Chelsea 012D,0.333333333,1
-Kensington and Chelsea 012C,0,1
+Kensington and Chelsea 012C,0.1,1
 Kensington and Chelsea 014C,1,1
 Kensington and Chelsea 014D,2,1
 Kensington and Chelsea 014E,2,1
@@ -28105,7 +28105,7 @@ Lambeth 019A,1,1
 Lambeth 017A,3,1
 Lambeth 019B,1.666666667,1
 Kensington and Chelsea 016D,0.333333333,1
-Kensington and Chelsea 017E,0,1
+Kensington and Chelsea 017E,0.1,1
 Kensington and Chelsea 013C,0.333333333,1
 Kensington and Chelsea 013B,1,1
 Kensington and Chelsea 013D,0.666666667,1
@@ -28131,12 +28131,12 @@ Hammersmith and Fulham 025D,1,1
 Hammersmith and Fulham 025C,1.333333333,1
 Hammersmith and Fulham 025B,0.333333333,1
 Hammersmith and Fulham 024C,0.666666667,1
-Hammersmith and Fulham 025A,0,1
+Hammersmith and Fulham 025A,0.1,1
 Hammersmith and Fulham 020E,0.666666667,1
 Hammersmith and Fulham 024B,2,1
 Hammersmith and Fulham 020C,0.666666667,1
 Hammersmith and Fulham 021B,1.666666667,1
-Hammersmith and Fulham 021E,0,1
+Hammersmith and Fulham 021E,0.1,1
 Hammersmith and Fulham 024D,1.333333333,1
 Hammersmith and Fulham 021C,0.666666667,1
 Hammersmith and Fulham 022C,0.666666667,1
@@ -28158,14 +28158,14 @@ Hammersmith and Fulham 015A,2,1
 Westminster 019F,4.666666667,1
 Westminster 019C,0.333333333,1
 Kensington and Chelsea 016A,0.333333333,1
-Westminster 019B,0,1
+Westminster 019B,0.1,1
 Kensington and Chelsea 014A,0.666666667,1
 Kensington and Chelsea 020A,1.333333333,1
 Kensington and Chelsea 016B,0.333333333,1
-Kensington and Chelsea 016E,0,1
+Kensington and Chelsea 016E,0.1,1
 Kensington and Chelsea 013E,0.666666667,1
 Kensington and Chelsea 010A,2,1
-Kensington and Chelsea 016C,0,1
+Kensington and Chelsea 016C,0.1,1
 Kensington and Chelsea 010D,1.333333333,1
 Kensington and Chelsea 010E,1,1
 Lambeth 004E,1.333333333,1
@@ -28234,7 +28234,7 @@ Shropshire 007A,1.666666667,1
 Shropshire 006E,3.333333333,1
 Shropshire 006C,2.333333333,1
 Shropshire 006F,2,1
-Shropshire 003D,0,1
+Shropshire 003D,0.1,1
 Shropshire 003E,0.333333333,1
 Shropshire 003C,0.666666667,1
 Shropshire 011E,4,1
@@ -28388,7 +28388,7 @@ Taunton Deane 009A,2.666666667,1
 Taunton Deane 009B,3.666666667,1
 Taunton Deane 006C,1,1
 Taunton Deane 009C,1.666666667,1
-Taunton Deane 006A,0,1
+Taunton Deane 006A,0.1,1
 Taunton Deane 006B,3.666666667,1
 South Somerset 010D,6,1
 South Somerset 010B,3.666666667,1
@@ -29106,7 +29106,7 @@ Wealden 004D,3.333333333,1
 Wealden 004C,1.666666667,1
 Wealden 004A,5.666666667,1
 Wealden 002C,0.666666667,1
-Wealden 003C,0,1
+Wealden 003C,0.1,1
 Wealden 006D,2.333333333,1
 Wealden 006A,2,1
 Wealden 006C,2,1
@@ -29567,7 +29567,7 @@ Redcar and Cleveland 020C,2.666666667,1
 Redcar and Cleveland 019E,4.333333333,1
 Redcar and Cleveland 019F,3.333333333,1
 Redcar and Cleveland 020B,4.333333333,1
-Middlesbrough 003A,0,1
+Middlesbrough 003A,0.1,1
 Middlesbrough 003D,1,1
 Middlesbrough 003E,2.666666667,1
 Middlesbrough 003C,1.333333333,1
@@ -29590,10 +29590,10 @@ Stockton-on-Tees 021E,1.666666667,1
 Stockton-on-Tees 021D,4.333333333,1
 Stockton-on-Tees 021A,4,1
 Stockton-on-Tees 019A,4,1
-Stockton-on-Tees 023E,0,1
+Stockton-on-Tees 023E,0.1,1
 Stockton-on-Tees 023A,1.666666667,1
 Stockton-on-Tees 020D,1.666666667,1
-Stockton-on-Tees 023G,0,1
+Stockton-on-Tees 023G,0.1,1
 Stockton-on-Tees 023D,1,1
 Stockton-on-Tees 022D,1,1
 Stockton-on-Tees 023I,0.666666667,1
@@ -29754,7 +29754,7 @@ Hartlepool 007C,1.666666667,1
 Hartlepool 007B,1.333333333,1
 Hartlepool 006A,3.333333333,1
 Hartlepool 014A,8,1
-Hartlepool 001D,0,1
+Hartlepool 001D,0.1,1
 Hartlepool 001F,0.666666667,1
 Hartlepool 001C,1.333333333,1
 County Durham 039A,2,1
@@ -29884,7 +29884,7 @@ Richmond upon Thames 006C,1.333333333,1
 Richmond upon Thames 012D,3,1
 Richmond upon Thames 006B,1.666666667,1
 Richmond upon Thames 006D,2.666666667,1
-Richmond upon Thames 008D,0,1
+Richmond upon Thames 008D,0.1,1
 Richmond upon Thames 008C,1.666666667,1
 Richmond upon Thames 008A,0.666666667,1
 Richmond upon Thames 012C,4,1
@@ -29913,7 +29913,7 @@ Richmond upon Thames 007A,0.333333333,1
 Richmond upon Thames 007C,0.666666667,1
 Richmond upon Thames 007D,0.666666667,1
 Richmond upon Thames 020B,1,1
-Richmond upon Thames 023F,0,1
+Richmond upon Thames 023F,0.1,1
 Richmond upon Thames 019B,0.666666667,1
 Richmond upon Thames 019D,0.666666667,1
 Richmond upon Thames 023B,1.666666667,1
@@ -29929,7 +29929,7 @@ Richmond upon Thames 020F,3.333333333,1
 Richmond upon Thames 009A,1.333333333,1
 Richmond upon Thames 009C,1.333333333,1
 Richmond upon Thames 009B,1.333333333,1
-Hounslow 025G,0,1
+Hounslow 025G,0.1,1
 Hounslow 025F,0.666666667,1
 Hounslow 025B,3.333333333,1
 Hounslow 025C,0.333333333,1
@@ -30072,7 +30072,7 @@ Richmond upon Thames 010A,1.666666667,1
 Richmond upon Thames 010E,2,1
 Richmond upon Thames 011D,1.333333333,1
 Hounslow 018G,1,1
-Hounslow 018F,0,1
+Hounslow 018F,0.1,1
 Hounslow 015A,2.666666667,1
 Hounslow 015C,3,1
 Hounslow 018D,0.666666667,1
@@ -30138,7 +30138,7 @@ Hounslow 009B,2.666666667,1
 Hounslow 014C,3,1
 Hounslow 019E,2,1
 Hounslow 014B,1,1
-Hounslow 015D,0,1
+Hounslow 015D,0.1,1
 Hounslow 014E,1.333333333,1
 Hounslow 020A,2,1
 Hounslow 014A,2,1
@@ -30259,7 +30259,7 @@ Hillingdon 032B,0.666666667,1
 Hillingdon 032C,0.333333333,1
 Hillingdon 021A,3,1
 Hillingdon 021E,2,1
-Hillingdon 021B,0,1
+Hillingdon 021B,0.1,1
 Hillingdon 026A,2.666666667,1
 Hillingdon 026D,2.333333333,1
 Hillingdon 023E,1,1
@@ -30448,7 +30448,7 @@ Hammersmith and Fulham 006E,2.666666667,1
 Hammersmith and Fulham 006D,1,1
 Hammersmith and Fulham 008B,3.333333333,1
 Hammersmith and Fulham 006A,2,1
-Hammersmith and Fulham 006B,0,1
+Hammersmith and Fulham 006B,0.1,1
 Hammersmith and Fulham 008C,2,1
 Ealing 016A,1.666666667,1
 Ealing 018A,2.333333333,1
@@ -30475,8 +30475,8 @@ Hammersmith and Fulham 010A,1,1
 Hammersmith and Fulham 010B,1,1
 Hammersmith and Fulham 010E,0.666666667,1
 Hammersmith and Fulham 012E,0.333333333,1
-Kensington and Chelsea 009E,0,1
-Kensington and Chelsea 009B,0,1
+Kensington and Chelsea 009E,0.1,1
+Kensington and Chelsea 009B,0.1,1
 Kensington and Chelsea 009A,1,1
 Kensington and Chelsea 009C,1.333333333,1
 Kensington and Chelsea 015A,1.666666667,1
@@ -30501,7 +30501,7 @@ Westminster 012E,3,1
 Westminster 012B,1,1
 Westminster 012A,1.666666667,1
 Westminster 018D,1.333333333,1
-Westminster 011E,0,1
+Westminster 011E,0.1,1
 Camden 026A,0.666666667,1
 Camden 026B,0.333333333,1
 Camden 026D,1.333333333,1
@@ -30511,7 +30511,7 @@ Westminster 011D,1,1
 Westminster 008B,1.333333333,1
 Westminster 013A,2.333333333,1
 Westminster 013D,2.666666667,1
-Westminster 015F,0,1
+Westminster 015F,0.1,1
 Westminster 009K,3,1
 Ealing 033E,1.333333333,1
 Westminster 015G,0.333333333,1
@@ -30524,10 +30524,10 @@ Westminster 016E,1.666666667,1
 Westminster 016C,1.333333333,1
 Westminster 016B,0.666666667,1
 Westminster 017C,2,1
-Westminster 017E,0,1
+Westminster 017E,0.1,1
 Westminster 017F,1,1
 Kensington and Chelsea 006C,1,1
-Kensington and Chelsea 006D,0,1
+Kensington and Chelsea 006D,0.1,1
 Westminster 017B,1.333333333,1
 Westminster 014B,2,1
 Westminster 014G,0.333333333,1
@@ -30542,7 +30542,7 @@ Westminster 017D,1.666666667,1
 Westminster 016A,1,1
 Westminster 010C,2,1
 Ealing 021A,1,1
-Ealing 020G,0,1
+Ealing 020G,0.1,1
 Ealing 015E,2,1
 Ealing 015A,4.333333333,1
 Ealing 025D,2.666666667,1
@@ -30558,7 +30558,7 @@ Ealing 024E,2,1
 Ealing 024D,1,1
 Ealing 024C,1.666666667,1
 Ealing 024A,1,1
-Ealing 034D,0,1
+Ealing 034D,0.1,1
 Ealing 024F,1.666666667,1
 Ealing 033D,2,1
 Ealing 033A,1.333333333,1
@@ -30663,7 +30663,7 @@ Ealing 028C,1,1
 Ealing 035A,3,1
 Ealing 030D,1.333333333,1
 Ealing 022A,2.333333333,1
-Ealing 022D,0,1
+Ealing 022D,0.1,1
 Ealing 030A,1,1
 Ealing 028B,0.666666667,1
 Ealing 030C,0.333333333,1
@@ -30747,7 +30747,7 @@ St. Helens 001D,1,1
 St. Helens 001E,2.333333333,1
 St. Helens 001F,3,1
 St. Helens 008C,1.666666667,1
-St. Helens 004D,0,1
+St. Helens 004D,0.1,1
 St. Helens 005C,1.666666667,1
 St. Helens 004E,2.666666667,1
 St. Helens 008E,2,1
@@ -31014,7 +31014,7 @@ Halton 013B,1,1
 Halton 015D,1.666666667,1
 Halton 015E,3.333333333,1
 Halton 014D,0.666666667,1
-Halton 014C,0,1
+Halton 014C,0.1,1
 Halton 014E,0.333333333,1
 Halton 014A,2,1
 Halton 014B,1.666666667,1
@@ -31059,7 +31059,7 @@ Halton 002A,2.666666667,1
 Halton 002B,1.666666667,1
 Halton 005B,3.666666667,1
 Halton 001C,2.666666667,1
-Halton 002C,0,1
+Halton 002C,0.1,1
 St. Helens 014D,6,1
 St. Helens 014E,3,1
 St. Helens 011D,3,1
@@ -31096,7 +31096,7 @@ Camden 028A,1,1
 Camden 024C,1.333333333,1
 Camden 025C,2,1
 Camden 025D,0.333333333,1
-Camden 025E,0,1
+Camden 025E,0.1,1
 Camden 026C,1.333333333,1
 Camden 025A,3.666666667,1
 Camden 025B,0.333333333,1
@@ -31250,7 +31250,7 @@ Hertsmere 010D,3.666666667,1
 Hertsmere 010C,1.333333333,1
 Hertsmere 006B,4.333333333,1
 Hertsmere 006C,3.333333333,1
-Hertsmere 007A,0,1
+Hertsmere 007A,0.1,1
 Hertsmere 007E,3.333333333,1
 Hertsmere 007C,2.666666667,1
 Hertsmere 006D,3.333333333,1
@@ -31391,7 +31391,7 @@ Kirklees 011A,4,1
 Kirklees 015B,4.666666667,1
 Kirklees 011B,0.666666667,1
 Kirklees 011F,1.666666667,1
-Kirklees 011E,0,1
+Kirklees 011E,0.1,1
 Kirklees 011C,1.666666667,1
 Kirklees 011D,1.333333333,1
 Kirklees 002E,2.333333333,1
@@ -31768,7 +31768,7 @@ West Lancashire 010C,1.666666667,1
 West Lancashire 010D,1,1
 West Lancashire 009A,1.666666667,1
 West Lancashire 010B,1,1
-West Lancashire 010A,0,1
+West Lancashire 010A,0.1,1
 West Lancashire 009B,3,1
 West Lancashire 009C,0.666666667,1
 West Lancashire 005B,0.666666667,1
@@ -31929,7 +31929,7 @@ Worcester 011A,4.333333333,1
 Worcester 013B,2,1
 Worcester 013D,3,1
 Wychavon 009C,1,1
-Wychavon 009D,0,1
+Wychavon 009D,0.1,1
 Worcester 013A,4.333333333,1
 Worcester 013C,2.333333333,1
 Malvern Hills 008B,3.666666667,1
@@ -32024,7 +32024,7 @@ Cannock Chase 008C,1.666666667,1
 Cannock Chase 008D,1.333333333,1
 Cannock Chase 011A,3.666666667,1
 Cannock Chase 010B,2.333333333,1
-Cannock Chase 010C,0,1
+Cannock Chase 010C,0.1,1
 Cannock Chase 012D,2,1
 Cannock Chase 013B,2.333333333,1
 Cannock Chase 013A,1.333333333,1
@@ -32165,7 +32165,7 @@ Walsall 008D,1.333333333,1
 Walsall 005C,4.333333333,1
 Walsall 005B,3,1
 Walsall 003B,2.333333333,1
-Walsall 003A,0,1
+Walsall 003A,0.1,1
 Walsall 005D,3,1
 Walsall 005A,3.333333333,1
 Walsall 003C,3.333333333,1
@@ -32217,7 +32217,7 @@ Lichfield 006A,1.333333333,1
 Lichfield 006E,3.333333333,1
 Lichfield 010A,4,1
 Lichfield 009F,2.333333333,1
-Lichfield 010D,0,1
+Lichfield 010D,0.1,1
 Lichfield 010C,1.333333333,1
 Lichfield 010B,1.333333333,1
 Lichfield 009A,4.333333333,1
@@ -32350,7 +32350,7 @@ Wolverhampton 023D,2.333333333,1
 Wolverhampton 022C,1.666666667,1
 Wolverhampton 033A,2.666666667,1
 Wolverhampton 029B,2,1
-Wolverhampton 029C,0,1
+Wolverhampton 029C,0.1,1
 Wolverhampton 023A,0.333333333,1
 Wolverhampton 027D,3.333333333,1
 Wolverhampton 022B,3,1
@@ -32842,1912 +32842,1912 @@ Selby 007D,2.666666667,1
 Selby 007B,3,1
 Selby 006A,1.333333333,1
 Selby 007A,1.666666667,1
-Isle of Anglesey 007A,0,0
-Isle of Anglesey 007B,0,0
-Isle of Anglesey 001A,0,0
-Isle of Anglesey 001B,0,0
-Isle of Anglesey 005A,0,0
-Isle of Anglesey 006A,0,0
-Isle of Anglesey 009A,0,0
-Isle of Anglesey 008A,0,0
-Isle of Anglesey 007C,0,0
-Isle of Anglesey 002A,0,0
-Isle of Anglesey 008B,0,0
-Isle of Anglesey 006B,0,0
-Isle of Anglesey 005B,0,0
-Isle of Anglesey 006C,0,0
-Isle of Anglesey 008C,0,0
-Isle of Anglesey 003A,0,0
-Isle of Anglesey 003B,0,0
-Isle of Anglesey 001C,0,0
-Isle of Anglesey 005C,0,0
-Isle of Anglesey 002B,0,0
-Isle of Anglesey 002C,0,0
-Isle of Anglesey 004A,0,0
-Isle of Anglesey 007D,0,0
-Isle of Anglesey 007E,0,0
-Isle of Anglesey 009B,0,0
-Isle of Anglesey 005D,0,0
-Isle of Anglesey 009C,0,0
-Isle of Anglesey 001D,0,0
-Isle of Anglesey 003C,0,0
-Isle of Anglesey 003D,0,0
-Isle of Anglesey 001E,0,0
-Isle of Anglesey 002D,0,0
-Isle of Anglesey 003E,0,0
-Isle of Anglesey 004B,0,0
-Isle of Anglesey 005E,0,0
-Isle of Anglesey 003F,0,0
-Isle of Anglesey 003G,0,0
-Isle of Anglesey 009D,0,0
-Isle of Anglesey 004C,0,0
-Isle of Anglesey 004D,0,0
-Isle of Anglesey 006D,0,0
-Isle of Anglesey 008D,0,0
-Isle of Anglesey 004E,0,0
-Isle of Anglesey 004F,0,0
-Gwynedd 011A,0,0
-Gwynedd 016A,0,0
-Gwynedd 016B,0,0
-Gwynedd 003A,0,0
-Gwynedd 015A,0,0
-Gwynedd 004A,0,0
-Gwynedd 004B,0,0
-Gwynedd 007A,0,0
-Gwynedd 009A,0,0
-Gwynedd 016C,0,0
-Gwynedd 006A,0,0
-Gwynedd 015B,0,0
-Gwynedd 011B,0,0
-Gwynedd 001A,0,0
-Gwynedd 005A,0,0
-Gwynedd 002A,0,0
-Gwynedd 009B,0,0
-Gwynedd 010A,0,0
-Gwynedd 016D,0,0
-Gwynedd 016E,0,0
-Gwynedd 013A,0,0
-Gwynedd 012A,0,0
-Gwynedd 003B,0,0
-Gwynedd 002B,0,0
-Gwynedd 008A,0,0
-Gwynedd 013B,0,0
-Gwynedd 002C,0,0
-Gwynedd 001B,0,0
-Gwynedd 001C,0,0
-Gwynedd 011C,0,0
-Gwynedd 013C,0,0
-Gwynedd 014C,0,0
-Gwynedd 005B,0,0
-Gwynedd 015C,0,0
-Gwynedd 015D,0,0
-Gwynedd 014D,0,0
-Gwynedd 017C,0,0
-Gwynedd 008B,0,0
-Gwynedd 004C,0,0
-Gwynedd 007B,0,0
-Gwynedd 011D,0,0
-Gwynedd 002D,0,0
-Gwynedd 001D,0,0
-Gwynedd 001E,0,0
-Gwynedd 006B,0,0
-Gwynedd 012B,0,0
-Gwynedd 012C,0,0
-Gwynedd 003C,0,0
-Gwynedd 003D,0,0
-Gwynedd 006C,0,0
-Gwynedd 005C,0,0
-Gwynedd 010B,0,0
-Gwynedd 013D,0,0
-Gwynedd 002E,0,0
-Gwynedd 005D,0,0
-Gwynedd 008C,0,0
-Gwynedd 010C,0,0
-Gwynedd 010D,0,0
-Gwynedd 010E,0,0
-Gwynedd 012D,0,0
-Gwynedd 012E,0,0
-Gwynedd 006D,0,0
-Gwynedd 007C,0,0
-Gwynedd 008D,0,0
-Gwynedd 009C,0,0
-Gwynedd 009D,0,0
-Gwynedd 003E,0,0
-Gwynedd 017D,0,0
-Gwynedd 017E,0,0
-Gwynedd 007D,0,0
-Gwynedd 004D,0,0
-Conwy 015A,0,0
-Conwy 014A,0,0
-Conwy 013A,0,0
-Conwy 012A,0,0
-Conwy 013B,0,0
-Conwy 009A,0,0
-Conwy 009B,0,0
-Conwy 009C,0,0
-Conwy 012B,0,0
-Conwy 012C,0,0
-Conwy 012D,0,0
-Conwy 001A,0,0
-Conwy 002A,0,0
-Conwy 015B,0,0
-Conwy 006A,0,0
-Conwy 006B,0,0
-Conwy 015C,0,0
-Conwy 008A,0,0
-Conwy 007A,0,0
-Conwy 010B,0,0
-Conwy 010C,0,0
-Conwy 010D,0,0
-Conwy 007B,0,0
-Conwy 007C,0,0
-Conwy 008B,0,0
-Conwy 001B,0,0
-Conwy 001C,0,0
-Conwy 015D,0,0
-Conwy 005A,0,0
-Conwy 005B,0,0
-Conwy 005C,0,0
-Conwy 005D,0,0
-Conwy 009D,0,0
-Conwy 003A,0,0
-Conwy 004A,0,0
-Conwy 004B,0,0
-Conwy 004C,0,0
-Conwy 004D,0,0
-Conwy 014B,0,0
-Conwy 014C,0,0
-Conwy 009E,0,0
-Conwy 009F,0,0
-Conwy 006C,0,0
-Conwy 006D,0,0
-Conwy 011C,0,0
-Conwy 002B,0,0
-Conwy 001D,0,0
-Conwy 013C,0,0
-Conwy 013D,0,0
-Conwy 013E,0,0
-Conwy 003B,0,0
-Conwy 003C,0,0
-Conwy 003D,0,0
-Conwy 011D,0,0
-Conwy 011E,0,0
-Conwy 010E,0,0
-Conwy 010F,0,0
-Conwy 008C,0,0
-Conwy 008D,0,0
-Conwy 007D,0,0
-Conwy 008E,0,0
-Conwy 005E,0,0
-Conwy 015E,0,0
-Conwy 001E,0,0
-Conwy 002C,0,0
-Conwy 002D,0,0
-Conwy 015F,0,0
-Conwy 014D,0,0
-Denbighshire 009A,0,0
-Denbighshire 016A,0,0
-Denbighshire 015A,0,0
-Denbighshire 011A,0,0
-Denbighshire 012A,0,0
-Denbighshire 012B,0,0
-Denbighshire 012C,0,0
-Denbighshire 011B,0,0
-Denbighshire 011C,0,0
-Denbighshire 008A,0,0
-Denbighshire 008B,0,0
-Denbighshire 015B,0,0
-Denbighshire 013A,0,0
-Denbighshire 013B,0,0
-Denbighshire 016B,0,0
-Denbighshire 013C,0,0
-Denbighshire 015C,0,0
-Denbighshire 016C,0,0
-Denbighshire 016D,0,0
-Denbighshire 016E,0,0
-Denbighshire 012D,0,0
-Denbighshire 003A,0,0
-Denbighshire 002A,0,0
-Denbighshire 002B,0,0
-Denbighshire 002C,0,0
-Denbighshire 002D,0,0
-Denbighshire 008C,0,0
-Denbighshire 001A,0,0
-Denbighshire 001B,0,0
-Denbighshire 001C,0,0
-Denbighshire 003B,0,0
-Denbighshire 003C,0,0
-Denbighshire 009B,0,0
-Denbighshire 009C,0,0
-Denbighshire 009D,0,0
-Denbighshire 004A,0,0
-Denbighshire 004B,0,0
-Denbighshire 004C,0,0
-Denbighshire 017E,0,0
-Denbighshire 017F,0,0
-Denbighshire 017A,0,0
-Denbighshire 017B,0,0
-Denbighshire 017C,0,0
-Denbighshire 017G,0,0
-Denbighshire 017D,0,0
-Denbighshire 006A,0,0
-Denbighshire 006B,0,0
-Denbighshire 006C,0,0
-Denbighshire 004D,0,0
-Denbighshire 004E,0,0
-Denbighshire 004F,0,0
-Denbighshire 014A,0,0
-Denbighshire 014B,0,0
-Denbighshire 014C,0,0
-Denbighshire 010A,0,0
-Denbighshire 010B,0,0
-Denbighshire 010C,0,0
-Denbighshire 008D,0,0
-Flintshire 014A,0,0
-Flintshire 014B,0,0
-Flintshire 013A,0,0
-Flintshire 010A,0,0
-Flintshire 003A,0,0
-Flintshire 003B,0,0
-Flintshire 015A,0,0
-Flintshire 015B,0,0
-Flintshire 015C,0,0
-Flintshire 006A,0,0
-Flintshire 017A,0,0
-Flintshire 017B,0,0
-Flintshire 014C,0,0
-Flintshire 017C,0,0
-Flintshire 017D,0,0
-Flintshire 012A,0,0
-Flintshire 012B,0,0
-Flintshire 017E,0,0
-Flintshire 017F,0,0
-Flintshire 013B,0,0
-Flintshire 020A,0,0
-Flintshire 006B,0,0
-Flintshire 006C,0,0
-Flintshire 006D,0,0
-Flintshire 007A,0,0
-Flintshire 007B,0,0
-Flintshire 007C,0,0
-Flintshire 008A,0,0
-Flintshire 008B,0,0
-Flintshire 007D,0,0
-Flintshire 008C,0,0
-Flintshire 010B,0,0
-Flintshire 008D,0,0
-Flintshire 010C,0,0
-Flintshire 008E,0,0
-Flintshire 013C,0,0
-Flintshire 013D,0,0
-Flintshire 013E,0,0
-Flintshire 001A,0,0
-Flintshire 004A,0,0
-Flintshire 005A,0,0
-Flintshire 004B,0,0
-Flintshire 005B,0,0
-Flintshire 004C,0,0
-Flintshire 004D,0,0
-Flintshire 005C,0,0
-Flintshire 005D,0,0
-Flintshire 003C,0,0
-Flintshire 003D,0,0
-Flintshire 001B,0,0
-Flintshire 019A,0,0
-Flintshire 019B,0,0
-Flintshire 006E,0,0
-Flintshire 013F,0,0
-Flintshire 018A,0,0
-Flintshire 003E,0,0
-Flintshire 003F,0,0
-Flintshire 002A,0,0
-Flintshire 020B,0,0
-Flintshire 020C,0,0
-Flintshire 019C,0,0
-Flintshire 020D,0,0
-Flintshire 011A,0,0
-Flintshire 011B,0,0
-Flintshire 016A,0,0
-Flintshire 016B,0,0
-Flintshire 016C,0,0
-Flintshire 016D,0,0
-Flintshire 016E,0,0
-Flintshire 016F,0,0
-Flintshire 016G,0,0
-Flintshire 002B,0,0
-Flintshire 014D,0,0
-Flintshire 014E,0,0
-Flintshire 012C,0,0
-Flintshire 012D,0,0
-Flintshire 010D,0,0
-Flintshire 018B,0,0
-Flintshire 018C,0,0
-Flintshire 011C,0,0
-Flintshire 015D,0,0
-Flintshire 015E,0,0
-Flintshire 015F,0,0
-Flintshire 009A,0,0
-Flintshire 009B,0,0
-Flintshire 009C,0,0
-Flintshire 009D,0,0
-Flintshire 009E,0,0
-Flintshire 009F,0,0
-Flintshire 001C,0,0
-Flintshire 019D,0,0
-Flintshire 002C,0,0
-Wrexham 009A,0,0
-Wrexham 009B,0,0
-Wrexham 007A,0,0
-Wrexham 007B,0,0
-Wrexham 018A,0,0
-Wrexham 018B,0,0
-Wrexham 006A,0,0
-Wrexham 006B,0,0
-Wrexham 011A,0,0
-Wrexham 011B,0,0
-Wrexham 005A,0,0
-Wrexham 010A,0,0
-Wrexham 010B,0,0
-Wrexham 017A,0,0
-Wrexham 017B,0,0
-Wrexham 017C,0,0
-Wrexham 019C,0,0
-Wrexham 019D,0,0
-Wrexham 019E,0,0
-Wrexham 006C,0,0
-Wrexham 006D,0,0
-Wrexham 006E,0,0
-Wrexham 011C,0,0
-Wrexham 014A,0,0
-Wrexham 014B,0,0
-Wrexham 008A,0,0
-Wrexham 020F,0,0
-Wrexham 020G,0,0
-Wrexham 008B,0,0
-Wrexham 008C,0,0
-Wrexham 005B,0,0
-Wrexham 003A,0,0
-Wrexham 003B,0,0
-Wrexham 003C,0,0
-Wrexham 004A,0,0
-Wrexham 004B,0,0
-Wrexham 004C,0,0
-Wrexham 004D,0,0
-Wrexham 012A,0,0
-Wrexham 012B,0,0
-Wrexham 020A,0,0
-Wrexham 020B,0,0
-Wrexham 014C,0,0
-Wrexham 015A,0,0
-Wrexham 008D,0,0
-Wrexham 008E,0,0
-Wrexham 017D,0,0
-Wrexham 020C,0,0
-Wrexham 003D,0,0
-Wrexham 003E,0,0
-Wrexham 009C,0,0
-Wrexham 016A,0,0
-Wrexham 016B,0,0
-Wrexham 020H,0,0
-Wrexham 020I,0,0
-Wrexham 013A,0,0
-Wrexham 013B,0,0
-Wrexham 005C,0,0
-Wrexham 005D,0,0
-Wrexham 011D,0,0
-Wrexham 018C,0,0
-Wrexham 018D,0,0
-Wrexham 015B,0,0
-Wrexham 013C,0,0
-Wrexham 016C,0,0
-Wrexham 013D,0,0
-Wrexham 017E,0,0
-Wrexham 014D,0,0
-Wrexham 015C,0,0
-Wrexham 015D,0,0
-Wrexham 010C,0,0
-Wrexham 010D,0,0
-Wrexham 007C,0,0
-Wrexham 007D,0,0
-Wrexham 020D,0,0
-Wrexham 020E,0,0
-Wrexham 016D,0,0
-Wrexham 016E,0,0
-Wrexham 008F,0,0
-Wrexham 012D,0,0
-Wrexham 012E,0,0
-Wrexham 010E,0,0
-Powys 021A,0,0
-Powys 011A,0,0
-Powys 005A,0,0
-Powys 010A,0,0
-Powys 015A,0,0
-Powys 014A,0,0
-Powys 014B,0,0
-Powys 006A,0,0
-Powys 007A,0,0
-Powys 012A,0,0
-Powys 007B,0,0
-Powys 020A,0,0
-Powys 005B,0,0
-Powys 004A,0,0
-Powys 015B,0,0
-Powys 002A,0,0
-Powys 015C,0,0
-Powys 015D,0,0
-Powys 007C,0,0
-Powys 011B,0,0
-Powys 011C,0,0
-Powys 014C,0,0
-Powys 012B,0,0
-Powys 004B,0,0
-Powys 010B,0,0
-Powys 013A,0,0
-Powys 013B,0,0
-Powys 013C,0,0
-Powys 002B,0,0
-Powys 002C,0,0
-Powys 014D,0,0
-Powys 006B,0,0
-Powys 001A,0,0
-Powys 011D,0,0
-Powys 018E,0,0
-Powys 010C,0,0
-Powys 010D,0,0
-Powys 001D,0,0
-Powys 014E,0,0
-Powys 012C,0,0
-Powys 004C,0,0
-Powys 020B,0,0
-Powys 001E,0,0
-Powys 005C,0,0
-Powys 012D,0,0
-Powys 009A,0,0
-Powys 009B,0,0
-Powys 008A,0,0
-Powys 008B,0,0
-Powys 008C,0,0
-Powys 009C,0,0
-Powys 011E,0,0
-Powys 011F,0,0
-Powys 011G,0,0
-Powys 012E,0,0
-Powys 006C,0,0
-Powys 017A,0,0
-Powys 017D,0,0
-Powys 017E,0,0
-Powys 015E,0,0
-Powys 021B,0,0
-Powys 005D,0,0
-Powys 003A,0,0
-Powys 003B,0,0
-Powys 003C,0,0
-Powys 003D,0,0
-Powys 021C,0,0
-Powys 020C,0,0
-Powys 021D,0,0
-Powys 021E,0,0
-Ceredigion 005A,0,0
-Ceredigion 009A,0,0
-Ceredigion 009B,0,0
-Ceredigion 009C,0,0
-Ceredigion 009D,0,0
-Ceredigion 009E,0,0
-Ceredigion 002A,0,0
-Ceredigion 002B,0,0
-Ceredigion 003A,0,0
-Ceredigion 003B,0,0
-Ceredigion 002D,0,0
-Ceredigion 003C,0,0
-Ceredigion 010A,0,0
-Ceredigion 010B,0,0
-Ceredigion 001C,0,0
-Ceredigion 005B,0,0
-Ceredigion 011A,0,0
-Ceredigion 008A,0,0
-Ceredigion 008B,0,0
-Ceredigion 007A,0,0
-Ceredigion 010C,0,0
-Ceredigion 007B,0,0
-Ceredigion 010D,0,0
-Ceredigion 011B,0,0
-Ceredigion 008C,0,0
-Ceredigion 011E,0,0
-Ceredigion 008D,0,0
-Ceredigion 005C,0,0
-Ceredigion 005D,0,0
-Ceredigion 005E,0,0
-Ceredigion 008E,0,0
-Ceredigion 011F,0,0
-Ceredigion 011C,0,0
-Ceredigion 007C,0,0
-Ceredigion 007D,0,0
-Ceredigion 009F,0,0
-Ceredigion 009G,0,0
-Ceredigion 001D,0,0
-Ceredigion 001E,0,0
-Ceredigion 011G,0,0
-Ceredigion 010E,0,0
-Ceredigion 011D,0,0
-Pembrokeshire 011A,0,0
-Pembrokeshire 009A,0,0
-Pembrokeshire 008A,0,0
-Pembrokeshire 008B,0,0
-Pembrokeshire 014A,0,0
-Pembrokeshire 001A,0,0
-Pembrokeshire 001B,0,0
-Pembrokeshire 001C,0,0
-Pembrokeshire 001D,0,0
-Pembrokeshire 002A,0,0
-Pembrokeshire 011B,0,0
-Pembrokeshire 011C,0,0
-Pembrokeshire 002B,0,0
-Pembrokeshire 002C,0,0
-Pembrokeshire 002D,0,0
-Pembrokeshire 005A,0,0
-Pembrokeshire 005B,0,0
-Pembrokeshire 005C,0,0
-Pembrokeshire 006A,0,0
-Pembrokeshire 005D,0,0
-Pembrokeshire 006B,0,0
-Pembrokeshire 015A,0,0
-Pembrokeshire 008C,0,0
-Pembrokeshire 011D,0,0
-Pembrokeshire 007A,0,0
-Pembrokeshire 014B,0,0
-Pembrokeshire 003A,0,0
-Pembrokeshire 009B,0,0
-Pembrokeshire 003B,0,0
-Pembrokeshire 004A,0,0
-Pembrokeshire 004B,0,0
-Pembrokeshire 014C,0,0
-Pembrokeshire 007B,0,0
-Pembrokeshire 006C,0,0
-Pembrokeshire 010A,0,0
-Pembrokeshire 010B,0,0
-Pembrokeshire 012A,0,0
-Pembrokeshire 012B,0,0
-Pembrokeshire 012C,0,0
-Pembrokeshire 012D,0,0
-Pembrokeshire 010C,0,0
-Pembrokeshire 012E,0,0
-Pembrokeshire 007C,0,0
-Pembrokeshire 007D,0,0
-Pembrokeshire 002E,0,0
-Pembrokeshire 009C,0,0
-Pembrokeshire 009D,0,0
-Pembrokeshire 013A,0,0
-Pembrokeshire 013B,0,0
-Pembrokeshire 013C,0,0
-Pembrokeshire 013D,0,0
-Pembrokeshire 013E,0,0
-Pembrokeshire 013F,0,0
-Pembrokeshire 015B,0,0
-Pembrokeshire 015C,0,0
-Pembrokeshire 015D,0,0
-Pembrokeshire 014D,0,0
-Pembrokeshire 016A,0,0
-Pembrokeshire 004C,0,0
-Pembrokeshire 003C,0,0
-Pembrokeshire 001E,0,0
-Pembrokeshire 008D,0,0
-Pembrokeshire 011E,0,0
-Pembrokeshire 011F,0,0
-Pembrokeshire 002F,0,0
-Pembrokeshire 003D,0,0
-Pembrokeshire 016B,0,0
-Pembrokeshire 016C,0,0
-Pembrokeshire 016D,0,0
-Pembrokeshire 008E,0,0
-Pembrokeshire 004D,0,0
-Carmarthenshire 005A,0,0
-Carmarthenshire 013A,0,0
-Carmarthenshire 013B,0,0
-Carmarthenshire 013C,0,0
-Carmarthenshire 024A,0,0
-Carmarthenshire 024B,0,0
-Carmarthenshire 024C,0,0
-Carmarthenshire 024D,0,0
-Carmarthenshire 021A,0,0
-Carmarthenshire 021B,0,0
-Carmarthenshire 021C,0,0
-Carmarthenshire 025A,0,0
-Carmarthenshire 025B,0,0
-Carmarthenshire 007A,0,0
-Carmarthenshire 007B,0,0
-Carmarthenshire 007C,0,0
-Carmarthenshire 007D,0,0
-Carmarthenshire 008A,0,0
-Carmarthenshire 008B,0,0
-Carmarthenshire 006A,0,0
-Carmarthenshire 006B,0,0
-Carmarthenshire 006C,0,0
-Carmarthenshire 003A,0,0
-Carmarthenshire 002A,0,0
-Carmarthenshire 006D,0,0
-Carmarthenshire 006E,0,0
-Carmarthenshire 002B,0,0
-Carmarthenshire 020A,0,0
-Carmarthenshire 020B,0,0
-Carmarthenshire 023A,0,0
-Carmarthenshire 023B,0,0
-Carmarthenshire 020C,0,0
-Carmarthenshire 010A,0,0
-Carmarthenshire 010B,0,0
-Carmarthenshire 010C,0,0
-Carmarthenshire 026A,0,0
-Carmarthenshire 026B,0,0
-Carmarthenshire 016A,0,0
-Carmarthenshire 016B,0,0
-Carmarthenshire 016C,0,0
-Carmarthenshire 017A,0,0
-Carmarthenshire 017B,0,0
-Carmarthenshire 023C,0,0
-Carmarthenshire 018A,0,0
-Carmarthenshire 018B,0,0
-Carmarthenshire 027E,0,0
-Carmarthenshire 027F,0,0
-Carmarthenshire 027A,0,0
-Carmarthenshire 012A,0,0
-Carmarthenshire 004A,0,0
-Carmarthenshire 004B,0,0
-Carmarthenshire 002C,0,0
-Carmarthenshire 002D,0,0
-Carmarthenshire 011A,0,0
-Carmarthenshire 011B,0,0
-Carmarthenshire 005B,0,0
-Carmarthenshire 005C,0,0
-Carmarthenshire 005D,0,0
-Carmarthenshire 001A,0,0
-Carmarthenshire 001B,0,0
-Carmarthenshire 004C,0,0
-Carmarthenshire 003B,0,0
-Carmarthenshire 003C,0,0
-Carmarthenshire 019A,0,0
-Carmarthenshire 019B,0,0
-Carmarthenshire 019C,0,0
-Carmarthenshire 008C,0,0
-Carmarthenshire 008D,0,0
-Carmarthenshire 012B,0,0
-Carmarthenshire 012C,0,0
-Carmarthenshire 015A,0,0
-Carmarthenshire 015B,0,0
-Carmarthenshire 015C,0,0
-Carmarthenshire 027G,0,0
-Carmarthenshire 001C,0,0
-Carmarthenshire 001D,0,0
-Carmarthenshire 022A,0,0
-Carmarthenshire 022B,0,0
-Carmarthenshire 022C,0,0
-Carmarthenshire 025C,0,0
-Carmarthenshire 025D,0,0
-Carmarthenshire 025E,0,0
-Carmarthenshire 004D,0,0
-Carmarthenshire 021D,0,0
-Carmarthenshire 021E,0,0
-Carmarthenshire 015D,0,0
-Carmarthenshire 015E,0,0
-Carmarthenshire 013D,0,0
-Carmarthenshire 013E,0,0
-Carmarthenshire 016D,0,0
-Carmarthenshire 016E,0,0
-Carmarthenshire 010D,0,0
-Carmarthenshire 010E,0,0
-Carmarthenshire 027B,0,0
-Carmarthenshire 027C,0,0
-Carmarthenshire 012D,0,0
-Carmarthenshire 012E,0,0
-Carmarthenshire 011C,0,0
-Carmarthenshire 011D,0,0
-Carmarthenshire 019D,0,0
-Carmarthenshire 019E,0,0
-Carmarthenshire 003D,0,0
-Carmarthenshire 018C,0,0
-Carmarthenshire 018D,0,0
-Carmarthenshire 017C,0,0
-Carmarthenshire 026D,0,0
-Carmarthenshire 026E,0,0
-Carmarthenshire 026F,0,0
-Carmarthenshire 027D,0,0
-Swansea 028A,0,0
-Swansea 028B,0,0
-Swansea 014A,0,0
-Swansea 014B,0,0
-Swansea 014C,0,0
-Swansea 014D,0,0
-Swansea 016A,0,0
-Swansea 016B,0,0
-Swansea 025B,0,0
-Swansea 025C,0,0
-Swansea 024A,0,0
-Swansea 026A,0,0
-Swansea 002A,0,0
-Swansea 002B,0,0
-Swansea 002C,0,0
-Swansea 002D,0,0
-Swansea 002E,0,0
-Swansea 017A,0,0
-Swansea 017B,0,0
-Swansea 017C,0,0
-Swansea 017D,0,0
-Swansea 012A,0,0
-Swansea 013A,0,0
-Swansea 013B,0,0
-Swansea 013C,0,0
-Swansea 015A,0,0
-Swansea 015B,0,0
-Swansea 015C,0,0
-Swansea 015D,0,0
-Swansea 015E,0,0
-Swansea 020A,0,0
-Swansea 020B,0,0
-Swansea 020C,0,0
-Swansea 020D,0,0
-Swansea 018A,0,0
-Swansea 005A,0,0
-Swansea 005B,0,0
-Swansea 030A,0,0
-Swansea 030B,0,0
-Swansea 012B,0,0
-Swansea 012C,0,0
-Swansea 012D,0,0
-Swansea 023B,0,0
-Swansea 023C,0,0
-Swansea 007A,0,0
-Swansea 007B,0,0
-Swansea 007C,0,0
-Swansea 016C,0,0
-Swansea 016D,0,0
-Swansea 016E,0,0
-Swansea 016F,0,0
-Swansea 004A,0,0
-Swansea 004B,0,0
-Swansea 004C,0,0
-Swansea 010A,0,0
-Swansea 006A,0,0
-Swansea 006B,0,0
-Swansea 010B,0,0
-Swansea 010C,0,0
-Swansea 010D,0,0
-Swansea 006C,0,0
-Swansea 006D,0,0
-Swansea 007D,0,0
-Swansea 002F,0,0
-Swansea 028C,0,0
-Swansea 028D,0,0
-Swansea 003A,0,0
-Swansea 003B,0,0
-Swansea 003C,0,0
-Swansea 008A,0,0
-Swansea 003D,0,0
-Swansea 008B,0,0
-Swansea 008C,0,0
-Swansea 008D,0,0
-Swansea 008E,0,0
-Swansea 003E,0,0
-Swansea 003F,0,0
-Swansea 009A,0,0
-Swansea 009B,0,0
-Swansea 009C,0,0
-Swansea 009D,0,0
-Swansea 009E,0,0
-Swansea 009F,0,0
-Swansea 031A,0,0
-Swansea 031B,0,0
-Swansea 031C,0,0
-Swansea 031D,0,0
-Swansea 031E,0,0
-Swansea 018B,0,0
-Swansea 018C,0,0
-Swansea 011A,0,0
-Swansea 013D,0,0
-Swansea 011B,0,0
-Swansea 011C,0,0
-Swansea 011D,0,0
-Swansea 013E,0,0
-Swansea 011E,0,0
-Swansea 004D,0,0
-Swansea 004E,0,0
-Swansea 030C,0,0
-Swansea 030D,0,0
-Swansea 005C,0,0
-Swansea 005D,0,0
-Swansea 005E,0,0
-Swansea 005F,0,0
-Swansea 001A,0,0
-Swansea 001B,0,0
-Swansea 001C,0,0
-Swansea 001D,0,0
-Swansea 021A,0,0
-Swansea 021B,0,0
-Swansea 021C,0,0
-Swansea 021D,0,0
-Swansea 022A,0,0
-Swansea 022B,0,0
-Swansea 022C,0,0
-Swansea 022D,0,0
-Swansea 022E,0,0
-Swansea 027A,0,0
-Swansea 027B,0,0
-Swansea 027C,0,0
-Swansea 027D,0,0
-Swansea 019A,0,0
-Swansea 019B,0,0
-Swansea 019C,0,0
-Swansea 019D,0,0
-Swansea 019E,0,0
-Swansea 019F,0,0
-Swansea 024B,0,0
-Swansea 024C,0,0
-Swansea 024D,0,0
-Swansea 026B,0,0
-Swansea 024E,0,0
-Swansea 026C,0,0
-Swansea 024F,0,0
-Swansea 026D,0,0
-Swansea 026E,0,0
-Swansea 007E,0,0
-Swansea 007F,0,0
-Swansea 029A,0,0
-Swansea 029B,0,0
-Swansea 029C,0,0
-Swansea 029D,0,0
-Neath Port Talbot 016A,0,0
-Neath Port Talbot 017A,0,0
-Neath Port Talbot 017B,0,0
-Neath Port Talbot 017C,0,0
-Neath Port Talbot 005A,0,0
-Neath Port Talbot 004A,0,0
-Neath Port Talbot 015A,0,0
-Neath Port Talbot 015B,0,0
-Neath Port Talbot 015C,0,0
-Neath Port Talbot 015D,0,0
-Neath Port Talbot 003A,0,0
-Neath Port Talbot 013A,0,0
-Neath Port Talbot 013B,0,0
-Neath Port Talbot 013C,0,0
-Neath Port Talbot 013D,0,0
-Neath Port Talbot 014A,0,0
-Neath Port Talbot 014B,0,0
-Neath Port Talbot 014C,0,0
-Neath Port Talbot 014D,0,0
-Neath Port Talbot 006A,0,0
-Neath Port Talbot 006B,0,0
-Neath Port Talbot 006C,0,0
-Neath Port Talbot 006D,0,0
-Neath Port Talbot 007A,0,0
-Neath Port Talbot 007B,0,0
-Neath Port Talbot 006E,0,0
-Neath Port Talbot 009A,0,0
-Neath Port Talbot 009B,0,0
-Neath Port Talbot 009C,0,0
-Neath Port Talbot 010A,0,0
-Neath Port Talbot 010B,0,0
-Neath Port Talbot 010C,0,0
-Neath Port Talbot 010D,0,0
-Neath Port Talbot 010E,0,0
-Neath Port Talbot 010F,0,0
-Neath Port Talbot 002A,0,0
-Neath Port Talbot 020A,0,0
-Neath Port Talbot 011A,0,0
-Neath Port Talbot 011B,0,0
-Neath Port Talbot 007C,0,0
-Neath Port Talbot 007D,0,0
-Neath Port Talbot 011C,0,0
-Neath Port Talbot 003B,0,0
-Neath Port Talbot 003C,0,0
-Neath Port Talbot 020B,0,0
-Neath Port Talbot 020C,0,0
-Neath Port Talbot 020D,0,0
-Neath Port Talbot 011D,0,0
-Neath Port Talbot 020E,0,0
-Neath Port Talbot 019A,0,0
-Neath Port Talbot 019B,0,0
-Neath Port Talbot 008A,0,0
-Neath Port Talbot 008B,0,0
-Neath Port Talbot 012A,0,0
-Neath Port Talbot 013E,0,0
-Neath Port Talbot 008C,0,0
-Neath Port Talbot 008D,0,0
-Neath Port Talbot 008E,0,0
-Neath Port Talbot 012B,0,0
-Neath Port Talbot 012C,0,0
-Neath Port Talbot 012D,0,0
-Neath Port Talbot 002B,0,0
-Neath Port Talbot 014E,0,0
-Neath Port Talbot 004B,0,0
-Neath Port Talbot 004C,0,0
-Neath Port Talbot 004D,0,0
-Neath Port Talbot 018A,0,0
-Neath Port Talbot 018B,0,0
-Neath Port Talbot 018C,0,0
-Neath Port Talbot 018D,0,0
-Neath Port Talbot 005B,0,0
-Neath Port Talbot 005C,0,0
-Neath Port Talbot 004E,0,0
-Neath Port Talbot 004F,0,0
-Neath Port Talbot 017D,0,0
-Neath Port Talbot 016B,0,0
-Neath Port Talbot 017E,0,0
-Neath Port Talbot 017F,0,0
-Neath Port Talbot 016C,0,0
-Neath Port Talbot 016D,0,0
-Neath Port Talbot 016E,0,0
-Neath Port Talbot 016F,0,0
-Neath Port Talbot 002C,0,0
-Neath Port Talbot 018E,0,0
-Neath Port Talbot 019C,0,0
-Neath Port Talbot 019D,0,0
-Neath Port Talbot 009D,0,0
-Neath Port Talbot 005D,0,0
-Neath Port Talbot 004G,0,0
-Neath Port Talbot 020F,0,0
-Bridgend 006A,0,0
-Bridgend 004A,0,0
-Bridgend 003A,0,0
-Bridgend 003B,0,0
-Bridgend 004B,0,0
-Bridgend 015A,0,0
-Bridgend 016A,0,0
-Bridgend 016B,0,0
-Bridgend 016C,0,0
-Bridgend 015B,0,0
-Bridgend 016D,0,0
-Bridgend 015C,0,0
-Bridgend 007A,0,0
-Bridgend 007B,0,0
-Bridgend 013A,0,0
-Bridgend 017B,0,0
-Bridgend 001A,0,0
-Bridgend 001B,0,0
-Bridgend 001C,0,0
-Bridgend 001D,0,0
-Bridgend 001E,0,0
-Bridgend 008A,0,0
-Bridgend 012A,0,0
-Bridgend 011A,0,0
-Bridgend 010A,0,0
-Bridgend 010B,0,0
-Bridgend 010C,0,0
-Bridgend 010D,0,0
-Bridgend 015D,0,0
-Bridgend 009A,0,0
-Bridgend 009B,0,0
-Bridgend 009C,0,0
-Bridgend 009D,0,0
-Bridgend 011B,0,0
-Bridgend 004C,0,0
-Bridgend 012B,0,0
-Bridgend 012C,0,0
-Bridgend 005A,0,0
-Bridgend 005B,0,0
-Bridgend 002A,0,0
-Bridgend 002B,0,0
-Bridgend 005C,0,0
-Bridgend 002C,0,0
-Bridgend 002D,0,0
-Bridgend 005D,0,0
-Bridgend 002E,0,0
-Bridgend 014A,0,0
-Bridgend 014B,0,0
-Bridgend 014C,0,0
-Bridgend 003C,0,0
-Bridgend 003D,0,0
-Bridgend 012D,0,0
-Bridgend 017C,0,0
-Bridgend 014D,0,0
-Bridgend 019A,0,0
-Bridgend 019B,0,0
-Bridgend 018A,0,0
-Bridgend 018B,0,0
-Bridgend 003E,0,0
-Bridgend 003F,0,0
-Bridgend 014E,0,0
-Bridgend 017D,0,0
-Bridgend 013B,0,0
-Bridgend 011C,0,0
-Bridgend 009E,0,0
-Bridgend 009F,0,0
-Bridgend 013C,0,0
-Bridgend 004D,0,0
-Bridgend 004E,0,0
-Bridgend 019C,0,0
-Bridgend 019D,0,0
-Bridgend 018C,0,0
-Bridgend 018D,0,0
-Bridgend 008B,0,0
-Bridgend 008C,0,0
-Bridgend 008D,0,0
-Bridgend 008E,0,0
-Bridgend 008F,0,0
-Bridgend 018E,0,0
-Bridgend 018F,0,0
-Bridgend 007C,0,0
-Bridgend 007D,0,0
-Bridgend 006B,0,0
-Bridgend 006C,0,0
-The Vale of Glamorgan 015A,0,0
-The Vale of Glamorgan 015B,0,0
-The Vale of Glamorgan 015C,0,0
-The Vale of Glamorgan 013A,0,0
-The Vale of Glamorgan 012A,0,0
-The Vale of Glamorgan 013B,0,0
-The Vale of Glamorgan 012B,0,0
-The Vale of Glamorgan 015D,0,0
-The Vale of Glamorgan 009A,0,0
-The Vale of Glamorgan 009B,0,0
-The Vale of Glamorgan 012C,0,0
-The Vale of Glamorgan 009C,0,0
-The Vale of Glamorgan 009D,0,0
-The Vale of Glamorgan 009E,0,0
-The Vale of Glamorgan 015E,0,0
-The Vale of Glamorgan 004A,0,0
-The Vale of Glamorgan 004B,0,0
-The Vale of Glamorgan 004C,0,0
-The Vale of Glamorgan 004D,0,0
-The Vale of Glamorgan 012E,0,0
-The Vale of Glamorgan 012F,0,0
-The Vale of Glamorgan 007A,0,0
-The Vale of Glamorgan 002A,0,0
-The Vale of Glamorgan 002B,0,0
-The Vale of Glamorgan 002C,0,0
-The Vale of Glamorgan 002D,0,0
-The Vale of Glamorgan 006A,0,0
-The Vale of Glamorgan 006B,0,0
-The Vale of Glamorgan 006C,0,0
-The Vale of Glamorgan 006D,0,0
-The Vale of Glamorgan 006E,0,0
-The Vale of Glamorgan 010A,0,0
-The Vale of Glamorgan 007B,0,0
-The Vale of Glamorgan 013C,0,0
-The Vale of Glamorgan 007C,0,0
-The Vale of Glamorgan 007D,0,0
-The Vale of Glamorgan 007E,0,0
-The Vale of Glamorgan 007F,0,0
-The Vale of Glamorgan 010B,0,0
-The Vale of Glamorgan 013D,0,0
-The Vale of Glamorgan 010C,0,0
-The Vale of Glamorgan 013E,0,0
-The Vale of Glamorgan 013F,0,0
-The Vale of Glamorgan 010D,0,0
-The Vale of Glamorgan 004E,0,0
-The Vale of Glamorgan 001A,0,0
-The Vale of Glamorgan 011A,0,0
-The Vale of Glamorgan 011B,0,0
-The Vale of Glamorgan 014A,0,0
-The Vale of Glamorgan 011C,0,0
-The Vale of Glamorgan 011D,0,0
-The Vale of Glamorgan 011E,0,0
-The Vale of Glamorgan 011F,0,0
-The Vale of Glamorgan 003A,0,0
-The Vale of Glamorgan 008A,0,0
-The Vale of Glamorgan 008B,0,0
-The Vale of Glamorgan 005A,0,0
-The Vale of Glamorgan 014B,0,0
-The Vale of Glamorgan 014C,0,0
-The Vale of Glamorgan 003B,0,0
-The Vale of Glamorgan 014D,0,0
-The Vale of Glamorgan 014E,0,0
-The Vale of Glamorgan 014F,0,0
-The Vale of Glamorgan 005B,0,0
-The Vale of Glamorgan 005C,0,0
-The Vale of Glamorgan 005D,0,0
-The Vale of Glamorgan 005E,0,0
-The Vale of Glamorgan 001B,0,0
-The Vale of Glamorgan 001C,0,0
-The Vale of Glamorgan 004F,0,0
-The Vale of Glamorgan 005F,0,0
-The Vale of Glamorgan 008C,0,0
-The Vale of Glamorgan 008D,0,0
-The Vale of Glamorgan 008E,0,0
-The Vale of Glamorgan 008F,0,0
-The Vale of Glamorgan 003C,0,0
-The Vale of Glamorgan 003D,0,0
-Rhondda Cynon Taf 005A,0,0
-Rhondda Cynon Taf 005B,0,0
-Rhondda Cynon Taf 005C,0,0
-Rhondda Cynon Taf 005D,0,0
-Rhondda Cynon Taf 005E,0,0
-Rhondda Cynon Taf 005F,0,0
-Rhondda Cynon Taf 012A,0,0
-Rhondda Cynon Taf 012B,0,0
-Rhondda Cynon Taf 012C,0,0
-Rhondda Cynon Taf 012D,0,0
-Rhondda Cynon Taf 004A,0,0
-Rhondda Cynon Taf 002A,0,0
-Rhondda Cynon Taf 003A,0,0
-Rhondda Cynon Taf 003B,0,0
-Rhondda Cynon Taf 003C,0,0
-Rhondda Cynon Taf 002B,0,0
-Rhondda Cynon Taf 002C,0,0
-Rhondda Cynon Taf 003D,0,0
-Rhondda Cynon Taf 002D,0,0
-Rhondda Cynon Taf 003E,0,0
-Rhondda Cynon Taf 028A,0,0
-Rhondda Cynon Taf 028B,0,0
-Rhondda Cynon Taf 028C,0,0
-Rhondda Cynon Taf 029A,0,0
-Rhondda Cynon Taf 029B,0,0
-Rhondda Cynon Taf 025A,0,0
-Rhondda Cynon Taf 019A,0,0
-Rhondda Cynon Taf 019B,0,0
-Rhondda Cynon Taf 016A,0,0
-Rhondda Cynon Taf 016B,0,0
-Rhondda Cynon Taf 004B,0,0
-Rhondda Cynon Taf 004C,0,0
-Rhondda Cynon Taf 004D,0,0
-Rhondda Cynon Taf 017A,0,0
-Rhondda Cynon Taf 020A,0,0
-Rhondda Cynon Taf 020B,0,0
-Rhondda Cynon Taf 020C,0,0
-Rhondda Cynon Taf 009A,0,0
-Rhondda Cynon Taf 013A,0,0
-Rhondda Cynon Taf 009B,0,0
-Rhondda Cynon Taf 023A,0,0
-Rhondda Cynon Taf 023B,0,0
-Rhondda Cynon Taf 015A,0,0
-Rhondda Cynon Taf 015B,0,0
-Rhondda Cynon Taf 021A,0,0
-Rhondda Cynon Taf 021B,0,0
-Rhondda Cynon Taf 026A,0,0
-Rhondda Cynon Taf 022A,0,0
-Rhondda Cynon Taf 001A,0,0
-Rhondda Cynon Taf 001B,0,0
-Rhondda Cynon Taf 001C,0,0
-Rhondda Cynon Taf 029C,0,0
-Rhondda Cynon Taf 029D,0,0
-Rhondda Cynon Taf 031A,0,0
-Rhondda Cynon Taf 031B,0,0
-Rhondda Cynon Taf 030A,0,0
-Rhondda Cynon Taf 030B,0,0
-Rhondda Cynon Taf 030C,0,0
-Rhondda Cynon Taf 027B,0,0
-Rhondda Cynon Taf 027C,0,0
-Rhondda Cynon Taf 027D,0,0
-Rhondda Cynon Taf 027E,0,0
-Rhondda Cynon Taf 014A,0,0
-Rhondda Cynon Taf 014B,0,0
-Rhondda Cynon Taf 009C,0,0
-Rhondda Cynon Taf 009D,0,0
-Rhondda Cynon Taf 006A,0,0
-Rhondda Cynon Taf 006B,0,0
-Rhondda Cynon Taf 006C,0,0
-Rhondda Cynon Taf 006D,0,0
-Rhondda Cynon Taf 006E,0,0
-Rhondda Cynon Taf 008A,0,0
-Rhondda Cynon Taf 008B,0,0
-Rhondda Cynon Taf 008C,0,0
-Rhondda Cynon Taf 008D,0,0
-Rhondda Cynon Taf 011A,0,0
-Rhondda Cynon Taf 011B,0,0
-Rhondda Cynon Taf 011C,0,0
-Rhondda Cynon Taf 011D,0,0
-Rhondda Cynon Taf 018A,0,0
-Rhondda Cynon Taf 018B,0,0
-Rhondda Cynon Taf 018C,0,0
-Rhondda Cynon Taf 018D,0,0
-Rhondda Cynon Taf 001D,0,0
-Rhondda Cynon Taf 001E,0,0
-Rhondda Cynon Taf 031C,0,0
-Rhondda Cynon Taf 031D,0,0
-Rhondda Cynon Taf 031E,0,0
-Rhondda Cynon Taf 031F,0,0
-Rhondda Cynon Taf 021C,0,0
-Rhondda Cynon Taf 021D,0,0
-Rhondda Cynon Taf 017B,0,0
-Rhondda Cynon Taf 017C,0,0
-Rhondda Cynon Taf 017D,0,0
-Rhondda Cynon Taf 020D,0,0
-Rhondda Cynon Taf 001F,0,0
-Rhondda Cynon Taf 021E,0,0
-Rhondda Cynon Taf 021F,0,0
-Rhondda Cynon Taf 021G,0,0
-Rhondda Cynon Taf 022B,0,0
-Rhondda Cynon Taf 022C,0,0
-Rhondda Cynon Taf 026B,0,0
-Rhondda Cynon Taf 026C,0,0
-Rhondda Cynon Taf 026D,0,0
-Rhondda Cynon Taf 030D,0,0
-Rhondda Cynon Taf 030E,0,0
-Rhondda Cynon Taf 025B,0,0
-Rhondda Cynon Taf 025C,0,0
-Rhondda Cynon Taf 025D,0,0
-Rhondda Cynon Taf 016C,0,0
-Rhondda Cynon Taf 016D,0,0
-Rhondda Cynon Taf 024A,0,0
-Rhondda Cynon Taf 024B,0,0
-Rhondda Cynon Taf 024C,0,0
-Rhondda Cynon Taf 024D,0,0
-Rhondda Cynon Taf 023C,0,0
-Rhondda Cynon Taf 023E,0,0
-Rhondda Cynon Taf 019C,0,0
-Rhondda Cynon Taf 019D,0,0
-Rhondda Cynon Taf 019E,0,0
-Rhondda Cynon Taf 018E,0,0
-Rhondda Cynon Taf 014C,0,0
-Rhondda Cynon Taf 018F,0,0
-Rhondda Cynon Taf 022D,0,0
-Rhondda Cynon Taf 022E,0,0
-Rhondda Cynon Taf 022F,0,0
-Rhondda Cynon Taf 007A,0,0
-Rhondda Cynon Taf 007B,0,0
-Rhondda Cynon Taf 007C,0,0
-Rhondda Cynon Taf 007D,0,0
-Rhondda Cynon Taf 010A,0,0
-Rhondda Cynon Taf 010B,0,0
-Rhondda Cynon Taf 010C,0,0
-Rhondda Cynon Taf 010D,0,0
-Rhondda Cynon Taf 010E,0,0
-Rhondda Cynon Taf 013B,0,0
-Rhondda Cynon Taf 013C,0,0
-Rhondda Cynon Taf 013D,0,0
-Rhondda Cynon Taf 028D,0,0
-Rhondda Cynon Taf 028E,0,0
-Rhondda Cynon Taf 028F,0,0
-Rhondda Cynon Taf 017E,0,0
-Rhondda Cynon Taf 017F,0,0
-Rhondda Cynon Taf 015C,0,0
-Rhondda Cynon Taf 015D,0,0
-Rhondda Cynon Taf 015E,0,0
-Rhondda Cynon Taf 014D,0,0
-Rhondda Cynon Taf 014E,0,0
-Rhondda Cynon Taf 014F,0,0
-Rhondda Cynon Taf 014G,0,0
-Merthyr Tydfil 006A,0,0
-Merthyr Tydfil 007A,0,0
-Merthyr Tydfil 003A,0,0
-Merthyr Tydfil 004A,0,0
-Merthyr Tydfil 004B,0,0
-Merthyr Tydfil 003B,0,0
-Merthyr Tydfil 002A,0,0
-Merthyr Tydfil 002B,0,0
-Merthyr Tydfil 002C,0,0
-Merthyr Tydfil 002D,0,0
-Merthyr Tydfil 008A,0,0
-Merthyr Tydfil 008B,0,0
-Merthyr Tydfil 008C,0,0
-Merthyr Tydfil 006B,0,0
-Merthyr Tydfil 006C,0,0
-Merthyr Tydfil 006D,0,0
-Merthyr Tydfil 003C,0,0
-Merthyr Tydfil 003D,0,0
-Merthyr Tydfil 004C,0,0
-Merthyr Tydfil 008D,0,0
-Merthyr Tydfil 008E,0,0
-Merthyr Tydfil 002E,0,0
-Merthyr Tydfil 002F,0,0
-Merthyr Tydfil 006E,0,0
-Merthyr Tydfil 006F,0,0
-Merthyr Tydfil 005A,0,0
-Merthyr Tydfil 004D,0,0
-Merthyr Tydfil 005B,0,0
-Merthyr Tydfil 005C,0,0
-Merthyr Tydfil 005D,0,0
-Merthyr Tydfil 007B,0,0
-Merthyr Tydfil 007C,0,0
-Merthyr Tydfil 007D,0,0
-Merthyr Tydfil 007E,0,0
-Merthyr Tydfil 003E,0,0
-Caerphilly 003A,0,0
-Caerphilly 003B,0,0
-Caerphilly 014A,0,0
-Caerphilly 014B,0,0
-Caerphilly 014C,0,0
-Caerphilly 018A,0,0
-Caerphilly 018B,0,0
-Caerphilly 018C,0,0
-Caerphilly 018D,0,0
-Caerphilly 005A,0,0
-Caerphilly 005B,0,0
-Caerphilly 004A,0,0
-Caerphilly 004B,0,0
-Caerphilly 004C,0,0
-Caerphilly 004D,0,0
-Caerphilly 020A,0,0
-Caerphilly 020B,0,0
-Caerphilly 021A,0,0
-Caerphilly 021B,0,0
-Caerphilly 020C,0,0
-Caerphilly 021C,0,0
-Caerphilly 020D,0,0
-Caerphilly 005C,0,0
-Caerphilly 009A,0,0
-Caerphilly 009B,0,0
-Caerphilly 009C,0,0
-Caerphilly 005D,0,0
-Caerphilly 007A,0,0
-Caerphilly 007B,0,0
-Caerphilly 014D,0,0
-Caerphilly 015A,0,0
-Caerphilly 006A,0,0
-Caerphilly 006B,0,0
-Caerphilly 006C,0,0
-Caerphilly 006D,0,0
-Caerphilly 002A,0,0
-Caerphilly 002B,0,0
-Caerphilly 003C,0,0
-Caerphilly 012A,0,0
-Caerphilly 012B,0,0
-Caerphilly 012C,0,0
-Caerphilly 019A,0,0
-Caerphilly 019B,0,0
-Caerphilly 019C,0,0
-Caerphilly 012D,0,0
-Caerphilly 023A,0,0
-Caerphilly 022A,0,0
-Caerphilly 022B,0,0
-Caerphilly 022C,0,0
-Caerphilly 001A,0,0
-Caerphilly 001B,0,0
-Caerphilly 001C,0,0
-Caerphilly 013A,0,0
-Caerphilly 013B,0,0
-Caerphilly 013C,0,0
-Caerphilly 010A,0,0
-Caerphilly 010B,0,0
-Caerphilly 010C,0,0
-Caerphilly 010D,0,0
-Caerphilly 002C,0,0
-Caerphilly 002D,0,0
-Caerphilly 002E,0,0
-Caerphilly 007C,0,0
-Caerphilly 007D,0,0
-Caerphilly 007E,0,0
-Caerphilly 006E,0,0
-Caerphilly 006F,0,0
-Caerphilly 009D,0,0
-Caerphilly 019D,0,0
-Caerphilly 023B,0,0
-Caerphilly 023C,0,0
-Caerphilly 023D,0,0
-Caerphilly 019E,0,0
-Caerphilly 024A,0,0
-Caerphilly 023E,0,0
-Caerphilly 019F,0,0
-Caerphilly 011A,0,0
-Caerphilly 011B,0,0
-Caerphilly 011C,0,0
-Caerphilly 011D,0,0
-Caerphilly 011E,0,0
-Caerphilly 001D,0,0
-Caerphilly 016A,0,0
-Caerphilly 016B,0,0
-Caerphilly 016C,0,0
-Caerphilly 016D,0,0
-Caerphilly 017A,0,0
-Caerphilly 017B,0,0
-Caerphilly 017C,0,0
-Caerphilly 008A,0,0
-Caerphilly 008B,0,0
-Caerphilly 008C,0,0
-Caerphilly 008D,0,0
-Caerphilly 008E,0,0
-Caerphilly 021D,0,0
-Caerphilly 022D,0,0
-Caerphilly 022E,0,0
-Caerphilly 022F,0,0
-Caerphilly 024B,0,0
-Caerphilly 024C,0,0
-Caerphilly 024D,0,0
-Caerphilly 024E,0,0
-Caerphilly 024F,0,0
-Caerphilly 001E,0,0
-Caerphilly 001F,0,0
-Caerphilly 015B,0,0
-Caerphilly 015C,0,0
-Caerphilly 013D,0,0
-Caerphilly 013E,0,0
-Caerphilly 013F,0,0
-Blaenau Gwent 008A,0,0
-Blaenau Gwent 008B,0,0
-Blaenau Gwent 008C,0,0
-Blaenau Gwent 004A,0,0
-Blaenau Gwent 004B,0,0
-Blaenau Gwent 001A,0,0
-Blaenau Gwent 001B,0,0
-Blaenau Gwent 001C,0,0
-Blaenau Gwent 005A,0,0
-Blaenau Gwent 005B,0,0
-Blaenau Gwent 005C,0,0
-Blaenau Gwent 002A,0,0
-Blaenau Gwent 002B,0,0
-Blaenau Gwent 002C,0,0
-Blaenau Gwent 002D,0,0
-Blaenau Gwent 007A,0,0
-Blaenau Gwent 007B,0,0
-Blaenau Gwent 007C,0,0
-Blaenau Gwent 008D,0,0
-Blaenau Gwent 008E,0,0
-Blaenau Gwent 008F,0,0
-Blaenau Gwent 004C,0,0
-Blaenau Gwent 004D,0,0
-Blaenau Gwent 004E,0,0
-Blaenau Gwent 007D,0,0
-Blaenau Gwent 007E,0,0
-Blaenau Gwent 007F,0,0
-Blaenau Gwent 006A,0,0
-Blaenau Gwent 006B,0,0
-Blaenau Gwent 009A,0,0
-Blaenau Gwent 009B,0,0
-Blaenau Gwent 009C,0,0
-Blaenau Gwent 005D,0,0
-Blaenau Gwent 005E,0,0
-Blaenau Gwent 005F,0,0
-Blaenau Gwent 001D,0,0
-Blaenau Gwent 001E,0,0
-Blaenau Gwent 003A,0,0
-Blaenau Gwent 003B,0,0
-Blaenau Gwent 003C,0,0
-Blaenau Gwent 003D,0,0
-Blaenau Gwent 009D,0,0
-Blaenau Gwent 009E,0,0
-Blaenau Gwent 006C,0,0
-Blaenau Gwent 006D,0,0
-Blaenau Gwent 003E,0,0
-Blaenau Gwent 006E,0,0
-Torfaen 002A,0,0
-Torfaen 002B,0,0
-Torfaen 002C,0,0
-Torfaen 002D,0,0
-Torfaen 002E,0,0
-Torfaen 001A,0,0
-Torfaen 001B,0,0
-Torfaen 001C,0,0
-Torfaen 001D,0,0
-Torfaen 004A,0,0
-Torfaen 012A,0,0
-Torfaen 008A,0,0
-Torfaen 008B,0,0
-Torfaen 008C,0,0
-Torfaen 004B,0,0
-Torfaen 011A,0,0
-Torfaen 011B,0,0
-Torfaen 011C,0,0
-Torfaen 011D,0,0
-Torfaen 009A,0,0
-Torfaen 011E,0,0
-Torfaen 009B,0,0
-Torfaen 013A,0,0
-Torfaen 013B,0,0
-Torfaen 010A,0,0
-Torfaen 008D,0,0
-Torfaen 013C,0,0
-Torfaen 013D,0,0
-Torfaen 005A,0,0
-Torfaen 005B,0,0
-Torfaen 005C,0,0
-Torfaen 005D,0,0
-Torfaen 006A,0,0
-Torfaen 006B,0,0
-Torfaen 006C,0,0
-Torfaen 006D,0,0
-Torfaen 006E,0,0
-Torfaen 007A,0,0
-Torfaen 007B,0,0
-Torfaen 007C,0,0
-Torfaen 007D,0,0
-Torfaen 004C,0,0
-Torfaen 004D,0,0
-Torfaen 003A,0,0
-Torfaen 010B,0,0
-Torfaen 010C,0,0
-Torfaen 010D,0,0
-Torfaen 003B,0,0
-Torfaen 003C,0,0
-Torfaen 003D,0,0
-Torfaen 010E,0,0
-Torfaen 012B,0,0
-Torfaen 012C,0,0
-Torfaen 012D,0,0
-Torfaen 009C,0,0
-Torfaen 007E,0,0
-Torfaen 009D,0,0
-Torfaen 009E,0,0
-Torfaen 004E,0,0
-Torfaen 004F,0,0
-Monmouthshire 009A,0,0
-Monmouthshire 009B,0,0
-Monmouthshire 001A,0,0
-Monmouthshire 002A,0,0
-Monmouthshire 001B,0,0
-Monmouthshire 007A,0,0
-Monmouthshire 010C,0,0
-Monmouthshire 004A,0,0
-Monmouthshire 004B,0,0
-Monmouthshire 004C,0,0
-Monmouthshire 006A,0,0
-Monmouthshire 006B,0,0
-Monmouthshire 001C,0,0
-Monmouthshire 002C,0,0
-Monmouthshire 008A,0,0
-Monmouthshire 006C,0,0
-Monmouthshire 003A,0,0
-Monmouthshire 003B,0,0
-Monmouthshire 003C,0,0
-Monmouthshire 003D,0,0
-Monmouthshire 006D,0,0
-Monmouthshire 005A,0,0
-Monmouthshire 005B,0,0
-Monmouthshire 005C,0,0
-Monmouthshire 003E,0,0
-Monmouthshire 001D,0,0
-Monmouthshire 011A,0,0
-Monmouthshire 011B,0,0
-Monmouthshire 011C,0,0
-Monmouthshire 005D,0,0
-Monmouthshire 004D,0,0
-Monmouthshire 004E,0,0
-Monmouthshire 009C,0,0
-Monmouthshire 001E,0,0
-Monmouthshire 002E,0,0
-Monmouthshire 005E,0,0
-Monmouthshire 011D,0,0
-Monmouthshire 007B,0,0
-Monmouthshire 008B,0,0
-Monmouthshire 007C,0,0
-Monmouthshire 007D,0,0
-Monmouthshire 008C,0,0
-Monmouthshire 010D,0,0
-Monmouthshire 010E,0,0
-Monmouthshire 009D,0,0
-Monmouthshire 011E,0,0
-Monmouthshire 008D,0,0
-Monmouthshire 008E,0,0
-Monmouthshire 007E,0,0
-Monmouthshire 007F,0,0
-Monmouthshire 006E,0,0
-Monmouthshire 006F,0,0
-Monmouthshire 010F,0,0
-Monmouthshire 004F,0,0
-Newport 012A,0,0
-Newport 006A,0,0
-Newport 012B,0,0
-Newport 012C,0,0
-Newport 012D,0,0
-Newport 014A,0,0
-Newport 008A,0,0
-Newport 015A,0,0
-Newport 008B,0,0
-Newport 015B,0,0
-Newport 015C,0,0
-Newport 011A,0,0
-Newport 011B,0,0
-Newport 011C,0,0
-Newport 005A,0,0
-Newport 005B,0,0
-Newport 005C,0,0
-Newport 003A,0,0
-Newport 003B,0,0
-Newport 003C,0,0
-Newport 003D,0,0
-Newport 003E,0,0
-Newport 003F,0,0
-Newport 001A,0,0
-Newport 001B,0,0
-Newport 001C,0,0
-Newport 001D,0,0
-Newport 001E,0,0
-Newport 001F,0,0
-Newport 017A,0,0
-Newport 017B,0,0
-Newport 017C,0,0
-Newport 017D,0,0
-Newport 019A,0,0
-Newport 019B,0,0
-Newport 016A,0,0
-Newport 020A,0,0
-Newport 016B,0,0
-Newport 016C,0,0
-Newport 004A,0,0
-Newport 004B,0,0
-Newport 004C,0,0
-Newport 013A,0,0
-Newport 013B,0,0
-Newport 013C,0,0
-Newport 015D,0,0
-Newport 015E,0,0
-Newport 015F,0,0
-Newport 015G,0,0
-Newport 004D,0,0
-Newport 004E,0,0
-Newport 002A,0,0
-Newport 002B,0,0
-Newport 002C,0,0
-Newport 002D,0,0
-Newport 002E,0,0
-Newport 020C,0,0
-Newport 020D,0,0
-Newport 018A,0,0
-Newport 018B,0,0
-Newport 018C,0,0
-Newport 018D,0,0
-Newport 008C,0,0
-Newport 010A,0,0
-Newport 008D,0,0
-Newport 010B,0,0
-Newport 010C,0,0
-Newport 010D,0,0
-Newport 009A,0,0
-Newport 009B,0,0
-Newport 016D,0,0
-Newport 009C,0,0
-Newport 009D,0,0
-Newport 009E,0,0
-Newport 007A,0,0
-Newport 007B,0,0
-Newport 007C,0,0
-Newport 005D,0,0
-Newport 007D,0,0
-Newport 007E,0,0
-Newport 006B,0,0
-Newport 006C,0,0
-Newport 006D,0,0
-Newport 006E,0,0
-Newport 014B,0,0
-Newport 014C,0,0
-Newport 014D,0,0
-Newport 019C,0,0
-Newport 019D,0,0
-Newport 013D,0,0
-Newport 011D,0,0
-Newport 011E,0,0
-Newport 013E,0,0
-Cardiff 036A,0,0
-Cardiff 036B,0,0
-Cardiff 036C,0,0
-Cardiff 036D,0,0
-Cardiff 036E,0,0
-Cardiff 049A,0,0
-Cardiff 045A,0,0
-Cardiff 045B,0,0
-Cardiff 041A,0,0
-Cardiff 045C,0,0
-Cardiff 041B,0,0
-Cardiff 041C,0,0
-Cardiff 045D,0,0
-Cardiff 040A,0,0
-Cardiff 040B,0,0
-Cardiff 040C,0,0
-Cardiff 040D,0,0
-Cardiff 040E,0,0
-Cardiff 035A,0,0
-Cardiff 035B,0,0
-Cardiff 035C,0,0
-Cardiff 035D,0,0
-Cardiff 028A,0,0
-Cardiff 028B,0,0
-Cardiff 028C,0,0
-Cardiff 032A,0,0
-Cardiff 028D,0,0
-Cardiff 032C,0,0
-Cardiff 032D,0,0
-Cardiff 028E,0,0
-Cardiff 014A,0,0
-Cardiff 014B,0,0
-Cardiff 014C,0,0
-Cardiff 008A,0,0
-Cardiff 008B,0,0
-Cardiff 019A,0,0
-Cardiff 019B,0,0
-Cardiff 019C,0,0
-Cardiff 019D,0,0
-Cardiff 008C,0,0
-Cardiff 039A,0,0
-Cardiff 039B,0,0
-Cardiff 039C,0,0
-Cardiff 039D,0,0
-Cardiff 039E,0,0
-Cardiff 043A,0,0
-Cardiff 043B,0,0
-Cardiff 043C,0,0
-Cardiff 043D,0,0
-Cardiff 041D,0,0
-Cardiff 027A,0,0
-Cardiff 027B,0,0
-Cardiff 027C,0,0
-Cardiff 031A,0,0
-Cardiff 027D,0,0
-Cardiff 031B,0,0
-Cardiff 031C,0,0
-Cardiff 031D,0,0
-Cardiff 025A,0,0
-Cardiff 025B,0,0
-Cardiff 025C,0,0
-Cardiff 025D,0,0
-Cardiff 046A,0,0
-Cardiff 046B,0,0
-Cardiff 046C,0,0
-Cardiff 046D,0,0
-Cardiff 044A,0,0
-Cardiff 044B,0,0
-Cardiff 044C,0,0
-Cardiff 044D,0,0
-Cardiff 044E,0,0
-Cardiff 018A,0,0
-Cardiff 018B,0,0
-Cardiff 018C,0,0
-Cardiff 021A,0,0
-Cardiff 012A,0,0
-Cardiff 018D,0,0
-Cardiff 021B,0,0
-Cardiff 021C,0,0
-Cardiff 001A,0,0
-Cardiff 001B,0,0
-Cardiff 026A,0,0
-Cardiff 026B,0,0
-Cardiff 026C,0,0
-Cardiff 026D,0,0
-Cardiff 026E,0,0
-Cardiff 026F,0,0
-Cardiff 023A,0,0
-Cardiff 023B,0,0
-Cardiff 023C,0,0
-Cardiff 023D,0,0
-Cardiff 023E,0,0
-Cardiff 023F,0,0
-Cardiff 005A,0,0
-Cardiff 005B,0,0
-Cardiff 002A,0,0
-Cardiff 001C,0,0
-Cardiff 002B,0,0
-Cardiff 002C,0,0
-Cardiff 005C,0,0
-Cardiff 002D,0,0
-Cardiff 001D,0,0
-Cardiff 005D,0,0
-Cardiff 007A,0,0
-Cardiff 015A,0,0
-Cardiff 015B,0,0
-Cardiff 015C,0,0
-Cardiff 015D,0,0
-Cardiff 007B,0,0
-Cardiff 007C,0,0
-Cardiff 017A,0,0
-Cardiff 017B,0,0
-Cardiff 009A,0,0
-Cardiff 017C,0,0
-Cardiff 017D,0,0
-Cardiff 017E,0,0
-Cardiff 008D,0,0
-Cardiff 009B,0,0
-Cardiff 009C,0,0
-Cardiff 009D,0,0
-Cardiff 014D,0,0
-Cardiff 006A,0,0
-Cardiff 024A,0,0
-Cardiff 029A,0,0
-Cardiff 029B,0,0
-Cardiff 029C,0,0
-Cardiff 029D,0,0
-Cardiff 024B,0,0
-Cardiff 024C,0,0
-Cardiff 024D,0,0
-Cardiff 033A,0,0
-Cardiff 033B,0,0
-Cardiff 030A,0,0
-Cardiff 033C,0,0
-Cardiff 033D,0,0
-Cardiff 033E,0,0
-Cardiff 033F,0,0
-Cardiff 030B,0,0
-Cardiff 030C,0,0
-Cardiff 030D,0,0
-Cardiff 030E,0,0
-Cardiff 007D,0,0
-Cardiff 003A,0,0
-Cardiff 003B,0,0
-Cardiff 003C,0,0
-Cardiff 003D,0,0
-Cardiff 006C,0,0
-Cardiff 006D,0,0
-Cardiff 012B,0,0
-Cardiff 004A,0,0
-Cardiff 012C,0,0
-Cardiff 012D,0,0
-Cardiff 004B,0,0
-Cardiff 004C,0,0
-Cardiff 004D,0,0
-Cardiff 042A,0,0
-Cardiff 042B,0,0
-Cardiff 042C,0,0
-Cardiff 034A,0,0
-Cardiff 034B,0,0
-Cardiff 034C,0,0
-Cardiff 034D,0,0
-Cardiff 042D,0,0
-Cardiff 022A,0,0
-Cardiff 022B,0,0
-Cardiff 022C,0,0
-Cardiff 016A,0,0
-Cardiff 016B,0,0
-Cardiff 022D,0,0
-Cardiff 038A,0,0
-Cardiff 037A,0,0
-Cardiff 037B,0,0
-Cardiff 038B,0,0
-Cardiff 038C,0,0
-Cardiff 038D,0,0
-Cardiff 037C,0,0
-Cardiff 037D,0,0
-Cardiff 011A,0,0
-Cardiff 011B,0,0
-Cardiff 013A,0,0
-Cardiff 013B,0,0
-Cardiff 013C,0,0
-Cardiff 011C,0,0
-Cardiff 016C,0,0
-Cardiff 013D,0,0
-Cardiff 011D,0,0
-Cardiff 016D,0,0
-Cardiff 020A,0,0
-Cardiff 010A,0,0
-Cardiff 020B,0,0
-Cardiff 021D,0,0
-Cardiff 020C,0,0
-Cardiff 020D,0,0
-Cardiff 010B,0,0
-Cardiff 010C,0,0
-Cardiff 010D,0,0
-Cardiff 020E,0,0
-Powys 020D,0,0
-Merthyr Tydfil 008F,0,0
-Powys 021F,0,0
-Neath Port Talbot 020G,0,0
-Powys 017F,0,0
-Powys 017G,0,0
-Powys 018F,0,0
-Powys 018G,0,0
-Powys 018H,0,0
-Powys 001F,0,0
-Powys 001G,0,0
-Monmouthshire 010G,0,0
-Monmouthshire 002F,0,0
-The Vale of Glamorgan 012G,0,0
-The Vale of Glamorgan 012H,0,0
-Newport 020E,0,0
-Newport 020F,0,0
-Rhondda Cynon Taf 023F,0,0
-Rhondda Cynon Taf 027F,0,0
-Rhondda Cynon Taf 027G,0,0
-Rhondda Cynon Taf 023G,0,0
-Bridgend 017E,0,0
-Bridgend 017F,0,0
-Bridgend 017G,0,0
-Bridgend 017H,0,0
-Cardiff 032E,0,0
-Carmarthenshire 026G,0,0
-Carmarthenshire 026H,0,0
-Carmarthenshire 023F,0,0
-Conwy 011F,0,0
-Conwy 010G,0,0
-Conwy 010H,0,0
-Wrexham 012F,0,0
-Wrexham 019F,0,0
-Wrexham 012G,0,0
-Gwynedd 014E,0,0
-Gwynedd 017F,0,0
-Ceredigion 002F,0,0
-Ceredigion 003E,0,0
-Ceredigion 003F,0,0
-Ceredigion 001F,0,0
-Swansea 025E,0,0
-Cardiff 032F,0,0
-Cardiff 048A,0,0
-Cardiff 032G,0,0
-Cardiff 049B,0,0
-Cardiff 048B,0,0
-Cardiff 048C,0,0
-Cardiff 048D,0,0
-Cardiff 049C,0,0
-Cardiff 048E,0,0
-Cardiff 006E,0,0
-Cardiff 005F,0,0
-Cardiff 049D,0,0
-Cardiff 049E,0,0
-Cardiff 049F,0,0
-Cardiff 005G,0,0
-Cardiff 006F,0,0
-Swansea 025F,0,0
-Swansea 023E,0,0
-Swansea 025G,0,0
-Swansea 025H,0,0
+Isle of Anglesey 007A,0.1,0
+Isle of Anglesey 007B,0.1,0
+Isle of Anglesey 001A,0.1,0
+Isle of Anglesey 001B,0.1,0
+Isle of Anglesey 005A,0.1,0
+Isle of Anglesey 006A,0.1,0
+Isle of Anglesey 009A,0.1,0
+Isle of Anglesey 008A,0.1,0
+Isle of Anglesey 007C,0.1,0
+Isle of Anglesey 002A,0.1,0
+Isle of Anglesey 008B,0.1,0
+Isle of Anglesey 006B,0.1,0
+Isle of Anglesey 005B,0.1,0
+Isle of Anglesey 006C,0.1,0
+Isle of Anglesey 008C,0.1,0
+Isle of Anglesey 003A,0.1,0
+Isle of Anglesey 003B,0.1,0
+Isle of Anglesey 001C,0.1,0
+Isle of Anglesey 005C,0.1,0
+Isle of Anglesey 002B,0.1,0
+Isle of Anglesey 002C,0.1,0
+Isle of Anglesey 004A,0.1,0
+Isle of Anglesey 007D,0.1,0
+Isle of Anglesey 007E,0.1,0
+Isle of Anglesey 009B,0.1,0
+Isle of Anglesey 005D,0.1,0
+Isle of Anglesey 009C,0.1,0
+Isle of Anglesey 001D,0.1,0
+Isle of Anglesey 003C,0.1,0
+Isle of Anglesey 003D,0.1,0
+Isle of Anglesey 001E,0.1,0
+Isle of Anglesey 002D,0.1,0
+Isle of Anglesey 003E,0.1,0
+Isle of Anglesey 004B,0.1,0
+Isle of Anglesey 005E,0.1,0
+Isle of Anglesey 003F,0.1,0
+Isle of Anglesey 003G,0.1,0
+Isle of Anglesey 009D,0.1,0
+Isle of Anglesey 004C,0.1,0
+Isle of Anglesey 004D,0.1,0
+Isle of Anglesey 006D,0.1,0
+Isle of Anglesey 008D,0.1,0
+Isle of Anglesey 004E,0.1,0
+Isle of Anglesey 004F,0.1,0
+Gwynedd 011A,0.1,0
+Gwynedd 016A,0.1,0
+Gwynedd 016B,0.1,0
+Gwynedd 003A,0.1,0
+Gwynedd 015A,0.1,0
+Gwynedd 004A,0.1,0
+Gwynedd 004B,0.1,0
+Gwynedd 007A,0.1,0
+Gwynedd 009A,0.1,0
+Gwynedd 016C,0.1,0
+Gwynedd 006A,0.1,0
+Gwynedd 015B,0.1,0
+Gwynedd 011B,0.1,0
+Gwynedd 001A,0.1,0
+Gwynedd 005A,0.1,0
+Gwynedd 002A,0.1,0
+Gwynedd 009B,0.1,0
+Gwynedd 010A,0.1,0
+Gwynedd 016D,0.1,0
+Gwynedd 016E,0.1,0
+Gwynedd 013A,0.1,0
+Gwynedd 012A,0.1,0
+Gwynedd 003B,0.1,0
+Gwynedd 002B,0.1,0
+Gwynedd 008A,0.1,0
+Gwynedd 013B,0.1,0
+Gwynedd 002C,0.1,0
+Gwynedd 001B,0.1,0
+Gwynedd 001C,0.1,0
+Gwynedd 011C,0.1,0
+Gwynedd 013C,0.1,0
+Gwynedd 014C,0.1,0
+Gwynedd 005B,0.1,0
+Gwynedd 015C,0.1,0
+Gwynedd 015D,0.1,0
+Gwynedd 014D,0.1,0
+Gwynedd 017C,0.1,0
+Gwynedd 008B,0.1,0
+Gwynedd 004C,0.1,0
+Gwynedd 007B,0.1,0
+Gwynedd 011D,0.1,0
+Gwynedd 002D,0.1,0
+Gwynedd 001D,0.1,0
+Gwynedd 001E,0.1,0
+Gwynedd 006B,0.1,0
+Gwynedd 012B,0.1,0
+Gwynedd 012C,0.1,0
+Gwynedd 003C,0.1,0
+Gwynedd 003D,0.1,0
+Gwynedd 006C,0.1,0
+Gwynedd 005C,0.1,0
+Gwynedd 010B,0.1,0
+Gwynedd 013D,0.1,0
+Gwynedd 002E,0.1,0
+Gwynedd 005D,0.1,0
+Gwynedd 008C,0.1,0
+Gwynedd 010C,0.1,0
+Gwynedd 010D,0.1,0
+Gwynedd 010E,0.1,0
+Gwynedd 012D,0.1,0
+Gwynedd 012E,0.1,0
+Gwynedd 006D,0.1,0
+Gwynedd 007C,0.1,0
+Gwynedd 008D,0.1,0
+Gwynedd 009C,0.1,0
+Gwynedd 009D,0.1,0
+Gwynedd 003E,0.1,0
+Gwynedd 017D,0.1,0
+Gwynedd 017E,0.1,0
+Gwynedd 007D,0.1,0
+Gwynedd 004D,0.1,0
+Conwy 015A,0.1,0
+Conwy 014A,0.1,0
+Conwy 013A,0.1,0
+Conwy 012A,0.1,0
+Conwy 013B,0.1,0
+Conwy 009A,0.1,0
+Conwy 009B,0.1,0
+Conwy 009C,0.1,0
+Conwy 012B,0.1,0
+Conwy 012C,0.1,0
+Conwy 012D,0.1,0
+Conwy 001A,0.1,0
+Conwy 002A,0.1,0
+Conwy 015B,0.1,0
+Conwy 006A,0.1,0
+Conwy 006B,0.1,0
+Conwy 015C,0.1,0
+Conwy 008A,0.1,0
+Conwy 007A,0.1,0
+Conwy 010B,0.1,0
+Conwy 010C,0.1,0
+Conwy 010D,0.1,0
+Conwy 007B,0.1,0
+Conwy 007C,0.1,0
+Conwy 008B,0.1,0
+Conwy 001B,0.1,0
+Conwy 001C,0.1,0
+Conwy 015D,0.1,0
+Conwy 005A,0.1,0
+Conwy 005B,0.1,0
+Conwy 005C,0.1,0
+Conwy 005D,0.1,0
+Conwy 009D,0.1,0
+Conwy 003A,0.1,0
+Conwy 004A,0.1,0
+Conwy 004B,0.1,0
+Conwy 004C,0.1,0
+Conwy 004D,0.1,0
+Conwy 014B,0.1,0
+Conwy 014C,0.1,0
+Conwy 009E,0.1,0
+Conwy 009F,0.1,0
+Conwy 006C,0.1,0
+Conwy 006D,0.1,0
+Conwy 011C,0.1,0
+Conwy 002B,0.1,0
+Conwy 001D,0.1,0
+Conwy 013C,0.1,0
+Conwy 013D,0.1,0
+Conwy 013E,0.1,0
+Conwy 003B,0.1,0
+Conwy 003C,0.1,0
+Conwy 003D,0.1,0
+Conwy 011D,0.1,0
+Conwy 011E,0.1,0
+Conwy 010E,0.1,0
+Conwy 010F,0.1,0
+Conwy 008C,0.1,0
+Conwy 008D,0.1,0
+Conwy 007D,0.1,0
+Conwy 008E,0.1,0
+Conwy 005E,0.1,0
+Conwy 015E,0.1,0
+Conwy 001E,0.1,0
+Conwy 002C,0.1,0
+Conwy 002D,0.1,0
+Conwy 015F,0.1,0
+Conwy 014D,0.1,0
+Denbighshire 009A,0.1,0
+Denbighshire 016A,0.1,0
+Denbighshire 015A,0.1,0
+Denbighshire 011A,0.1,0
+Denbighshire 012A,0.1,0
+Denbighshire 012B,0.1,0
+Denbighshire 012C,0.1,0
+Denbighshire 011B,0.1,0
+Denbighshire 011C,0.1,0
+Denbighshire 008A,0.1,0
+Denbighshire 008B,0.1,0
+Denbighshire 015B,0.1,0
+Denbighshire 013A,0.1,0
+Denbighshire 013B,0.1,0
+Denbighshire 016B,0.1,0
+Denbighshire 013C,0.1,0
+Denbighshire 015C,0.1,0
+Denbighshire 016C,0.1,0
+Denbighshire 016D,0.1,0
+Denbighshire 016E,0.1,0
+Denbighshire 012D,0.1,0
+Denbighshire 003A,0.1,0
+Denbighshire 002A,0.1,0
+Denbighshire 002B,0.1,0
+Denbighshire 002C,0.1,0
+Denbighshire 002D,0.1,0
+Denbighshire 008C,0.1,0
+Denbighshire 001A,0.1,0
+Denbighshire 001B,0.1,0
+Denbighshire 001C,0.1,0
+Denbighshire 003B,0.1,0
+Denbighshire 003C,0.1,0
+Denbighshire 009B,0.1,0
+Denbighshire 009C,0.1,0
+Denbighshire 009D,0.1,0
+Denbighshire 004A,0.1,0
+Denbighshire 004B,0.1,0
+Denbighshire 004C,0.1,0
+Denbighshire 017E,0.1,0
+Denbighshire 017F,0.1,0
+Denbighshire 017A,0.1,0
+Denbighshire 017B,0.1,0
+Denbighshire 017C,0.1,0
+Denbighshire 017G,0.1,0
+Denbighshire 017D,0.1,0
+Denbighshire 006A,0.1,0
+Denbighshire 006B,0.1,0
+Denbighshire 006C,0.1,0
+Denbighshire 004D,0.1,0
+Denbighshire 004E,0.1,0
+Denbighshire 004F,0.1,0
+Denbighshire 014A,0.1,0
+Denbighshire 014B,0.1,0
+Denbighshire 014C,0.1,0
+Denbighshire 010A,0.1,0
+Denbighshire 010B,0.1,0
+Denbighshire 010C,0.1,0
+Denbighshire 008D,0.1,0
+Flintshire 014A,0.1,0
+Flintshire 014B,0.1,0
+Flintshire 013A,0.1,0
+Flintshire 010A,0.1,0
+Flintshire 003A,0.1,0
+Flintshire 003B,0.1,0
+Flintshire 015A,0.1,0
+Flintshire 015B,0.1,0
+Flintshire 015C,0.1,0
+Flintshire 006A,0.1,0
+Flintshire 017A,0.1,0
+Flintshire 017B,0.1,0
+Flintshire 014C,0.1,0
+Flintshire 017C,0.1,0
+Flintshire 017D,0.1,0
+Flintshire 012A,0.1,0
+Flintshire 012B,0.1,0
+Flintshire 017E,0.1,0
+Flintshire 017F,0.1,0
+Flintshire 013B,0.1,0
+Flintshire 020A,0.1,0
+Flintshire 006B,0.1,0
+Flintshire 006C,0.1,0
+Flintshire 006D,0.1,0
+Flintshire 007A,0.1,0
+Flintshire 007B,0.1,0
+Flintshire 007C,0.1,0
+Flintshire 008A,0.1,0
+Flintshire 008B,0.1,0
+Flintshire 007D,0.1,0
+Flintshire 008C,0.1,0
+Flintshire 010B,0.1,0
+Flintshire 008D,0.1,0
+Flintshire 010C,0.1,0
+Flintshire 008E,0.1,0
+Flintshire 013C,0.1,0
+Flintshire 013D,0.1,0
+Flintshire 013E,0.1,0
+Flintshire 001A,0.1,0
+Flintshire 004A,0.1,0
+Flintshire 005A,0.1,0
+Flintshire 004B,0.1,0
+Flintshire 005B,0.1,0
+Flintshire 004C,0.1,0
+Flintshire 004D,0.1,0
+Flintshire 005C,0.1,0
+Flintshire 005D,0.1,0
+Flintshire 003C,0.1,0
+Flintshire 003D,0.1,0
+Flintshire 001B,0.1,0
+Flintshire 019A,0.1,0
+Flintshire 019B,0.1,0
+Flintshire 006E,0.1,0
+Flintshire 013F,0.1,0
+Flintshire 018A,0.1,0
+Flintshire 003E,0.1,0
+Flintshire 003F,0.1,0
+Flintshire 002A,0.1,0
+Flintshire 020B,0.1,0
+Flintshire 020C,0.1,0
+Flintshire 019C,0.1,0
+Flintshire 020D,0.1,0
+Flintshire 011A,0.1,0
+Flintshire 011B,0.1,0
+Flintshire 016A,0.1,0
+Flintshire 016B,0.1,0
+Flintshire 016C,0.1,0
+Flintshire 016D,0.1,0
+Flintshire 016E,0.1,0
+Flintshire 016F,0.1,0
+Flintshire 016G,0.1,0
+Flintshire 002B,0.1,0
+Flintshire 014D,0.1,0
+Flintshire 014E,0.1,0
+Flintshire 012C,0.1,0
+Flintshire 012D,0.1,0
+Flintshire 010D,0.1,0
+Flintshire 018B,0.1,0
+Flintshire 018C,0.1,0
+Flintshire 011C,0.1,0
+Flintshire 015D,0.1,0
+Flintshire 015E,0.1,0
+Flintshire 015F,0.1,0
+Flintshire 009A,0.1,0
+Flintshire 009B,0.1,0
+Flintshire 009C,0.1,0
+Flintshire 009D,0.1,0
+Flintshire 009E,0.1,0
+Flintshire 009F,0.1,0
+Flintshire 001C,0.1,0
+Flintshire 019D,0.1,0
+Flintshire 002C,0.1,0
+Wrexham 009A,0.1,0
+Wrexham 009B,0.1,0
+Wrexham 007A,0.1,0
+Wrexham 007B,0.1,0
+Wrexham 018A,0.1,0
+Wrexham 018B,0.1,0
+Wrexham 006A,0.1,0
+Wrexham 006B,0.1,0
+Wrexham 011A,0.1,0
+Wrexham 011B,0.1,0
+Wrexham 005A,0.1,0
+Wrexham 010A,0.1,0
+Wrexham 010B,0.1,0
+Wrexham 017A,0.1,0
+Wrexham 017B,0.1,0
+Wrexham 017C,0.1,0
+Wrexham 019C,0.1,0
+Wrexham 019D,0.1,0
+Wrexham 019E,0.1,0
+Wrexham 006C,0.1,0
+Wrexham 006D,0.1,0
+Wrexham 006E,0.1,0
+Wrexham 011C,0.1,0
+Wrexham 014A,0.1,0
+Wrexham 014B,0.1,0
+Wrexham 008A,0.1,0
+Wrexham 020F,0.1,0
+Wrexham 020G,0.1,0
+Wrexham 008B,0.1,0
+Wrexham 008C,0.1,0
+Wrexham 005B,0.1,0
+Wrexham 003A,0.1,0
+Wrexham 003B,0.1,0
+Wrexham 003C,0.1,0
+Wrexham 004A,0.1,0
+Wrexham 004B,0.1,0
+Wrexham 004C,0.1,0
+Wrexham 004D,0.1,0
+Wrexham 012A,0.1,0
+Wrexham 012B,0.1,0
+Wrexham 020A,0.1,0
+Wrexham 020B,0.1,0
+Wrexham 014C,0.1,0
+Wrexham 015A,0.1,0
+Wrexham 008D,0.1,0
+Wrexham 008E,0.1,0
+Wrexham 017D,0.1,0
+Wrexham 020C,0.1,0
+Wrexham 003D,0.1,0
+Wrexham 003E,0.1,0
+Wrexham 009C,0.1,0
+Wrexham 016A,0.1,0
+Wrexham 016B,0.1,0
+Wrexham 020H,0.1,0
+Wrexham 020I,0.1,0
+Wrexham 013A,0.1,0
+Wrexham 013B,0.1,0
+Wrexham 005C,0.1,0
+Wrexham 005D,0.1,0
+Wrexham 011D,0.1,0
+Wrexham 018C,0.1,0
+Wrexham 018D,0.1,0
+Wrexham 015B,0.1,0
+Wrexham 013C,0.1,0
+Wrexham 016C,0.1,0
+Wrexham 013D,0.1,0
+Wrexham 017E,0.1,0
+Wrexham 014D,0.1,0
+Wrexham 015C,0.1,0
+Wrexham 015D,0.1,0
+Wrexham 010C,0.1,0
+Wrexham 010D,0.1,0
+Wrexham 007C,0.1,0
+Wrexham 007D,0.1,0
+Wrexham 020D,0.1,0
+Wrexham 020E,0.1,0
+Wrexham 016D,0.1,0
+Wrexham 016E,0.1,0
+Wrexham 008F,0.1,0
+Wrexham 012D,0.1,0
+Wrexham 012E,0.1,0
+Wrexham 010E,0.1,0
+Powys 021A,0.1,0
+Powys 011A,0.1,0
+Powys 005A,0.1,0
+Powys 010A,0.1,0
+Powys 015A,0.1,0
+Powys 014A,0.1,0
+Powys 014B,0.1,0
+Powys 006A,0.1,0
+Powys 007A,0.1,0
+Powys 012A,0.1,0
+Powys 007B,0.1,0
+Powys 020A,0.1,0
+Powys 005B,0.1,0
+Powys 004A,0.1,0
+Powys 015B,0.1,0
+Powys 002A,0.1,0
+Powys 015C,0.1,0
+Powys 015D,0.1,0
+Powys 007C,0.1,0
+Powys 011B,0.1,0
+Powys 011C,0.1,0
+Powys 014C,0.1,0
+Powys 012B,0.1,0
+Powys 004B,0.1,0
+Powys 010B,0.1,0
+Powys 013A,0.1,0
+Powys 013B,0.1,0
+Powys 013C,0.1,0
+Powys 002B,0.1,0
+Powys 002C,0.1,0
+Powys 014D,0.1,0
+Powys 006B,0.1,0
+Powys 001A,0.1,0
+Powys 011D,0.1,0
+Powys 018E,0.1,0
+Powys 010C,0.1,0
+Powys 010D,0.1,0
+Powys 001D,0.1,0
+Powys 014E,0.1,0
+Powys 012C,0.1,0
+Powys 004C,0.1,0
+Powys 020B,0.1,0
+Powys 001E,0.1,0
+Powys 005C,0.1,0
+Powys 012D,0.1,0
+Powys 009A,0.1,0
+Powys 009B,0.1,0
+Powys 008A,0.1,0
+Powys 008B,0.1,0
+Powys 008C,0.1,0
+Powys 009C,0.1,0
+Powys 011E,0.1,0
+Powys 011F,0.1,0
+Powys 011G,0.1,0
+Powys 012E,0.1,0
+Powys 006C,0.1,0
+Powys 017A,0.1,0
+Powys 017D,0.1,0
+Powys 017E,0.1,0
+Powys 015E,0.1,0
+Powys 021B,0.1,0
+Powys 005D,0.1,0
+Powys 003A,0.1,0
+Powys 003B,0.1,0
+Powys 003C,0.1,0
+Powys 003D,0.1,0
+Powys 021C,0.1,0
+Powys 020C,0.1,0
+Powys 021D,0.1,0
+Powys 021E,0.1,0
+Ceredigion 005A,0.1,0
+Ceredigion 009A,0.1,0
+Ceredigion 009B,0.1,0
+Ceredigion 009C,0.1,0
+Ceredigion 009D,0.1,0
+Ceredigion 009E,0.1,0
+Ceredigion 002A,0.1,0
+Ceredigion 002B,0.1,0
+Ceredigion 003A,0.1,0
+Ceredigion 003B,0.1,0
+Ceredigion 002D,0.1,0
+Ceredigion 003C,0.1,0
+Ceredigion 010A,0.1,0
+Ceredigion 010B,0.1,0
+Ceredigion 001C,0.1,0
+Ceredigion 005B,0.1,0
+Ceredigion 011A,0.1,0
+Ceredigion 008A,0.1,0
+Ceredigion 008B,0.1,0
+Ceredigion 007A,0.1,0
+Ceredigion 010C,0.1,0
+Ceredigion 007B,0.1,0
+Ceredigion 010D,0.1,0
+Ceredigion 011B,0.1,0
+Ceredigion 008C,0.1,0
+Ceredigion 011E,0.1,0
+Ceredigion 008D,0.1,0
+Ceredigion 005C,0.1,0
+Ceredigion 005D,0.1,0
+Ceredigion 005E,0.1,0
+Ceredigion 008E,0.1,0
+Ceredigion 011F,0.1,0
+Ceredigion 011C,0.1,0
+Ceredigion 007C,0.1,0
+Ceredigion 007D,0.1,0
+Ceredigion 009F,0.1,0
+Ceredigion 009G,0.1,0
+Ceredigion 001D,0.1,0
+Ceredigion 001E,0.1,0
+Ceredigion 011G,0.1,0
+Ceredigion 010E,0.1,0
+Ceredigion 011D,0.1,0
+Pembrokeshire 011A,0.1,0
+Pembrokeshire 009A,0.1,0
+Pembrokeshire 008A,0.1,0
+Pembrokeshire 008B,0.1,0
+Pembrokeshire 014A,0.1,0
+Pembrokeshire 001A,0.1,0
+Pembrokeshire 001B,0.1,0
+Pembrokeshire 001C,0.1,0
+Pembrokeshire 001D,0.1,0
+Pembrokeshire 002A,0.1,0
+Pembrokeshire 011B,0.1,0
+Pembrokeshire 011C,0.1,0
+Pembrokeshire 002B,0.1,0
+Pembrokeshire 002C,0.1,0
+Pembrokeshire 002D,0.1,0
+Pembrokeshire 005A,0.1,0
+Pembrokeshire 005B,0.1,0
+Pembrokeshire 005C,0.1,0
+Pembrokeshire 006A,0.1,0
+Pembrokeshire 005D,0.1,0
+Pembrokeshire 006B,0.1,0
+Pembrokeshire 015A,0.1,0
+Pembrokeshire 008C,0.1,0
+Pembrokeshire 011D,0.1,0
+Pembrokeshire 007A,0.1,0
+Pembrokeshire 014B,0.1,0
+Pembrokeshire 003A,0.1,0
+Pembrokeshire 009B,0.1,0
+Pembrokeshire 003B,0.1,0
+Pembrokeshire 004A,0.1,0
+Pembrokeshire 004B,0.1,0
+Pembrokeshire 014C,0.1,0
+Pembrokeshire 007B,0.1,0
+Pembrokeshire 006C,0.1,0
+Pembrokeshire 010A,0.1,0
+Pembrokeshire 010B,0.1,0
+Pembrokeshire 012A,0.1,0
+Pembrokeshire 012B,0.1,0
+Pembrokeshire 012C,0.1,0
+Pembrokeshire 012D,0.1,0
+Pembrokeshire 010C,0.1,0
+Pembrokeshire 012E,0.1,0
+Pembrokeshire 007C,0.1,0
+Pembrokeshire 007D,0.1,0
+Pembrokeshire 002E,0.1,0
+Pembrokeshire 009C,0.1,0
+Pembrokeshire 009D,0.1,0
+Pembrokeshire 013A,0.1,0
+Pembrokeshire 013B,0.1,0
+Pembrokeshire 013C,0.1,0
+Pembrokeshire 013D,0.1,0
+Pembrokeshire 013E,0.1,0
+Pembrokeshire 013F,0.1,0
+Pembrokeshire 015B,0.1,0
+Pembrokeshire 015C,0.1,0
+Pembrokeshire 015D,0.1,0
+Pembrokeshire 014D,0.1,0
+Pembrokeshire 016A,0.1,0
+Pembrokeshire 004C,0.1,0
+Pembrokeshire 003C,0.1,0
+Pembrokeshire 001E,0.1,0
+Pembrokeshire 008D,0.1,0
+Pembrokeshire 011E,0.1,0
+Pembrokeshire 011F,0.1,0
+Pembrokeshire 002F,0.1,0
+Pembrokeshire 003D,0.1,0
+Pembrokeshire 016B,0.1,0
+Pembrokeshire 016C,0.1,0
+Pembrokeshire 016D,0.1,0
+Pembrokeshire 008E,0.1,0
+Pembrokeshire 004D,0.1,0
+Carmarthenshire 005A,0.1,0
+Carmarthenshire 013A,0.1,0
+Carmarthenshire 013B,0.1,0
+Carmarthenshire 013C,0.1,0
+Carmarthenshire 024A,0.1,0
+Carmarthenshire 024B,0.1,0
+Carmarthenshire 024C,0.1,0
+Carmarthenshire 024D,0.1,0
+Carmarthenshire 021A,0.1,0
+Carmarthenshire 021B,0.1,0
+Carmarthenshire 021C,0.1,0
+Carmarthenshire 025A,0.1,0
+Carmarthenshire 025B,0.1,0
+Carmarthenshire 007A,0.1,0
+Carmarthenshire 007B,0.1,0
+Carmarthenshire 007C,0.1,0
+Carmarthenshire 007D,0.1,0
+Carmarthenshire 008A,0.1,0
+Carmarthenshire 008B,0.1,0
+Carmarthenshire 006A,0.1,0
+Carmarthenshire 006B,0.1,0
+Carmarthenshire 006C,0.1,0
+Carmarthenshire 003A,0.1,0
+Carmarthenshire 002A,0.1,0
+Carmarthenshire 006D,0.1,0
+Carmarthenshire 006E,0.1,0
+Carmarthenshire 002B,0.1,0
+Carmarthenshire 020A,0.1,0
+Carmarthenshire 020B,0.1,0
+Carmarthenshire 023A,0.1,0
+Carmarthenshire 023B,0.1,0
+Carmarthenshire 020C,0.1,0
+Carmarthenshire 010A,0.1,0
+Carmarthenshire 010B,0.1,0
+Carmarthenshire 010C,0.1,0
+Carmarthenshire 026A,0.1,0
+Carmarthenshire 026B,0.1,0
+Carmarthenshire 016A,0.1,0
+Carmarthenshire 016B,0.1,0
+Carmarthenshire 016C,0.1,0
+Carmarthenshire 017A,0.1,0
+Carmarthenshire 017B,0.1,0
+Carmarthenshire 023C,0.1,0
+Carmarthenshire 018A,0.1,0
+Carmarthenshire 018B,0.1,0
+Carmarthenshire 027E,0.1,0
+Carmarthenshire 027F,0.1,0
+Carmarthenshire 027A,0.1,0
+Carmarthenshire 012A,0.1,0
+Carmarthenshire 004A,0.1,0
+Carmarthenshire 004B,0.1,0
+Carmarthenshire 002C,0.1,0
+Carmarthenshire 002D,0.1,0
+Carmarthenshire 011A,0.1,0
+Carmarthenshire 011B,0.1,0
+Carmarthenshire 005B,0.1,0
+Carmarthenshire 005C,0.1,0
+Carmarthenshire 005D,0.1,0
+Carmarthenshire 001A,0.1,0
+Carmarthenshire 001B,0.1,0
+Carmarthenshire 004C,0.1,0
+Carmarthenshire 003B,0.1,0
+Carmarthenshire 003C,0.1,0
+Carmarthenshire 019A,0.1,0
+Carmarthenshire 019B,0.1,0
+Carmarthenshire 019C,0.1,0
+Carmarthenshire 008C,0.1,0
+Carmarthenshire 008D,0.1,0
+Carmarthenshire 012B,0.1,0
+Carmarthenshire 012C,0.1,0
+Carmarthenshire 015A,0.1,0
+Carmarthenshire 015B,0.1,0
+Carmarthenshire 015C,0.1,0
+Carmarthenshire 027G,0.1,0
+Carmarthenshire 001C,0.1,0
+Carmarthenshire 001D,0.1,0
+Carmarthenshire 022A,0.1,0
+Carmarthenshire 022B,0.1,0
+Carmarthenshire 022C,0.1,0
+Carmarthenshire 025C,0.1,0
+Carmarthenshire 025D,0.1,0
+Carmarthenshire 025E,0.1,0
+Carmarthenshire 004D,0.1,0
+Carmarthenshire 021D,0.1,0
+Carmarthenshire 021E,0.1,0
+Carmarthenshire 015D,0.1,0
+Carmarthenshire 015E,0.1,0
+Carmarthenshire 013D,0.1,0
+Carmarthenshire 013E,0.1,0
+Carmarthenshire 016D,0.1,0
+Carmarthenshire 016E,0.1,0
+Carmarthenshire 010D,0.1,0
+Carmarthenshire 010E,0.1,0
+Carmarthenshire 027B,0.1,0
+Carmarthenshire 027C,0.1,0
+Carmarthenshire 012D,0.1,0
+Carmarthenshire 012E,0.1,0
+Carmarthenshire 011C,0.1,0
+Carmarthenshire 011D,0.1,0
+Carmarthenshire 019D,0.1,0
+Carmarthenshire 019E,0.1,0
+Carmarthenshire 003D,0.1,0
+Carmarthenshire 018C,0.1,0
+Carmarthenshire 018D,0.1,0
+Carmarthenshire 017C,0.1,0
+Carmarthenshire 026D,0.1,0
+Carmarthenshire 026E,0.1,0
+Carmarthenshire 026F,0.1,0
+Carmarthenshire 027D,0.1,0
+Swansea 028A,0.1,0
+Swansea 028B,0.1,0
+Swansea 014A,0.1,0
+Swansea 014B,0.1,0
+Swansea 014C,0.1,0
+Swansea 014D,0.1,0
+Swansea 016A,0.1,0
+Swansea 016B,0.1,0
+Swansea 025B,0.1,0
+Swansea 025C,0.1,0
+Swansea 024A,0.1,0
+Swansea 026A,0.1,0
+Swansea 002A,0.1,0
+Swansea 002B,0.1,0
+Swansea 002C,0.1,0
+Swansea 002D,0.1,0
+Swansea 002E,0.1,0
+Swansea 017A,0.1,0
+Swansea 017B,0.1,0
+Swansea 017C,0.1,0
+Swansea 017D,0.1,0
+Swansea 012A,0.1,0
+Swansea 013A,0.1,0
+Swansea 013B,0.1,0
+Swansea 013C,0.1,0
+Swansea 015A,0.1,0
+Swansea 015B,0.1,0
+Swansea 015C,0.1,0
+Swansea 015D,0.1,0
+Swansea 015E,0.1,0
+Swansea 020A,0.1,0
+Swansea 020B,0.1,0
+Swansea 020C,0.1,0
+Swansea 020D,0.1,0
+Swansea 018A,0.1,0
+Swansea 005A,0.1,0
+Swansea 005B,0.1,0
+Swansea 030A,0.1,0
+Swansea 030B,0.1,0
+Swansea 012B,0.1,0
+Swansea 012C,0.1,0
+Swansea 012D,0.1,0
+Swansea 023B,0.1,0
+Swansea 023C,0.1,0
+Swansea 007A,0.1,0
+Swansea 007B,0.1,0
+Swansea 007C,0.1,0
+Swansea 016C,0.1,0
+Swansea 016D,0.1,0
+Swansea 016E,0.1,0
+Swansea 016F,0.1,0
+Swansea 004A,0.1,0
+Swansea 004B,0.1,0
+Swansea 004C,0.1,0
+Swansea 010A,0.1,0
+Swansea 006A,0.1,0
+Swansea 006B,0.1,0
+Swansea 010B,0.1,0
+Swansea 010C,0.1,0
+Swansea 010D,0.1,0
+Swansea 006C,0.1,0
+Swansea 006D,0.1,0
+Swansea 007D,0.1,0
+Swansea 002F,0.1,0
+Swansea 028C,0.1,0
+Swansea 028D,0.1,0
+Swansea 003A,0.1,0
+Swansea 003B,0.1,0
+Swansea 003C,0.1,0
+Swansea 008A,0.1,0
+Swansea 003D,0.1,0
+Swansea 008B,0.1,0
+Swansea 008C,0.1,0
+Swansea 008D,0.1,0
+Swansea 008E,0.1,0
+Swansea 003E,0.1,0
+Swansea 003F,0.1,0
+Swansea 009A,0.1,0
+Swansea 009B,0.1,0
+Swansea 009C,0.1,0
+Swansea 009D,0.1,0
+Swansea 009E,0.1,0
+Swansea 009F,0.1,0
+Swansea 031A,0.1,0
+Swansea 031B,0.1,0
+Swansea 031C,0.1,0
+Swansea 031D,0.1,0
+Swansea 031E,0.1,0
+Swansea 018B,0.1,0
+Swansea 018C,0.1,0
+Swansea 011A,0.1,0
+Swansea 013D,0.1,0
+Swansea 011B,0.1,0
+Swansea 011C,0.1,0
+Swansea 011D,0.1,0
+Swansea 013E,0.1,0
+Swansea 011E,0.1,0
+Swansea 004D,0.1,0
+Swansea 004E,0.1,0
+Swansea 030C,0.1,0
+Swansea 030D,0.1,0
+Swansea 005C,0.1,0
+Swansea 005D,0.1,0
+Swansea 005E,0.1,0
+Swansea 005F,0.1,0
+Swansea 001A,0.1,0
+Swansea 001B,0.1,0
+Swansea 001C,0.1,0
+Swansea 001D,0.1,0
+Swansea 021A,0.1,0
+Swansea 021B,0.1,0
+Swansea 021C,0.1,0
+Swansea 021D,0.1,0
+Swansea 022A,0.1,0
+Swansea 022B,0.1,0
+Swansea 022C,0.1,0
+Swansea 022D,0.1,0
+Swansea 022E,0.1,0
+Swansea 027A,0.1,0
+Swansea 027B,0.1,0
+Swansea 027C,0.1,0
+Swansea 027D,0.1,0
+Swansea 019A,0.1,0
+Swansea 019B,0.1,0
+Swansea 019C,0.1,0
+Swansea 019D,0.1,0
+Swansea 019E,0.1,0
+Swansea 019F,0.1,0
+Swansea 024B,0.1,0
+Swansea 024C,0.1,0
+Swansea 024D,0.1,0
+Swansea 026B,0.1,0
+Swansea 024E,0.1,0
+Swansea 026C,0.1,0
+Swansea 024F,0.1,0
+Swansea 026D,0.1,0
+Swansea 026E,0.1,0
+Swansea 007E,0.1,0
+Swansea 007F,0.1,0
+Swansea 029A,0.1,0
+Swansea 029B,0.1,0
+Swansea 029C,0.1,0
+Swansea 029D,0.1,0
+Neath Port Talbot 016A,0.1,0
+Neath Port Talbot 017A,0.1,0
+Neath Port Talbot 017B,0.1,0
+Neath Port Talbot 017C,0.1,0
+Neath Port Talbot 005A,0.1,0
+Neath Port Talbot 004A,0.1,0
+Neath Port Talbot 015A,0.1,0
+Neath Port Talbot 015B,0.1,0
+Neath Port Talbot 015C,0.1,0
+Neath Port Talbot 015D,0.1,0
+Neath Port Talbot 003A,0.1,0
+Neath Port Talbot 013A,0.1,0
+Neath Port Talbot 013B,0.1,0
+Neath Port Talbot 013C,0.1,0
+Neath Port Talbot 013D,0.1,0
+Neath Port Talbot 014A,0.1,0
+Neath Port Talbot 014B,0.1,0
+Neath Port Talbot 014C,0.1,0
+Neath Port Talbot 014D,0.1,0
+Neath Port Talbot 006A,0.1,0
+Neath Port Talbot 006B,0.1,0
+Neath Port Talbot 006C,0.1,0
+Neath Port Talbot 006D,0.1,0
+Neath Port Talbot 007A,0.1,0
+Neath Port Talbot 007B,0.1,0
+Neath Port Talbot 006E,0.1,0
+Neath Port Talbot 009A,0.1,0
+Neath Port Talbot 009B,0.1,0
+Neath Port Talbot 009C,0.1,0
+Neath Port Talbot 010A,0.1,0
+Neath Port Talbot 010B,0.1,0
+Neath Port Talbot 010C,0.1,0
+Neath Port Talbot 010D,0.1,0
+Neath Port Talbot 010E,0.1,0
+Neath Port Talbot 010F,0.1,0
+Neath Port Talbot 002A,0.1,0
+Neath Port Talbot 020A,0.1,0
+Neath Port Talbot 011A,0.1,0
+Neath Port Talbot 011B,0.1,0
+Neath Port Talbot 007C,0.1,0
+Neath Port Talbot 007D,0.1,0
+Neath Port Talbot 011C,0.1,0
+Neath Port Talbot 003B,0.1,0
+Neath Port Talbot 003C,0.1,0
+Neath Port Talbot 020B,0.1,0
+Neath Port Talbot 020C,0.1,0
+Neath Port Talbot 020D,0.1,0
+Neath Port Talbot 011D,0.1,0
+Neath Port Talbot 020E,0.1,0
+Neath Port Talbot 019A,0.1,0
+Neath Port Talbot 019B,0.1,0
+Neath Port Talbot 008A,0.1,0
+Neath Port Talbot 008B,0.1,0
+Neath Port Talbot 012A,0.1,0
+Neath Port Talbot 013E,0.1,0
+Neath Port Talbot 008C,0.1,0
+Neath Port Talbot 008D,0.1,0
+Neath Port Talbot 008E,0.1,0
+Neath Port Talbot 012B,0.1,0
+Neath Port Talbot 012C,0.1,0
+Neath Port Talbot 012D,0.1,0
+Neath Port Talbot 002B,0.1,0
+Neath Port Talbot 014E,0.1,0
+Neath Port Talbot 004B,0.1,0
+Neath Port Talbot 004C,0.1,0
+Neath Port Talbot 004D,0.1,0
+Neath Port Talbot 018A,0.1,0
+Neath Port Talbot 018B,0.1,0
+Neath Port Talbot 018C,0.1,0
+Neath Port Talbot 018D,0.1,0
+Neath Port Talbot 005B,0.1,0
+Neath Port Talbot 005C,0.1,0
+Neath Port Talbot 004E,0.1,0
+Neath Port Talbot 004F,0.1,0
+Neath Port Talbot 017D,0.1,0
+Neath Port Talbot 016B,0.1,0
+Neath Port Talbot 017E,0.1,0
+Neath Port Talbot 017F,0.1,0
+Neath Port Talbot 016C,0.1,0
+Neath Port Talbot 016D,0.1,0
+Neath Port Talbot 016E,0.1,0
+Neath Port Talbot 016F,0.1,0
+Neath Port Talbot 002C,0.1,0
+Neath Port Talbot 018E,0.1,0
+Neath Port Talbot 019C,0.1,0
+Neath Port Talbot 019D,0.1,0
+Neath Port Talbot 009D,0.1,0
+Neath Port Talbot 005D,0.1,0
+Neath Port Talbot 004G,0.1,0
+Neath Port Talbot 020F,0.1,0
+Bridgend 006A,0.1,0
+Bridgend 004A,0.1,0
+Bridgend 003A,0.1,0
+Bridgend 003B,0.1,0
+Bridgend 004B,0.1,0
+Bridgend 015A,0.1,0
+Bridgend 016A,0.1,0
+Bridgend 016B,0.1,0
+Bridgend 016C,0.1,0
+Bridgend 015B,0.1,0
+Bridgend 016D,0.1,0
+Bridgend 015C,0.1,0
+Bridgend 007A,0.1,0
+Bridgend 007B,0.1,0
+Bridgend 013A,0.1,0
+Bridgend 017B,0.1,0
+Bridgend 001A,0.1,0
+Bridgend 001B,0.1,0
+Bridgend 001C,0.1,0
+Bridgend 001D,0.1,0
+Bridgend 001E,0.1,0
+Bridgend 008A,0.1,0
+Bridgend 012A,0.1,0
+Bridgend 011A,0.1,0
+Bridgend 010A,0.1,0
+Bridgend 010B,0.1,0
+Bridgend 010C,0.1,0
+Bridgend 010D,0.1,0
+Bridgend 015D,0.1,0
+Bridgend 009A,0.1,0
+Bridgend 009B,0.1,0
+Bridgend 009C,0.1,0
+Bridgend 009D,0.1,0
+Bridgend 011B,0.1,0
+Bridgend 004C,0.1,0
+Bridgend 012B,0.1,0
+Bridgend 012C,0.1,0
+Bridgend 005A,0.1,0
+Bridgend 005B,0.1,0
+Bridgend 002A,0.1,0
+Bridgend 002B,0.1,0
+Bridgend 005C,0.1,0
+Bridgend 002C,0.1,0
+Bridgend 002D,0.1,0
+Bridgend 005D,0.1,0
+Bridgend 002E,0.1,0
+Bridgend 014A,0.1,0
+Bridgend 014B,0.1,0
+Bridgend 014C,0.1,0
+Bridgend 003C,0.1,0
+Bridgend 003D,0.1,0
+Bridgend 012D,0.1,0
+Bridgend 017C,0.1,0
+Bridgend 014D,0.1,0
+Bridgend 019A,0.1,0
+Bridgend 019B,0.1,0
+Bridgend 018A,0.1,0
+Bridgend 018B,0.1,0
+Bridgend 003E,0.1,0
+Bridgend 003F,0.1,0
+Bridgend 014E,0.1,0
+Bridgend 017D,0.1,0
+Bridgend 013B,0.1,0
+Bridgend 011C,0.1,0
+Bridgend 009E,0.1,0
+Bridgend 009F,0.1,0
+Bridgend 013C,0.1,0
+Bridgend 004D,0.1,0
+Bridgend 004E,0.1,0
+Bridgend 019C,0.1,0
+Bridgend 019D,0.1,0
+Bridgend 018C,0.1,0
+Bridgend 018D,0.1,0
+Bridgend 008B,0.1,0
+Bridgend 008C,0.1,0
+Bridgend 008D,0.1,0
+Bridgend 008E,0.1,0
+Bridgend 008F,0.1,0
+Bridgend 018E,0.1,0
+Bridgend 018F,0.1,0
+Bridgend 007C,0.1,0
+Bridgend 007D,0.1,0
+Bridgend 006B,0.1,0
+Bridgend 006C,0.1,0
+The Vale of Glamorgan 015A,0.1,0
+The Vale of Glamorgan 015B,0.1,0
+The Vale of Glamorgan 015C,0.1,0
+The Vale of Glamorgan 013A,0.1,0
+The Vale of Glamorgan 012A,0.1,0
+The Vale of Glamorgan 013B,0.1,0
+The Vale of Glamorgan 012B,0.1,0
+The Vale of Glamorgan 015D,0.1,0
+The Vale of Glamorgan 009A,0.1,0
+The Vale of Glamorgan 009B,0.1,0
+The Vale of Glamorgan 012C,0.1,0
+The Vale of Glamorgan 009C,0.1,0
+The Vale of Glamorgan 009D,0.1,0
+The Vale of Glamorgan 009E,0.1,0
+The Vale of Glamorgan 015E,0.1,0
+The Vale of Glamorgan 004A,0.1,0
+The Vale of Glamorgan 004B,0.1,0
+The Vale of Glamorgan 004C,0.1,0
+The Vale of Glamorgan 004D,0.1,0
+The Vale of Glamorgan 012E,0.1,0
+The Vale of Glamorgan 012F,0.1,0
+The Vale of Glamorgan 007A,0.1,0
+The Vale of Glamorgan 002A,0.1,0
+The Vale of Glamorgan 002B,0.1,0
+The Vale of Glamorgan 002C,0.1,0
+The Vale of Glamorgan 002D,0.1,0
+The Vale of Glamorgan 006A,0.1,0
+The Vale of Glamorgan 006B,0.1,0
+The Vale of Glamorgan 006C,0.1,0
+The Vale of Glamorgan 006D,0.1,0
+The Vale of Glamorgan 006E,0.1,0
+The Vale of Glamorgan 010A,0.1,0
+The Vale of Glamorgan 007B,0.1,0
+The Vale of Glamorgan 013C,0.1,0
+The Vale of Glamorgan 007C,0.1,0
+The Vale of Glamorgan 007D,0.1,0
+The Vale of Glamorgan 007E,0.1,0
+The Vale of Glamorgan 007F,0.1,0
+The Vale of Glamorgan 010B,0.1,0
+The Vale of Glamorgan 013D,0.1,0
+The Vale of Glamorgan 010C,0.1,0
+The Vale of Glamorgan 013E,0.1,0
+The Vale of Glamorgan 013F,0.1,0
+The Vale of Glamorgan 010D,0.1,0
+The Vale of Glamorgan 004E,0.1,0
+The Vale of Glamorgan 001A,0.1,0
+The Vale of Glamorgan 011A,0.1,0
+The Vale of Glamorgan 011B,0.1,0
+The Vale of Glamorgan 014A,0.1,0
+The Vale of Glamorgan 011C,0.1,0
+The Vale of Glamorgan 011D,0.1,0
+The Vale of Glamorgan 011E,0.1,0
+The Vale of Glamorgan 011F,0.1,0
+The Vale of Glamorgan 003A,0.1,0
+The Vale of Glamorgan 008A,0.1,0
+The Vale of Glamorgan 008B,0.1,0
+The Vale of Glamorgan 005A,0.1,0
+The Vale of Glamorgan 014B,0.1,0
+The Vale of Glamorgan 014C,0.1,0
+The Vale of Glamorgan 003B,0.1,0
+The Vale of Glamorgan 014D,0.1,0
+The Vale of Glamorgan 014E,0.1,0
+The Vale of Glamorgan 014F,0.1,0
+The Vale of Glamorgan 005B,0.1,0
+The Vale of Glamorgan 005C,0.1,0
+The Vale of Glamorgan 005D,0.1,0
+The Vale of Glamorgan 005E,0.1,0
+The Vale of Glamorgan 001B,0.1,0
+The Vale of Glamorgan 001C,0.1,0
+The Vale of Glamorgan 004F,0.1,0
+The Vale of Glamorgan 005F,0.1,0
+The Vale of Glamorgan 008C,0.1,0
+The Vale of Glamorgan 008D,0.1,0
+The Vale of Glamorgan 008E,0.1,0
+The Vale of Glamorgan 008F,0.1,0
+The Vale of Glamorgan 003C,0.1,0
+The Vale of Glamorgan 003D,0.1,0
+Rhondda Cynon Taf 005A,0.1,0
+Rhondda Cynon Taf 005B,0.1,0
+Rhondda Cynon Taf 005C,0.1,0
+Rhondda Cynon Taf 005D,0.1,0
+Rhondda Cynon Taf 005E,0.1,0
+Rhondda Cynon Taf 005F,0.1,0
+Rhondda Cynon Taf 012A,0.1,0
+Rhondda Cynon Taf 012B,0.1,0
+Rhondda Cynon Taf 012C,0.1,0
+Rhondda Cynon Taf 012D,0.1,0
+Rhondda Cynon Taf 004A,0.1,0
+Rhondda Cynon Taf 002A,0.1,0
+Rhondda Cynon Taf 003A,0.1,0
+Rhondda Cynon Taf 003B,0.1,0
+Rhondda Cynon Taf 003C,0.1,0
+Rhondda Cynon Taf 002B,0.1,0
+Rhondda Cynon Taf 002C,0.1,0
+Rhondda Cynon Taf 003D,0.1,0
+Rhondda Cynon Taf 002D,0.1,0
+Rhondda Cynon Taf 003E,0.1,0
+Rhondda Cynon Taf 028A,0.1,0
+Rhondda Cynon Taf 028B,0.1,0
+Rhondda Cynon Taf 028C,0.1,0
+Rhondda Cynon Taf 029A,0.1,0
+Rhondda Cynon Taf 029B,0.1,0
+Rhondda Cynon Taf 025A,0.1,0
+Rhondda Cynon Taf 019A,0.1,0
+Rhondda Cynon Taf 019B,0.1,0
+Rhondda Cynon Taf 016A,0.1,0
+Rhondda Cynon Taf 016B,0.1,0
+Rhondda Cynon Taf 004B,0.1,0
+Rhondda Cynon Taf 004C,0.1,0
+Rhondda Cynon Taf 004D,0.1,0
+Rhondda Cynon Taf 017A,0.1,0
+Rhondda Cynon Taf 020A,0.1,0
+Rhondda Cynon Taf 020B,0.1,0
+Rhondda Cynon Taf 020C,0.1,0
+Rhondda Cynon Taf 009A,0.1,0
+Rhondda Cynon Taf 013A,0.1,0
+Rhondda Cynon Taf 009B,0.1,0
+Rhondda Cynon Taf 023A,0.1,0
+Rhondda Cynon Taf 023B,0.1,0
+Rhondda Cynon Taf 015A,0.1,0
+Rhondda Cynon Taf 015B,0.1,0
+Rhondda Cynon Taf 021A,0.1,0
+Rhondda Cynon Taf 021B,0.1,0
+Rhondda Cynon Taf 026A,0.1,0
+Rhondda Cynon Taf 022A,0.1,0
+Rhondda Cynon Taf 001A,0.1,0
+Rhondda Cynon Taf 001B,0.1,0
+Rhondda Cynon Taf 001C,0.1,0
+Rhondda Cynon Taf 029C,0.1,0
+Rhondda Cynon Taf 029D,0.1,0
+Rhondda Cynon Taf 031A,0.1,0
+Rhondda Cynon Taf 031B,0.1,0
+Rhondda Cynon Taf 030A,0.1,0
+Rhondda Cynon Taf 030B,0.1,0
+Rhondda Cynon Taf 030C,0.1,0
+Rhondda Cynon Taf 027B,0.1,0
+Rhondda Cynon Taf 027C,0.1,0
+Rhondda Cynon Taf 027D,0.1,0
+Rhondda Cynon Taf 027E,0.1,0
+Rhondda Cynon Taf 014A,0.1,0
+Rhondda Cynon Taf 014B,0.1,0
+Rhondda Cynon Taf 009C,0.1,0
+Rhondda Cynon Taf 009D,0.1,0
+Rhondda Cynon Taf 006A,0.1,0
+Rhondda Cynon Taf 006B,0.1,0
+Rhondda Cynon Taf 006C,0.1,0
+Rhondda Cynon Taf 006D,0.1,0
+Rhondda Cynon Taf 006E,0.1,0
+Rhondda Cynon Taf 008A,0.1,0
+Rhondda Cynon Taf 008B,0.1,0
+Rhondda Cynon Taf 008C,0.1,0
+Rhondda Cynon Taf 008D,0.1,0
+Rhondda Cynon Taf 011A,0.1,0
+Rhondda Cynon Taf 011B,0.1,0
+Rhondda Cynon Taf 011C,0.1,0
+Rhondda Cynon Taf 011D,0.1,0
+Rhondda Cynon Taf 018A,0.1,0
+Rhondda Cynon Taf 018B,0.1,0
+Rhondda Cynon Taf 018C,0.1,0
+Rhondda Cynon Taf 018D,0.1,0
+Rhondda Cynon Taf 001D,0.1,0
+Rhondda Cynon Taf 001E,0.1,0
+Rhondda Cynon Taf 031C,0.1,0
+Rhondda Cynon Taf 031D,0.1,0
+Rhondda Cynon Taf 031E,0.1,0
+Rhondda Cynon Taf 031F,0.1,0
+Rhondda Cynon Taf 021C,0.1,0
+Rhondda Cynon Taf 021D,0.1,0
+Rhondda Cynon Taf 017B,0.1,0
+Rhondda Cynon Taf 017C,0.1,0
+Rhondda Cynon Taf 017D,0.1,0
+Rhondda Cynon Taf 020D,0.1,0
+Rhondda Cynon Taf 001F,0.1,0
+Rhondda Cynon Taf 021E,0.1,0
+Rhondda Cynon Taf 021F,0.1,0
+Rhondda Cynon Taf 021G,0.1,0
+Rhondda Cynon Taf 022B,0.1,0
+Rhondda Cynon Taf 022C,0.1,0
+Rhondda Cynon Taf 026B,0.1,0
+Rhondda Cynon Taf 026C,0.1,0
+Rhondda Cynon Taf 026D,0.1,0
+Rhondda Cynon Taf 030D,0.1,0
+Rhondda Cynon Taf 030E,0.1,0
+Rhondda Cynon Taf 025B,0.1,0
+Rhondda Cynon Taf 025C,0.1,0
+Rhondda Cynon Taf 025D,0.1,0
+Rhondda Cynon Taf 016C,0.1,0
+Rhondda Cynon Taf 016D,0.1,0
+Rhondda Cynon Taf 024A,0.1,0
+Rhondda Cynon Taf 024B,0.1,0
+Rhondda Cynon Taf 024C,0.1,0
+Rhondda Cynon Taf 024D,0.1,0
+Rhondda Cynon Taf 023C,0.1,0
+Rhondda Cynon Taf 023E,0.1,0
+Rhondda Cynon Taf 019C,0.1,0
+Rhondda Cynon Taf 019D,0.1,0
+Rhondda Cynon Taf 019E,0.1,0
+Rhondda Cynon Taf 018E,0.1,0
+Rhondda Cynon Taf 014C,0.1,0
+Rhondda Cynon Taf 018F,0.1,0
+Rhondda Cynon Taf 022D,0.1,0
+Rhondda Cynon Taf 022E,0.1,0
+Rhondda Cynon Taf 022F,0.1,0
+Rhondda Cynon Taf 007A,0.1,0
+Rhondda Cynon Taf 007B,0.1,0
+Rhondda Cynon Taf 007C,0.1,0
+Rhondda Cynon Taf 007D,0.1,0
+Rhondda Cynon Taf 010A,0.1,0
+Rhondda Cynon Taf 010B,0.1,0
+Rhondda Cynon Taf 010C,0.1,0
+Rhondda Cynon Taf 010D,0.1,0
+Rhondda Cynon Taf 010E,0.1,0
+Rhondda Cynon Taf 013B,0.1,0
+Rhondda Cynon Taf 013C,0.1,0
+Rhondda Cynon Taf 013D,0.1,0
+Rhondda Cynon Taf 028D,0.1,0
+Rhondda Cynon Taf 028E,0.1,0
+Rhondda Cynon Taf 028F,0.1,0
+Rhondda Cynon Taf 017E,0.1,0
+Rhondda Cynon Taf 017F,0.1,0
+Rhondda Cynon Taf 015C,0.1,0
+Rhondda Cynon Taf 015D,0.1,0
+Rhondda Cynon Taf 015E,0.1,0
+Rhondda Cynon Taf 014D,0.1,0
+Rhondda Cynon Taf 014E,0.1,0
+Rhondda Cynon Taf 014F,0.1,0
+Rhondda Cynon Taf 014G,0.1,0
+Merthyr Tydfil 006A,0.1,0
+Merthyr Tydfil 007A,0.1,0
+Merthyr Tydfil 003A,0.1,0
+Merthyr Tydfil 004A,0.1,0
+Merthyr Tydfil 004B,0.1,0
+Merthyr Tydfil 003B,0.1,0
+Merthyr Tydfil 002A,0.1,0
+Merthyr Tydfil 002B,0.1,0
+Merthyr Tydfil 002C,0.1,0
+Merthyr Tydfil 002D,0.1,0
+Merthyr Tydfil 008A,0.1,0
+Merthyr Tydfil 008B,0.1,0
+Merthyr Tydfil 008C,0.1,0
+Merthyr Tydfil 006B,0.1,0
+Merthyr Tydfil 006C,0.1,0
+Merthyr Tydfil 006D,0.1,0
+Merthyr Tydfil 003C,0.1,0
+Merthyr Tydfil 003D,0.1,0
+Merthyr Tydfil 004C,0.1,0
+Merthyr Tydfil 008D,0.1,0
+Merthyr Tydfil 008E,0.1,0
+Merthyr Tydfil 002E,0.1,0
+Merthyr Tydfil 002F,0.1,0
+Merthyr Tydfil 006E,0.1,0
+Merthyr Tydfil 006F,0.1,0
+Merthyr Tydfil 005A,0.1,0
+Merthyr Tydfil 004D,0.1,0
+Merthyr Tydfil 005B,0.1,0
+Merthyr Tydfil 005C,0.1,0
+Merthyr Tydfil 005D,0.1,0
+Merthyr Tydfil 007B,0.1,0
+Merthyr Tydfil 007C,0.1,0
+Merthyr Tydfil 007D,0.1,0
+Merthyr Tydfil 007E,0.1,0
+Merthyr Tydfil 003E,0.1,0
+Caerphilly 003A,0.1,0
+Caerphilly 003B,0.1,0
+Caerphilly 014A,0.1,0
+Caerphilly 014B,0.1,0
+Caerphilly 014C,0.1,0
+Caerphilly 018A,0.1,0
+Caerphilly 018B,0.1,0
+Caerphilly 018C,0.1,0
+Caerphilly 018D,0.1,0
+Caerphilly 005A,0.1,0
+Caerphilly 005B,0.1,0
+Caerphilly 004A,0.1,0
+Caerphilly 004B,0.1,0
+Caerphilly 004C,0.1,0
+Caerphilly 004D,0.1,0
+Caerphilly 020A,0.1,0
+Caerphilly 020B,0.1,0
+Caerphilly 021A,0.1,0
+Caerphilly 021B,0.1,0
+Caerphilly 020C,0.1,0
+Caerphilly 021C,0.1,0
+Caerphilly 020D,0.1,0
+Caerphilly 005C,0.1,0
+Caerphilly 009A,0.1,0
+Caerphilly 009B,0.1,0
+Caerphilly 009C,0.1,0
+Caerphilly 005D,0.1,0
+Caerphilly 007A,0.1,0
+Caerphilly 007B,0.1,0
+Caerphilly 014D,0.1,0
+Caerphilly 015A,0.1,0
+Caerphilly 006A,0.1,0
+Caerphilly 006B,0.1,0
+Caerphilly 006C,0.1,0
+Caerphilly 006D,0.1,0
+Caerphilly 002A,0.1,0
+Caerphilly 002B,0.1,0
+Caerphilly 003C,0.1,0
+Caerphilly 012A,0.1,0
+Caerphilly 012B,0.1,0
+Caerphilly 012C,0.1,0
+Caerphilly 019A,0.1,0
+Caerphilly 019B,0.1,0
+Caerphilly 019C,0.1,0
+Caerphilly 012D,0.1,0
+Caerphilly 023A,0.1,0
+Caerphilly 022A,0.1,0
+Caerphilly 022B,0.1,0
+Caerphilly 022C,0.1,0
+Caerphilly 001A,0.1,0
+Caerphilly 001B,0.1,0
+Caerphilly 001C,0.1,0
+Caerphilly 013A,0.1,0
+Caerphilly 013B,0.1,0
+Caerphilly 013C,0.1,0
+Caerphilly 010A,0.1,0
+Caerphilly 010B,0.1,0
+Caerphilly 010C,0.1,0
+Caerphilly 010D,0.1,0
+Caerphilly 002C,0.1,0
+Caerphilly 002D,0.1,0
+Caerphilly 002E,0.1,0
+Caerphilly 007C,0.1,0
+Caerphilly 007D,0.1,0
+Caerphilly 007E,0.1,0
+Caerphilly 006E,0.1,0
+Caerphilly 006F,0.1,0
+Caerphilly 009D,0.1,0
+Caerphilly 019D,0.1,0
+Caerphilly 023B,0.1,0
+Caerphilly 023C,0.1,0
+Caerphilly 023D,0.1,0
+Caerphilly 019E,0.1,0
+Caerphilly 024A,0.1,0
+Caerphilly 023E,0.1,0
+Caerphilly 019F,0.1,0
+Caerphilly 011A,0.1,0
+Caerphilly 011B,0.1,0
+Caerphilly 011C,0.1,0
+Caerphilly 011D,0.1,0
+Caerphilly 011E,0.1,0
+Caerphilly 001D,0.1,0
+Caerphilly 016A,0.1,0
+Caerphilly 016B,0.1,0
+Caerphilly 016C,0.1,0
+Caerphilly 016D,0.1,0
+Caerphilly 017A,0.1,0
+Caerphilly 017B,0.1,0
+Caerphilly 017C,0.1,0
+Caerphilly 008A,0.1,0
+Caerphilly 008B,0.1,0
+Caerphilly 008C,0.1,0
+Caerphilly 008D,0.1,0
+Caerphilly 008E,0.1,0
+Caerphilly 021D,0.1,0
+Caerphilly 022D,0.1,0
+Caerphilly 022E,0.1,0
+Caerphilly 022F,0.1,0
+Caerphilly 024B,0.1,0
+Caerphilly 024C,0.1,0
+Caerphilly 024D,0.1,0
+Caerphilly 024E,0.1,0
+Caerphilly 024F,0.1,0
+Caerphilly 001E,0.1,0
+Caerphilly 001F,0.1,0
+Caerphilly 015B,0.1,0
+Caerphilly 015C,0.1,0
+Caerphilly 013D,0.1,0
+Caerphilly 013E,0.1,0
+Caerphilly 013F,0.1,0
+Blaenau Gwent 008A,0.1,0
+Blaenau Gwent 008B,0.1,0
+Blaenau Gwent 008C,0.1,0
+Blaenau Gwent 004A,0.1,0
+Blaenau Gwent 004B,0.1,0
+Blaenau Gwent 001A,0.1,0
+Blaenau Gwent 001B,0.1,0
+Blaenau Gwent 001C,0.1,0
+Blaenau Gwent 005A,0.1,0
+Blaenau Gwent 005B,0.1,0
+Blaenau Gwent 005C,0.1,0
+Blaenau Gwent 002A,0.1,0
+Blaenau Gwent 002B,0.1,0
+Blaenau Gwent 002C,0.1,0
+Blaenau Gwent 002D,0.1,0
+Blaenau Gwent 007A,0.1,0
+Blaenau Gwent 007B,0.1,0
+Blaenau Gwent 007C,0.1,0
+Blaenau Gwent 008D,0.1,0
+Blaenau Gwent 008E,0.1,0
+Blaenau Gwent 008F,0.1,0
+Blaenau Gwent 004C,0.1,0
+Blaenau Gwent 004D,0.1,0
+Blaenau Gwent 004E,0.1,0
+Blaenau Gwent 007D,0.1,0
+Blaenau Gwent 007E,0.1,0
+Blaenau Gwent 007F,0.1,0
+Blaenau Gwent 006A,0.1,0
+Blaenau Gwent 006B,0.1,0
+Blaenau Gwent 009A,0.1,0
+Blaenau Gwent 009B,0.1,0
+Blaenau Gwent 009C,0.1,0
+Blaenau Gwent 005D,0.1,0
+Blaenau Gwent 005E,0.1,0
+Blaenau Gwent 005F,0.1,0
+Blaenau Gwent 001D,0.1,0
+Blaenau Gwent 001E,0.1,0
+Blaenau Gwent 003A,0.1,0
+Blaenau Gwent 003B,0.1,0
+Blaenau Gwent 003C,0.1,0
+Blaenau Gwent 003D,0.1,0
+Blaenau Gwent 009D,0.1,0
+Blaenau Gwent 009E,0.1,0
+Blaenau Gwent 006C,0.1,0
+Blaenau Gwent 006D,0.1,0
+Blaenau Gwent 003E,0.1,0
+Blaenau Gwent 006E,0.1,0
+Torfaen 002A,0.1,0
+Torfaen 002B,0.1,0
+Torfaen 002C,0.1,0
+Torfaen 002D,0.1,0
+Torfaen 002E,0.1,0
+Torfaen 001A,0.1,0
+Torfaen 001B,0.1,0
+Torfaen 001C,0.1,0
+Torfaen 001D,0.1,0
+Torfaen 004A,0.1,0
+Torfaen 012A,0.1,0
+Torfaen 008A,0.1,0
+Torfaen 008B,0.1,0
+Torfaen 008C,0.1,0
+Torfaen 004B,0.1,0
+Torfaen 011A,0.1,0
+Torfaen 011B,0.1,0
+Torfaen 011C,0.1,0
+Torfaen 011D,0.1,0
+Torfaen 009A,0.1,0
+Torfaen 011E,0.1,0
+Torfaen 009B,0.1,0
+Torfaen 013A,0.1,0
+Torfaen 013B,0.1,0
+Torfaen 010A,0.1,0
+Torfaen 008D,0.1,0
+Torfaen 013C,0.1,0
+Torfaen 013D,0.1,0
+Torfaen 005A,0.1,0
+Torfaen 005B,0.1,0
+Torfaen 005C,0.1,0
+Torfaen 005D,0.1,0
+Torfaen 006A,0.1,0
+Torfaen 006B,0.1,0
+Torfaen 006C,0.1,0
+Torfaen 006D,0.1,0
+Torfaen 006E,0.1,0
+Torfaen 007A,0.1,0
+Torfaen 007B,0.1,0
+Torfaen 007C,0.1,0
+Torfaen 007D,0.1,0
+Torfaen 004C,0.1,0
+Torfaen 004D,0.1,0
+Torfaen 003A,0.1,0
+Torfaen 010B,0.1,0
+Torfaen 010C,0.1,0
+Torfaen 010D,0.1,0
+Torfaen 003B,0.1,0
+Torfaen 003C,0.1,0
+Torfaen 003D,0.1,0
+Torfaen 010E,0.1,0
+Torfaen 012B,0.1,0
+Torfaen 012C,0.1,0
+Torfaen 012D,0.1,0
+Torfaen 009C,0.1,0
+Torfaen 007E,0.1,0
+Torfaen 009D,0.1,0
+Torfaen 009E,0.1,0
+Torfaen 004E,0.1,0
+Torfaen 004F,0.1,0
+Monmouthshire 009A,0.1,0
+Monmouthshire 009B,0.1,0
+Monmouthshire 001A,0.1,0
+Monmouthshire 002A,0.1,0
+Monmouthshire 001B,0.1,0
+Monmouthshire 007A,0.1,0
+Monmouthshire 010C,0.1,0
+Monmouthshire 004A,0.1,0
+Monmouthshire 004B,0.1,0
+Monmouthshire 004C,0.1,0
+Monmouthshire 006A,0.1,0
+Monmouthshire 006B,0.1,0
+Monmouthshire 001C,0.1,0
+Monmouthshire 002C,0.1,0
+Monmouthshire 008A,0.1,0
+Monmouthshire 006C,0.1,0
+Monmouthshire 003A,0.1,0
+Monmouthshire 003B,0.1,0
+Monmouthshire 003C,0.1,0
+Monmouthshire 003D,0.1,0
+Monmouthshire 006D,0.1,0
+Monmouthshire 005A,0.1,0
+Monmouthshire 005B,0.1,0
+Monmouthshire 005C,0.1,0
+Monmouthshire 003E,0.1,0
+Monmouthshire 001D,0.1,0
+Monmouthshire 011A,0.1,0
+Monmouthshire 011B,0.1,0
+Monmouthshire 011C,0.1,0
+Monmouthshire 005D,0.1,0
+Monmouthshire 004D,0.1,0
+Monmouthshire 004E,0.1,0
+Monmouthshire 009C,0.1,0
+Monmouthshire 001E,0.1,0
+Monmouthshire 002E,0.1,0
+Monmouthshire 005E,0.1,0
+Monmouthshire 011D,0.1,0
+Monmouthshire 007B,0.1,0
+Monmouthshire 008B,0.1,0
+Monmouthshire 007C,0.1,0
+Monmouthshire 007D,0.1,0
+Monmouthshire 008C,0.1,0
+Monmouthshire 010D,0.1,0
+Monmouthshire 010E,0.1,0
+Monmouthshire 009D,0.1,0
+Monmouthshire 011E,0.1,0
+Monmouthshire 008D,0.1,0
+Monmouthshire 008E,0.1,0
+Monmouthshire 007E,0.1,0
+Monmouthshire 007F,0.1,0
+Monmouthshire 006E,0.1,0
+Monmouthshire 006F,0.1,0
+Monmouthshire 010F,0.1,0
+Monmouthshire 004F,0.1,0
+Newport 012A,0.1,0
+Newport 006A,0.1,0
+Newport 012B,0.1,0
+Newport 012C,0.1,0
+Newport 012D,0.1,0
+Newport 014A,0.1,0
+Newport 008A,0.1,0
+Newport 015A,0.1,0
+Newport 008B,0.1,0
+Newport 015B,0.1,0
+Newport 015C,0.1,0
+Newport 011A,0.1,0
+Newport 011B,0.1,0
+Newport 011C,0.1,0
+Newport 005A,0.1,0
+Newport 005B,0.1,0
+Newport 005C,0.1,0
+Newport 003A,0.1,0
+Newport 003B,0.1,0
+Newport 003C,0.1,0
+Newport 003D,0.1,0
+Newport 003E,0.1,0
+Newport 003F,0.1,0
+Newport 001A,0.1,0
+Newport 001B,0.1,0
+Newport 001C,0.1,0
+Newport 001D,0.1,0
+Newport 001E,0.1,0
+Newport 001F,0.1,0
+Newport 017A,0.1,0
+Newport 017B,0.1,0
+Newport 017C,0.1,0
+Newport 017D,0.1,0
+Newport 019A,0.1,0
+Newport 019B,0.1,0
+Newport 016A,0.1,0
+Newport 020A,0.1,0
+Newport 016B,0.1,0
+Newport 016C,0.1,0
+Newport 004A,0.1,0
+Newport 004B,0.1,0
+Newport 004C,0.1,0
+Newport 013A,0.1,0
+Newport 013B,0.1,0
+Newport 013C,0.1,0
+Newport 015D,0.1,0
+Newport 015E,0.1,0
+Newport 015F,0.1,0
+Newport 015G,0.1,0
+Newport 004D,0.1,0
+Newport 004E,0.1,0
+Newport 002A,0.1,0
+Newport 002B,0.1,0
+Newport 002C,0.1,0
+Newport 002D,0.1,0
+Newport 002E,0.1,0
+Newport 020C,0.1,0
+Newport 020D,0.1,0
+Newport 018A,0.1,0
+Newport 018B,0.1,0
+Newport 018C,0.1,0
+Newport 018D,0.1,0
+Newport 008C,0.1,0
+Newport 010A,0.1,0
+Newport 008D,0.1,0
+Newport 010B,0.1,0
+Newport 010C,0.1,0
+Newport 010D,0.1,0
+Newport 009A,0.1,0
+Newport 009B,0.1,0
+Newport 016D,0.1,0
+Newport 009C,0.1,0
+Newport 009D,0.1,0
+Newport 009E,0.1,0
+Newport 007A,0.1,0
+Newport 007B,0.1,0
+Newport 007C,0.1,0
+Newport 005D,0.1,0
+Newport 007D,0.1,0
+Newport 007E,0.1,0
+Newport 006B,0.1,0
+Newport 006C,0.1,0
+Newport 006D,0.1,0
+Newport 006E,0.1,0
+Newport 014B,0.1,0
+Newport 014C,0.1,0
+Newport 014D,0.1,0
+Newport 019C,0.1,0
+Newport 019D,0.1,0
+Newport 013D,0.1,0
+Newport 011D,0.1,0
+Newport 011E,0.1,0
+Newport 013E,0.1,0
+Cardiff 036A,0.1,0
+Cardiff 036B,0.1,0
+Cardiff 036C,0.1,0
+Cardiff 036D,0.1,0
+Cardiff 036E,0.1,0
+Cardiff 049A,0.1,0
+Cardiff 045A,0.1,0
+Cardiff 045B,0.1,0
+Cardiff 041A,0.1,0
+Cardiff 045C,0.1,0
+Cardiff 041B,0.1,0
+Cardiff 041C,0.1,0
+Cardiff 045D,0.1,0
+Cardiff 040A,0.1,0
+Cardiff 040B,0.1,0
+Cardiff 040C,0.1,0
+Cardiff 040D,0.1,0
+Cardiff 040E,0.1,0
+Cardiff 035A,0.1,0
+Cardiff 035B,0.1,0
+Cardiff 035C,0.1,0
+Cardiff 035D,0.1,0
+Cardiff 028A,0.1,0
+Cardiff 028B,0.1,0
+Cardiff 028C,0.1,0
+Cardiff 032A,0.1,0
+Cardiff 028D,0.1,0
+Cardiff 032C,0.1,0
+Cardiff 032D,0.1,0
+Cardiff 028E,0.1,0
+Cardiff 014A,0.1,0
+Cardiff 014B,0.1,0
+Cardiff 014C,0.1,0
+Cardiff 008A,0.1,0
+Cardiff 008B,0.1,0
+Cardiff 019A,0.1,0
+Cardiff 019B,0.1,0
+Cardiff 019C,0.1,0
+Cardiff 019D,0.1,0
+Cardiff 008C,0.1,0
+Cardiff 039A,0.1,0
+Cardiff 039B,0.1,0
+Cardiff 039C,0.1,0
+Cardiff 039D,0.1,0
+Cardiff 039E,0.1,0
+Cardiff 043A,0.1,0
+Cardiff 043B,0.1,0
+Cardiff 043C,0.1,0
+Cardiff 043D,0.1,0
+Cardiff 041D,0.1,0
+Cardiff 027A,0.1,0
+Cardiff 027B,0.1,0
+Cardiff 027C,0.1,0
+Cardiff 031A,0.1,0
+Cardiff 027D,0.1,0
+Cardiff 031B,0.1,0
+Cardiff 031C,0.1,0
+Cardiff 031D,0.1,0
+Cardiff 025A,0.1,0
+Cardiff 025B,0.1,0
+Cardiff 025C,0.1,0
+Cardiff 025D,0.1,0
+Cardiff 046A,0.1,0
+Cardiff 046B,0.1,0
+Cardiff 046C,0.1,0
+Cardiff 046D,0.1,0
+Cardiff 044A,0.1,0
+Cardiff 044B,0.1,0
+Cardiff 044C,0.1,0
+Cardiff 044D,0.1,0
+Cardiff 044E,0.1,0
+Cardiff 018A,0.1,0
+Cardiff 018B,0.1,0
+Cardiff 018C,0.1,0
+Cardiff 021A,0.1,0
+Cardiff 012A,0.1,0
+Cardiff 018D,0.1,0
+Cardiff 021B,0.1,0
+Cardiff 021C,0.1,0
+Cardiff 001A,0.1,0
+Cardiff 001B,0.1,0
+Cardiff 026A,0.1,0
+Cardiff 026B,0.1,0
+Cardiff 026C,0.1,0
+Cardiff 026D,0.1,0
+Cardiff 026E,0.1,0
+Cardiff 026F,0.1,0
+Cardiff 023A,0.1,0
+Cardiff 023B,0.1,0
+Cardiff 023C,0.1,0
+Cardiff 023D,0.1,0
+Cardiff 023E,0.1,0
+Cardiff 023F,0.1,0
+Cardiff 005A,0.1,0
+Cardiff 005B,0.1,0
+Cardiff 002A,0.1,0
+Cardiff 001C,0.1,0
+Cardiff 002B,0.1,0
+Cardiff 002C,0.1,0
+Cardiff 005C,0.1,0
+Cardiff 002D,0.1,0
+Cardiff 001D,0.1,0
+Cardiff 005D,0.1,0
+Cardiff 007A,0.1,0
+Cardiff 015A,0.1,0
+Cardiff 015B,0.1,0
+Cardiff 015C,0.1,0
+Cardiff 015D,0.1,0
+Cardiff 007B,0.1,0
+Cardiff 007C,0.1,0
+Cardiff 017A,0.1,0
+Cardiff 017B,0.1,0
+Cardiff 009A,0.1,0
+Cardiff 017C,0.1,0
+Cardiff 017D,0.1,0
+Cardiff 017E,0.1,0
+Cardiff 008D,0.1,0
+Cardiff 009B,0.1,0
+Cardiff 009C,0.1,0
+Cardiff 009D,0.1,0
+Cardiff 014D,0.1,0
+Cardiff 006A,0.1,0
+Cardiff 024A,0.1,0
+Cardiff 029A,0.1,0
+Cardiff 029B,0.1,0
+Cardiff 029C,0.1,0
+Cardiff 029D,0.1,0
+Cardiff 024B,0.1,0
+Cardiff 024C,0.1,0
+Cardiff 024D,0.1,0
+Cardiff 033A,0.1,0
+Cardiff 033B,0.1,0
+Cardiff 030A,0.1,0
+Cardiff 033C,0.1,0
+Cardiff 033D,0.1,0
+Cardiff 033E,0.1,0
+Cardiff 033F,0.1,0
+Cardiff 030B,0.1,0
+Cardiff 030C,0.1,0
+Cardiff 030D,0.1,0
+Cardiff 030E,0.1,0
+Cardiff 007D,0.1,0
+Cardiff 003A,0.1,0
+Cardiff 003B,0.1,0
+Cardiff 003C,0.1,0
+Cardiff 003D,0.1,0
+Cardiff 006C,0.1,0
+Cardiff 006D,0.1,0
+Cardiff 012B,0.1,0
+Cardiff 004A,0.1,0
+Cardiff 012C,0.1,0
+Cardiff 012D,0.1,0
+Cardiff 004B,0.1,0
+Cardiff 004C,0.1,0
+Cardiff 004D,0.1,0
+Cardiff 042A,0.1,0
+Cardiff 042B,0.1,0
+Cardiff 042C,0.1,0
+Cardiff 034A,0.1,0
+Cardiff 034B,0.1,0
+Cardiff 034C,0.1,0
+Cardiff 034D,0.1,0
+Cardiff 042D,0.1,0
+Cardiff 022A,0.1,0
+Cardiff 022B,0.1,0
+Cardiff 022C,0.1,0
+Cardiff 016A,0.1,0
+Cardiff 016B,0.1,0
+Cardiff 022D,0.1,0
+Cardiff 038A,0.1,0
+Cardiff 037A,0.1,0
+Cardiff 037B,0.1,0
+Cardiff 038B,0.1,0
+Cardiff 038C,0.1,0
+Cardiff 038D,0.1,0
+Cardiff 037C,0.1,0
+Cardiff 037D,0.1,0
+Cardiff 011A,0.1,0
+Cardiff 011B,0.1,0
+Cardiff 013A,0.1,0
+Cardiff 013B,0.1,0
+Cardiff 013C,0.1,0
+Cardiff 011C,0.1,0
+Cardiff 016C,0.1,0
+Cardiff 013D,0.1,0
+Cardiff 011D,0.1,0
+Cardiff 016D,0.1,0
+Cardiff 020A,0.1,0
+Cardiff 010A,0.1,0
+Cardiff 020B,0.1,0
+Cardiff 021D,0.1,0
+Cardiff 020C,0.1,0
+Cardiff 020D,0.1,0
+Cardiff 010B,0.1,0
+Cardiff 010C,0.1,0
+Cardiff 010D,0.1,0
+Cardiff 020E,0.1,0
+Powys 020D,0.1,0
+Merthyr Tydfil 008F,0.1,0
+Powys 021F,0.1,0
+Neath Port Talbot 020G,0.1,0
+Powys 017F,0.1,0
+Powys 017G,0.1,0
+Powys 018F,0.1,0
+Powys 018G,0.1,0
+Powys 018H,0.1,0
+Powys 001F,0.1,0
+Powys 001G,0.1,0
+Monmouthshire 010G,0.1,0
+Monmouthshire 002F,0.1,0
+The Vale of Glamorgan 012G,0.1,0
+The Vale of Glamorgan 012H,0.1,0
+Newport 020E,0.1,0
+Newport 020F,0.1,0
+Rhondda Cynon Taf 023F,0.1,0
+Rhondda Cynon Taf 027F,0.1,0
+Rhondda Cynon Taf 027G,0.1,0
+Rhondda Cynon Taf 023G,0.1,0
+Bridgend 017E,0.1,0
+Bridgend 017F,0.1,0
+Bridgend 017G,0.1,0
+Bridgend 017H,0.1,0
+Cardiff 032E,0.1,0
+Carmarthenshire 026G,0.1,0
+Carmarthenshire 026H,0.1,0
+Carmarthenshire 023F,0.1,0
+Conwy 011F,0.1,0
+Conwy 010G,0.1,0
+Conwy 010H,0.1,0
+Wrexham 012F,0.1,0
+Wrexham 019F,0.1,0
+Wrexham 012G,0.1,0
+Gwynedd 014E,0.1,0
+Gwynedd 017F,0.1,0
+Ceredigion 002F,0.1,0
+Ceredigion 003E,0.1,0
+Ceredigion 003F,0.1,0
+Ceredigion 001F,0.1,0
+Swansea 025E,0.1,0
+Cardiff 032F,0.1,0
+Cardiff 048A,0.1,0
+Cardiff 032G,0.1,0
+Cardiff 049B,0.1,0
+Cardiff 048B,0.1,0
+Cardiff 048C,0.1,0
+Cardiff 048D,0.1,0
+Cardiff 049C,0.1,0
+Cardiff 048E,0.1,0
+Cardiff 006E,0.1,0
+Cardiff 005F,0.1,0
+Cardiff 049D,0.1,0
+Cardiff 049E,0.1,0
+Cardiff 049F,0.1,0
+Cardiff 005G,0.1,0
+Cardiff 006F,0.1,0
+Swansea 025F,0.1,0
+Swansea 023E,0.1,0
+Swansea 025G,0.1,0
+Swansea 025H,0.1,0

@@ -97,11 +97,14 @@ class Pathway_msu(object):
         # Call ambulance
         yield self.env.process(self.call_ambulance(patient))
 
-        msu_free = True  # Placeholder for MSU availability
+        if self.scenario.use_msu:
 
-        if msu_free:
-            # MSU is free
-            yield self.env.process(self.msu_process_patient(patient))
+            msu_free = True  # Placeholder for MSU availability
+
+            if msu_free:
+                # MSU is free
+                yield self.env.process(self.msu_process_patient(patient))
+        
         else:
             # MSU is not free
             yield self.env.process(self.non_msu_process_patient(patient))
@@ -584,7 +587,7 @@ class Pathway_msu(object):
 
         # Add travel time (from MT unit as MSU location)
         travel_time = patient.closest_mt_travel_duration
-        duration = duration + travel_time
+        duration += travel_time
 
         # Let this time pass in the simulation.
         yield self.env.timeout(duration)
@@ -597,8 +600,8 @@ class Pathway_msu(object):
         # Get timings depending on whether patients receives thrombolysis
         if patient.thrombolysis:
             # Time to thrombolysis in the MSU
-            min_duration = self.scenario.process_msu_dispatch[0]
-            max_duration = self.scenario.process_msu_dispatch[1]
+            min_duration = self.scenario.process_msu_thrombolysis[0]
+            max_duration = self.scenario.process_msu_thrombolysis[1]
             duration = random.uniform(min_duration, max_duration)
             # Let this time pass in the simulation.
             yield self.env.timeout(duration)
