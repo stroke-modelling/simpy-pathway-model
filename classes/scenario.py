@@ -91,7 +91,7 @@ class Scenario(object):
         self.warm_up = 50
 
         # Specifiy use of msu
-        self.use_msu = False
+        self.use_msu = True
 
         # Which stroke team choice model will we use?
         self.destination_decision_type = 0
@@ -105,17 +105,17 @@ class Scenario(object):
         # Each tuple contains (minimum time, maximum time).
         # When both values are the same, all generated times
         # are that same value with no variation.
-        self.process_time_call_ambulance = (30, 30)
+        self.process_time_call_ambulance = (60, 60)
         self.process_time_ambulance_response = (30, 30)
         self.process_ambulance_on_scene_duration = (20, 20)
-        self.process_msu_dispatch = (10, 15)
-        self.process_msu_thrombolysis = (10, 20)
-        self.process_msu_post_thrombolysis = (5, 10)
+        self.process_msu_dispatch = (10, 10)
+        self.process_msu_thrombolysis = (20, 20)
+        self.process_msu_post_thrombolysis = (15, 15)
         self.process_msu_on_scene_no_thrombolysis = (30, 30)
-        self.process_time_arrival_to_needle = (30, 30)
+        self.process_time_arrival_to_needle = (40, 40)
         self.process_time_arrival_to_puncture = (45, 45)
-        self.transfer_time_delay = 30
-        self.process_time_transfer_arrival_to_puncture = (60, 60)
+        self.transfer_time_delay = 60
+        self.process_time_transfer_arrival_to_puncture = (45, 45)
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
