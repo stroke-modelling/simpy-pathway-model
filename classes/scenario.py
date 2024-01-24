@@ -325,6 +325,7 @@ class Scenario(object):
             # Mask is True for any LSOA that is True in any of the
             # lists in lsoa_bool.
             mask = np.any(lsoa_bool, axis=0)
+            print(mask)
             # Limit the data to just these LSOAs:
             lsoas_to_include = df_travel['LSOA11NM'][mask]
         elif self.limit_to_england:

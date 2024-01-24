@@ -27,6 +27,7 @@ class Units(object):
         # self.services_updates = {
         #     'hospital_name1': {'Use_MT': 0},
         #     'hospital_name2': {'Use_IVT': 0, 'Use_MSU': None},
+        #     'hospital_name3': {'Nearest_MT': 'EX25DW'},
         #     }
         self.services_updates = {}
 
@@ -150,22 +151,26 @@ class Units(object):
                  self.services_updates.values())
         for hospital, service_dict in kv:
             for key, value in zip(service_dict.keys(), service_dict.values()):
-                success = True
-                try:
-                    value = int(value)
-                except TypeError:
-                    if value is None:
-                        # Nothing to see here.
-                        pass
-                    else:
-                        # This shouldn't happen.
-                        # TO DO - flag up an error or something?
-                        success = False
-                if success:
-                    # Get the right row with services.loc[hospital],
-                    # then the right column with [key],
-                    # and overwrite the existing value.
-                    services.loc[hospital, key] = value
+                if key[:4] == 'Use_':
+                    success = True
+                    try:
+                        value = int(value)
+                    except TypeError:
+                        if value is None:
+                            # Nothing to see here.
+                            pass
+                        else:
+                            # This shouldn't happen.
+                            # TO DO - flag up an error or something?
+                            success = False
+                    if success:
+                        # Get the right row with services.loc[hospital],
+                        # then the right column with [key],
+                        # and overwrite the existing value.
+                        services.loc[hospital, key] = value
+                else:
+                    # This isn't an entry about service provision.
+                    pass
 
         # Save output to output folder.
         dir_output = self.paths_dict['output_folder']
@@ -257,12 +262,12 @@ class Units(object):
             time_nearest_{label}
             postcode_nearest_{label}
             """
-            if (df_results.index != df_time_lsoa_hospital.index).any():
-                # If a new dataframe was made, make sure the
-                # index column contains the LSOA names.
-                df_results.index = df_time_lsoa_hospital.index
-            else:
-                pass
+            # if (df_results.index != df_time_lsoa_hospital.index).any():
+            #     # If a new dataframe was made, make sure the
+            #     # index column contains the LSOA names.
+            #     df_results.index = df_time_lsoa_hospital.index
+            # else:
+            #     pass
             # The smallest time in each row:
             df_results[f'time_nearest_{label}'] = (
                 df_time_lsoa_hospital[teams].min(axis='columns'))
@@ -390,15 +395,18 @@ class Units(object):
         # 'Postcode', 'SSNAP name', 'Use_IVT', 'Use_MT', 'Use_MSU'
         # where the "Use_" columns contain 0 (False) or 1 (True).
 
+        # Pick out the names of hospitals offering MT:
+        mask_mt = (df_stroke_teams['Use_MT'] == 1)
+        mt_hospital_names = df_stroke_teams['Postcode'][mask_mt].values
+
+        # Firstly, determine MT feeder units based on travel time.
+        # Each stroke unit will be assigned the MT unit that it is
+        # closest to in travel time.
         # Travel time matrix between hospitals:
         df_time_inter_hospital = pd.read_csv(
             './data/inter_hospital_time_calibrated.csv',
             index_col='from_postcode'
             )
-
-        # Pick out the names of hospitals offering MT:
-        mask_mt = (df_stroke_teams['Use_MT'] == 1)
-        mt_hospital_names = df_stroke_teams['Postcode'][mask_mt].values
         # Reduce columns of inter-hospital time matrix to just MT hospitals:
         df_time_inter_hospital = df_time_inter_hospital[mt_hospital_names]
 
@@ -413,6 +421,24 @@ class Units(object):
         # The name of the column containing the smallest time in each row:
         df_nearest_mt['name_nearest_MT'] = (
             df_time_inter_hospital.idxmin(axis='columns'))
+
+        # Update the feeder units list with anything specified
+        # by the user.
+        z = zip(self.services_updates.keys(), self.services_updates.values())
+        for stroke_unit, stroke_unit_dict in z:
+            if 'Nearest_MT' in list(stroke_unit_dict.keys()):
+                # Name of the unit:
+                mt_name = stroke_unit_dict['Nearest_MT']
+
+                # Find the time to this MT unit.
+                mt_time = df_time_inter_hospital.loc[stroke_unit][mt_name]
+
+                # Update the chosen nearest MT unit name and time.
+                df_nearest_mt.at[stroke_unit, 'name_nearest_MT'] = mt_name
+                df_nearest_mt.at[stroke_unit, 'time_nearest_MT'] = mt_time
+            else:
+                # Nothing to update.
+                pass
 
         # Store in self:
         self.national_ivt_feeder_units = df_nearest_mt
