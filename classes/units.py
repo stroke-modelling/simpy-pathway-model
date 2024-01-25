@@ -433,18 +433,24 @@ class Units(object):
         z = zip(self.services_updates.keys(),
                 self.services_updates.values())
         for stroke_unit, stroke_unit_dict in z:
-            if 'Nearest_MT' in list(stroke_unit_dict.keys()):
-                # Name of the unit:
-                mt_name = stroke_unit_dict['Nearest_MT']
+            if stroke_unit in df_stroke_teams.index.values:
+                # This stroke unit has at least one service
+                # (Use_IVT, Use_MT, and/or Use_MSU = 1).
+                if 'Nearest_MT' in list(stroke_unit_dict.keys()):
+                    # Name of the unit:
+                    mt_name = stroke_unit_dict['Nearest_MT']
 
-                # Find the time to this MT unit.
-                mt_time = df_time_inter_hospital.loc[stroke_unit][mt_name]
+                    # Find the time to this MT unit.
+                    mt_time = df_time_inter_hospital.loc[stroke_unit][mt_name]
 
-                # Update the chosen nearest MT unit name and time.
-                df_nearest_mt.at[stroke_unit, 'name_nearest_MT'] = mt_name
-                df_nearest_mt.at[stroke_unit, 'time_nearest_MT'] = mt_time
+                    # Update the chosen nearest MT unit name and time.
+                    df_nearest_mt.at[stroke_unit, 'name_nearest_MT'] = mt_name
+                    df_nearest_mt.at[stroke_unit, 'time_nearest_MT'] = mt_time
+                else:
+                    # Nothing to update.
+                    pass
             else:
-                # Nothing to update.
+                # Reject stroke units that have no services.
                 pass
 
         # Store in self:

@@ -270,8 +270,12 @@ class Scenario(object):
                 right=pd.Series(feeder_units, name='Postcode'),
                 left_on='Postcode',
                 right_on='Postcode',
-                how='right'
+                how='inner'
             )
+            # Use 'inner' merge to remove any stroke units that
+            # are not in "hospitals" because they do not provide
+            # any services (Use_IVT, Use_MT, Use_MSU all are 0).
+
         elif self.limit_to_england:
             # Limit the data to English stroke units only.
             mask = hospitals["Country"] == "England"
