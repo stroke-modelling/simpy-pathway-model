@@ -6,6 +6,7 @@ import pandas as pd
 
 from classes.units import Units
 
+
 class Scenario(object):
     """
     Global variables for model.
@@ -204,7 +205,6 @@ class Scenario(object):
         # + self.lsoa_msu_travel_time
         # + self.lsoa_msu_unit
 
-
     # ##########################
     # ##### SELECTED UNITS #####
     # ##########################
@@ -325,7 +325,6 @@ class Scenario(object):
             # Mask is True for any LSOA that is True in any of the
             # lists in lsoa_bool.
             mask = np.any(lsoa_bool, axis=0)
-            print(mask)
             # Limit the data to just these LSOAs:
             lsoas_to_include = df_travel['LSOA11NM'][mask]
         elif self.limit_to_england:
