@@ -3,6 +3,7 @@ Scenario class with global parameters for the pathway model.
 """
 import numpy as np
 import pandas as pd
+import os
 
 from classes.units import Units
 
@@ -88,6 +89,7 @@ class Scenario(object):
         # Which LSOAs will we use?
         self.mt_hub_postcodes = []
         self.limit_to_england = True
+        self.region_type_for_lsoa_selection = None
 
         self.run_duration = 365  # Days
         self.warm_up = 50
@@ -130,8 +132,12 @@ class Scenario(object):
         # TO DO - check if output folder already exists,
         # make a new output folder for each run.
         self.paths_dict = dict(
-            data_read_path='./data/',
-            output_folder='./output/',
+            # Directories:
+            dir_data='./data/',
+            dir_output='./output/',  # TO DO ------- match this to the one in Units class --------
+            # dir_output=dir_output_this_run,
+            # Input file names:
+            file_input_lsoa_regions='LSOA_regions.csv',
         )
 
         # Overwrite default values
@@ -248,7 +254,10 @@ class Scenario(object):
                 df_feeders['name_nearest_MT'].str.contains(s)
                 for s in self.mt_hub_postcodes
                 ]
+            # The following mask is True for any stroke unit that is
+            # has any of the MT hub postcodes as its chosen unit:
             mask = np.any(mask, axis=0)
+            # Select just those stroke units:
             feeder_units = df_feeders.index.values[mask]
 
             # Reduce the hospitals DataFrame to just the feeder units
@@ -270,7 +279,7 @@ class Scenario(object):
         self.hospitals = hospitals
 
         # Save output to output folder.
-        dir_output = self.paths_dict['output_folder']
+        dir_output = self.paths_dict['dir_output']
         file_name = 'selected_stroke_units.csv'
         hospitals.to_csv(f'{dir_output}{file_name}')
 
@@ -302,26 +311,32 @@ class Scenario(object):
         # + time_nearest_MSU
         # + postcode_nearest_MSU
         # + ssnap_name_nearest_MSU
+        lsoa11nm = df_travel['LSOA11NM'].copy()
+        lsoa11cd = df_travel['LSOA11CD'].copy()
 
         # Limit the available hospitals if required.
         if len(self.mt_hub_postcodes) > 0:
-            lsoas_to_include = self._select_lsoas_by_nearest(df_travel)
+            if isinstance(self.region_type_for_lsoa_selection, str):
+                lsoas_to_include = self._select_lsoas_by_region(
+                    self.region_type_for_lsoa_selection)
+            else:
+                lsoas_to_include = self._select_lsoas_by_nearest(df_travel)
         elif self.limit_to_england:
             # Limit the data to English LSOAs only.
             # The LSOA11CD (ONS code for each LSOA) begins with
             # an "E" for English and "W" for Welsh LSOAs.
             # All other characters are numbers.
-            mask_england = df_travel['LSOA11CD'].str.contains('E')
-            lsoas_to_include = df_travel['LSOA11NM'][mask_england]
+            mask_england = lsoa11cd.str.contains('E')
+            lsoas_to_include = lsoa11nm[mask_england]
         else:
             # Just use all LSOAs in the file.
-            lsoas_to_include = df_travel['LSOA11NM']
+            lsoas_to_include = lsoa11nm
 
         # Store in self:
         self.lsoa_names = lsoas_to_include
 
         # Save output to output folder.
-        dir_output = self.paths_dict['output_folder']
+        dir_output = self.paths_dict['dir_output']
         file_name = 'selected_lsoas.csv'
         lsoas_to_include.to_csv(f'{dir_output}{file_name}')
 
@@ -349,6 +364,75 @@ class Scenario(object):
         mask = np.any(lsoa_bool, axis=0)
         # Limit the data to just these LSOAs:
         lsoas_to_include = df_travel['LSOA11NM'][mask]
+        return lsoas_to_include
+
+    def _select_lsoas_by_region(self, region_type='ICB'):
+        """
+        If a list of MT units was given, limit the admissions
+        data to just those MT units and feeder IVT units
+        that we saved earlier as self.hospitals.
+        """
+        # List of hospitals selected and the regions containing them:
+        hospitals = self.hospitals
+
+        if region_type in hospitals.columns:
+            # Use this column.
+            col = region_type
+        else:
+            # Guess which one is intended.
+            cols = [c for c in hospitals.columns if region_type in c]
+            # Prioritise the ones that start with the region type.
+            cols_prefix = [c for c in cols if (
+                (len(c) >= len(region_type)) & 
+                (c[:len(region_type)] == region_type)
+            )]
+            # Prioritise the ones that end with 'NM':
+            cols_suffix = [c for c in cols if c[-2:] == 'NM']
+            if len(cols_suffix) > 0:
+                col = cols_suffix[0]
+            elif len(cols_prefix) > 0:
+                col = cols_prefix[0]
+            elif len(cols) > 0:
+                col = cols[0]
+            else:
+                # This shouldn't happen.
+                col = hospitals.columns[0]
+                # TO DO - raise an exception or something here. -----------------------------
+
+        # Regions to limit to:
+        regions = list(set(hospitals[col]))
+
+        # Load data on LSOA names, codes, regions...
+        dir_input = self.paths_dict['dir_data']
+        file_input = self.paths_dict['file_input_lsoa_regions']
+        path_to_file = os.path.join(dir_input, file_input)
+        df_regions = pd.read_csv(path_to_file)
+        # Each row is a different LSOA and the columns include
+        # LSOA11NM, LSOA11CD, longitude and latitude, and larger
+        # regional groupings (e.g. Clinical Care Group names).
+
+        # Which LSOAs are in the catchment areas for these IVT units?
+        # For each stroke team, make a long list of True/False for
+        # whether each LSOA has this as its nearest unit.
+        # List of LSOAs:
+        lsoa_bool = [
+            df_regions[col].str.contains(s)
+            for s in regions
+            ]
+        # Sometimes get missing values, not True or False,
+        # e.g. when comparing Welsh LSOAs with England-only region types.
+        # Change any missing values to False:
+        lsoa_bool = [s.fillna(False) for s in lsoa_bool]
+        # Mask is True for any LSOA that is True in any of the
+        # lists in lsoa_bool.
+        mask = np.any(lsoa_bool, axis=0)
+        # Limit the data to just these LSOAs:
+        lsoas_to_include = df_regions['LSOA11NM'][mask]
+
+        # TO DO ---------------------------------------------------------------------------
+        # Need to make sure that LSOAs within the region but closer
+        # to a stroke unit outside the region are forced to travel to
+        # a stroke unit within the region.
         return lsoas_to_include
 
     def _load_admissions(self):
