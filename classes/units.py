@@ -122,7 +122,7 @@ class Units(object):
 
         return national_dict
 
-    def _create_output_dir(dir_output_all_runs, dir_output, delim='!'):
+    def _create_output_dir(self, dir_output_all_runs, dir_output, delim='!'):
         """
         Create a directory for storing the output of this run.
 
