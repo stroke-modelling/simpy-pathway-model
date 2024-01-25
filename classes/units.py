@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import os  # For checking directory existence
 
+from classes.setup import Setup
 
 class Units(object):
     """
@@ -32,29 +33,7 @@ class Units(object):
         #     }
         self.services_updates = {}
 
-        # Set up paths to files.
-        dir_output_all_runs = './output/'
-        # Try this name for an output folder:
-        dir_output = 'run'  # Don't put a slash at the end please.
-        dir_output_this_run = self._create_output_dir(
-            dir_output_all_runs, dir_output)
-
-        # make a new output folder for each run.
-        self.paths_dict = dict(
-            # Directories:
-            dir_data='./data/',
-            dir_output=dir_output_this_run,
-            # Input file names:
-            file_input_unit_services='stroke_unit_services.csv',
-            file_input_travel_times='lsoa_travel_time_matrix_calibrated.csv',
-            file_input_travel_times_inter_unit=(
-                'inter_hospital_time_calibrated.csv'),
-            file_input_lsoa_regions='LSOA_regions.csv',
-            # Output file names:
-            file_output_unit_services='national_stroke_unit_services.csv',
-            file_output_lsoa_units='national_travel_lsoa_stroke_units.csv',
-            file_output_feeder_units='national_stroke_unit_nearest_mt.csv'
-        )
+        self.setup = Setup()
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
@@ -119,70 +98,6 @@ class Units(object):
 
         return national_dict
 
-    def _create_output_dir(self, dir_output_all_runs, dir_output, delim='!'):
-        """
-        Create a directory for storing the output of this run.
-
-        If the chosen directory name already exists, add a suffix
-        "!1" or similar to make a new directory name and create that
-        instead.
-
-        Choose a delimiter that wouldn't normally go into a dir
-        name just to make the naming easier.
-
-        Inputs
-        ------
-        dir_output_all_runs - str. Name of the main output directory
-                              for all runs.
-        dir_output          - str. Requested name of the output directory
-                              for this run of the model only.
-        delim               - str. A character to split off the requested
-                              directory name from the suffix that this
-                              function adds to it.
-        """
-        # Check if output folder already exists:
-        dir_output_this_run = os.path.join(dir_output_all_runs, dir_output)
-
-        # While the requested output folder already exists:
-        while os.path.isdir(dir_output_this_run):
-            if ((dir_output[-1] == '/') | (dir_output[-1] == '\\')):
-                # Remove final '/' or '\'
-                dir_output = dir_output[:-1]
-            # Split the dir name by every delim:
-            dir_parts = dir_output.split(delim)
-            # # Make a single string of everything up to the final delim:
-            # For now, assume that the delimiter doesn't appear
-            # elsewhere in the file name.
-            dir_start = dir_parts[0]
-            # If delimiter would appear elsewhere, would need something
-            # like this only need a way to tell the difference between
-            # a name ending _1 and ending _useful_stuff.
-            # dir_start = (
-            #     delim.join(dir_parts.split(delim)[:-1])
-            #     if len(dir_parts) > 1 else dir_output)
-            if len(dir_parts) == 1:
-                # No delim in it yet. Set up the suffix.
-                suffix = 1
-            else:
-                # Increase the number after the delim.
-                suffix = dir_parts[-1]
-                try:
-                    suffix = int(suffix)
-                    suffix += 1
-                except ValueError:
-                    # The final part of the directory name is not
-                    # a number.
-                    suffix = 1
-            # Update the directory name:
-            dir_output = f'{dir_start}{delim}{suffix}'
-            dir_output_this_run = os.path.join(
-                dir_output_all_runs, dir_output)
-        # Create this directory:
-        os.mkdir(dir_output_this_run)
-        # Return the name so that we can point the code
-        # at this directory:
-        return dir_output_this_run
-
     # ################################
     # ##### NATIONAL INFORMATION #####
     # ################################
@@ -212,8 +127,8 @@ class Units(object):
             Columns for whether a team provides IVT, MT, and MSU.
         """
         # Load default stroke unit services:
-        dir_input = self.paths_dict['dir_data']
-        file_input = self.paths_dict['file_input_unit_services']
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_unit_services
         path_to_file = os.path.join(dir_input, file_input)
         services = pd.read_csv(
             path_to_file,
@@ -263,8 +178,8 @@ class Units(object):
         self.national_hospital_services = services
 
         # Save output to output folder.
-        dir_output = self.paths_dict['dir_output']
-        file_name = self.paths_dict['file_output_unit_services']
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_output_unit_services
         path_to_file = os.path.join(dir_output, file_name)
         services.to_csv(path_to_file, index=False)
 
@@ -284,8 +199,8 @@ class Units(object):
             IVT, MT, and MSU for each LSOA and the travel times.
         """
         # Load travel time matrix:
-        dir_input = self.paths_dict['dir_data']
-        file_input = self.paths_dict['file_input_travel_times']
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_travel_times
         path_to_file = os.path.join(dir_input, file_input)
         df_time_lsoa_hospital = pd.read_csv(
             path_to_file,
@@ -418,8 +333,8 @@ class Units(object):
                 df_results, df_stroke_teams, label)
 
         # Load data on LSOA names, codes, regions...
-        dir_input = self.paths_dict['dir_data']
-        file_input = self.paths_dict['file_input_lsoa_regions']
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_lsoa_regions
         path_to_file = os.path.join(dir_input, file_input)
         df_regions = pd.read_csv(path_to_file)
         # Each row is a different LSOA and the columns include
@@ -449,8 +364,8 @@ class Units(object):
         self.national_lsoa_nearest_units = df_results
 
         # Save output to output folder.
-        dir_output = self.paths_dict['dir_output']
-        file_name = self.paths_dict['file_output_lsoa_units']
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_output_lsoa_units
         path_to_file = os.path.join(dir_output, file_name)
         df_results.to_csv(path_to_file, index=False)
 
@@ -484,8 +399,8 @@ class Units(object):
         # Each stroke unit will be assigned the MT unit that it is
         # closest to in travel time.
         # Travel time matrix between hospitals:
-        dir_input = self.paths_dict['dir_data']
-        file_input = self.paths_dict['file_input_travel_times_inter_unit']
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_travel_times_inter_unit
         path_to_file = os.path.join(dir_input, file_input)
         df_time_inter_hospital = pd.read_csv(
             path_to_file,
@@ -529,8 +444,8 @@ class Units(object):
         self.national_ivt_feeder_units = df_nearest_mt
 
         # Save output to output folder.
-        dir_output = self.paths_dict['dir_output']
-        file_name = self.paths_dict['file_output_feeder_units']
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_output_feeder_units
         path_to_file = os.path.join(dir_output, file_name)
         df_nearest_mt.to_csv(path_to_file)
 
