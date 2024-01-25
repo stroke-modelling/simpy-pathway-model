@@ -4,10 +4,12 @@ Model class for running a simulation of the stroke pathway.
 import numpy as np
 import pandas as pd
 import simpy
+import os
 
 from classes.patient import Patient
 from classes.pathway import Pathway
 from classes.scenario import Scenario
+from classes.setup import Setup
 from stroke_outcome.continuous_outcome import Continuous_outcome
 
 
@@ -43,7 +45,7 @@ class Model(object):
         Main model running method.
     """
 
-    def __init__(self, scenario: type[Scenario]):
+    def __init__(self, scenario: type[Scenario], *initial_data, **kwargs):
         """
         Constructor class for model
         """
@@ -56,6 +58,26 @@ class Model(object):
 
         # Set up pathway
         self.pathway = Pathway(self.env, self.scenario)
+
+        # Overwrite default values
+        # (can take named arguments or a dictionary)
+        for dictionary in initial_data:
+            for key in dictionary:
+                setattr(self, key, dictionary[key])
+
+        for key in kwargs:
+            setattr(self, key, kwargs[key])
+
+        # Transfer Setup from Scenario:
+        try:
+            self.setup = self.scenario.setup
+        except AttributeError:
+            # Check whether Setup was passed directly to Model:
+            try:
+                self.setup
+            except AttributeError:
+                # If no setup was given, create one now:
+                self.setup = Setup()
 
     def end_run_routine(self):
         """
@@ -92,6 +114,11 @@ class Model(object):
         # with shared keys so can be converted to DataFrame:
         self.results_all = pd.DataFrame(self.pathway.completed_patients)
 
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_results_all
+        path_to_file = os.path.join(dir_output, file_name)
+        self.results_all.to_csv(path_to_file, index=False)
 
         # Get outcomes
         self.get_outcomes()
@@ -102,17 +129,30 @@ class Model(object):
         aggregate_cols.remove('time_onset')
         # Add outcomes
         aggregate_cols.extend(['mRS shift', 'utility_shift', 'mRS 0-2'])
-  
+
         self.results_summary_all = (
             self.results_all[aggregate_cols].agg(['mean', 'std']))
         # Rename the index column:
         self.results_summary_all.index.name = 'statistic'
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_results_summary_all
+        path_to_file = os.path.join(dir_output, file_name)
+        self.results_summary_all.to_csv(path_to_file, index=False)
 
         # Group the results by first unit.
         # Group by unit, then take only the columns relating to time,
         # then take only their means and standard deviations.
         self.results_summary_by_admitting_unit = self.results_all.groupby(
             by='closest_ivt_unit')[aggregate_cols].agg(['mean', 'std'])
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_results_summary_by_admitting_unit
+        path_to_file = os.path.join(dir_output, file_name)
+        self.results_summary_by_admitting_unit.to_csv(
+            path_to_file, index=False)
 
     def generate_patient_arrival(self):
         """
