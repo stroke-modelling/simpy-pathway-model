@@ -255,17 +255,18 @@ class Units(object):
                     # This isn't an entry about service provision.
                     pass
 
-        # Save output to output folder.
-        dir_output = self.paths_dict['dir_output']
-        file_name = self.paths_dict['file_output_unit_services']
-        path_to_file = os.path.join(dir_output, file_name)
-        services.to_csv(path_to_file)
 
         # Remove index column:
         services = services.reset_index()
 
         # Store national hospitals and their services in self.
         self.national_hospital_services = services
+
+        # Save output to output folder.
+        dir_output = self.paths_dict['dir_output']
+        file_name = self.paths_dict['file_output_unit_services']
+        path_to_file = os.path.join(dir_output, file_name)
+        services.to_csv(path_to_file, index=False)
 
     def _find_national_lsoa_nearest_units(self):
         """
@@ -444,6 +445,7 @@ class Units(object):
         df_results = df_results[cols_order]
 
         # Save this to self.
+        df_results = df_results.reset_index()
         self.national_lsoa_nearest_units = df_results
 
         # Save output to output folder.

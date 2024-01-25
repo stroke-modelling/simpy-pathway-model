@@ -225,41 +225,41 @@ class Scenario(object):
             postcode, region, lat/long, provide IVT or MT...
         """
         # Load and parse hospital data
-        hospitals = pd.read_csv("./data/stroke_hospitals_2022.csv")
-        # Only keep stroke units that offer IVT and/or MT:
-        hospitals["Use"] = hospitals[["Use_IVT", "Use_MT"]].max(axis=1)
-        mask = hospitals["Use"] == 1
+        hospitals = pd.read_csv("./data/stroke_hospitals_2022_regions.csv")
+        # Only keep stroke units that offer IVT, MT, and/or MSU:
+        hospitals['Use'] = hospitals[
+            ['Use_IVT', 'Use_MT', 'Use_MSU']].max(axis=1)
+        mask = hospitals['Use'] == 1
         hospitals = hospitals[mask]
 
         # Limit the available hospitals if required.
         if len(self.mt_hub_postcodes) > 0:
             # If a list of MT units was given, use only those units.
 
-            # Which IVT units are feeder units for these MT units?
-            # These lines also pick out the MT units themselves.
-            df_feeders = pd.read_csv('./data/nearest_mt_each_hospital.csv')
-            # For each MT unit, find whether each stroke unit has this
-            # as its nearest MT unit. Get a long list of True/False
-            # values for each MT unit.
-            feeders_bool = [
+            # Find which IVT units feed into these MT units.
+            # First take the data of all feeder units nationally:
+            df_feeders = self.national_dict['ivt_feeder_units']
+            # Each row is a stroke unit. Columns are
+            # its postcode, the postcode of the nearest MT unit,
+            # and travel time to that MT unit.
+
+            # Which hospitals feed into the selected MT units?
+            mask = [
                 df_feeders['name_nearest_MT'].str.contains(s)
                 for s in self.mt_hub_postcodes
                 ]
-            # Make a mask that is True for any stroke unit that
-            # answered True to any of the feeders_bool lists,
-            # i.e. its nearest MT unit is in the requested list.
-            mask = np.any(feeders_bool, axis=0)
-            # Limit the feeders dataframe to just those stroke teams
-            # to get a list of postcodes of feeder units.
-            df_feeders = df_feeders[mask]
-            # Limit the "hospitals" dataframe to these feeder postcodes:
+            mask = np.any(mask, axis=0)
+            feeder_units = df_feeders.index.values[mask]
+
+            # Reduce the hospitals DataFrame to just the feeder units
+            # and the MT units themselves:
             hospitals = pd.merge(
                 left=hospitals,
-                right=df_feeders,
+                right=pd.Series(feeder_units, name='from_postcode'),
                 left_on='Postcode',
                 right_on='from_postcode',
                 how='inner'
-            )[hospitals.columns]
+            )
         elif self.limit_to_england:
             # Limit the data to English stroke units only.
             mask = hospitals["Country"] == "England"
@@ -305,28 +305,7 @@ class Scenario(object):
 
         # Limit the available hospitals if required.
         if len(self.mt_hub_postcodes) > 0:
-            # If a list of MT units was given, limit the admissions
-            # data to just those MT units and feeder IVT units
-            # that we saved earlier as self.hospitals.
-
-            # Which LSOAs are in the catchment areas for these IVT units?
-            # For each stroke team, make a long list of True/False for
-            # whether each LSOA has this as its nearest unit.
-            postcode_cols = [
-                'postcode_nearest_IVT',
-                'postcode_nearest_MT',
-                'postcode_nearest_MSU',
-            ]
-            lsoa_bool = [
-                df_travel[col].str.contains(s)
-                for col in postcode_cols
-                for s in self.hospitals['Postcode'].values
-                ]
-            # Mask is True for any LSOA that is True in any of the
-            # lists in lsoa_bool.
-            mask = np.any(lsoa_bool, axis=0)
-            # Limit the data to just these LSOAs:
-            lsoas_to_include = df_travel['LSOA11NM'][mask]
+            lsoas_to_include = self._select_lsoas_by_nearest(df_travel)
         elif self.limit_to_england:
             # Limit the data to English LSOAs only.
             # The LSOA11CD (ONS code for each LSOA) begins with
@@ -345,6 +324,32 @@ class Scenario(object):
         dir_output = self.paths_dict['output_folder']
         file_name = 'selected_lsoas.csv'
         lsoas_to_include.to_csv(f'{dir_output}{file_name}')
+
+    def _select_lsoas_by_nearest(self, df_travel):
+        """
+        If a list of MT units was given, limit the admissions
+        data to just those MT units and feeder IVT units
+        that we saved earlier as self.hospitals.
+        """
+        # Which LSOAs are in the catchment areas for these IVT units?
+        # For each stroke team, make a long list of True/False for
+        # whether each LSOA has this as its nearest unit.
+        postcode_cols = [
+            'postcode_nearest_IVT',
+            'postcode_nearest_MT',
+            'postcode_nearest_MSU',
+        ]
+        lsoa_bool = [
+            df_travel[col].str.contains(s)
+            for col in postcode_cols
+            for s in self.hospitals['Postcode'].values
+            ]
+        # Mask is True for any LSOA that is True in any of the
+        # lists in lsoa_bool.
+        mask = np.any(lsoa_bool, axis=0)
+        # Limit the data to just these LSOAs:
+        lsoas_to_include = df_travel['LSOA11NM'][mask]
+        return lsoas_to_include
 
     def _load_admissions(self):
         """
