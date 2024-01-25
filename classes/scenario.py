@@ -91,6 +91,7 @@ class Scenario(object):
         self.mt_hub_postcodes = []
         self.limit_to_england = True
         self.region_type_for_lsoa_selection = None
+        self.region_column_for_lsoa_selection = None
 
         self.run_duration = 365  # Days
         self.warm_up = 50
@@ -147,11 +148,55 @@ class Scenario(object):
         # Convert run duration to minutes
         self.run_duration *= 1440
 
+        if isinstance(self.region_type_for_lsoa_selection, str):
+            # Load and parse hospital data
+            dir_input = self.setup.dir_data
+            file_input = self.setup.file_input_hospital_info
+            path_to_file = os.path.join(dir_input, file_input)
+            hospitals = pd.read_csv(path_to_file)
+            # Regions to limit to:
+            self.region_column_for_lsoa_selection = self._find_region_column(
+                self.region_type_for_lsoa_selection,
+                hospitals.columns
+                )
+        else:
+            pass
+
         # Load data:
         # (run this after MT hospitals are updated in
         # initial_data or kwargs).
         self.load_data()
 
+
+    def _find_region_column(self, region_type, columns):
+        """
+        Find the column name that best matches the region type.
+        """
+        if region_type in columns:
+            # Use this column.
+            col = region_type
+        else:
+            # Guess which one is intended.
+            cols = [c for c in columns if region_type in c]
+            # Prioritise the ones that start with the region type.
+            cols_prefix = [c for c in cols if (
+                (len(c) >= len(region_type)) &
+                (c[:len(region_type)] == region_type)
+            )]
+            # Prioritise the ones that end with 'NM':
+            cols_suffix = [c for c in cols if c[-2:] == 'NM']
+            if len(cols_suffix) > 0:
+                col = cols_suffix[0]
+            elif len(cols_prefix) > 0:
+                col = cols_prefix[0]
+            elif len(cols) > 0:
+                col = cols[0]
+            else:
+                # This shouldn't happen.
+                col = columns[0]
+                # TO DO - raise an exception or something here. -----------------------------
+        return col
+    
     def load_data(self):
         """
         Load required data.
@@ -210,6 +255,10 @@ class Scenario(object):
         # + self.lsoa_mt_unit
         # + self.lsoa_msu_travel_time
         # + self.lsoa_msu_unit
+
+        from classes.map import plot_map_selected_units
+        plot_map_selected_units(
+            self.setup, col=self.region_column_for_lsoa_selection)
 
     # ##########################
     # ##### SELECTED UNITS #####
@@ -327,8 +376,7 @@ class Scenario(object):
         # Limit the available hospitals if required.
         if len(self.mt_hub_postcodes) > 0:
             if isinstance(self.region_type_for_lsoa_selection, str):
-                lsoas_to_include = self._select_lsoas_by_region(
-                    self.region_type_for_lsoa_selection)
+                lsoas_to_include = self._select_lsoas_by_region()
             else:
                 lsoas_to_include = self._select_lsoas_by_nearest(df_travel)
         elif self.limit_to_england:
@@ -380,44 +428,14 @@ class Scenario(object):
         lsoas_to_include = df_travel['LSOA11NM'][mask]
         return lsoas_to_include
 
-    def _select_lsoas_by_region(self, region_type='ICB'):
+    def _select_lsoas_by_region(self):
         """
         Limit LSOAs to those in the same region as stroke units.
         """
+        # Column:
+        col = self.region_column_for_lsoa_selection
         # List of hospitals selected and the regions containing them:
         hospitals = self.hospitals
-
-        def _find_region_column(region_type, columns):
-            """
-            Find the column name that best matches the region type.
-            """
-            if region_type in columns:
-                # Use this column.
-                col = region_type
-            else:
-                # Guess which one is intended.
-                cols = [c for c in columns if region_type in c]
-                # Prioritise the ones that start with the region type.
-                cols_prefix = [c for c in cols if (
-                    (len(c) >= len(region_type)) &
-                    (c[:len(region_type)] == region_type)
-                )]
-                # Prioritise the ones that end with 'NM':
-                cols_suffix = [c for c in cols if c[-2:] == 'NM']
-                if len(cols_suffix) > 0:
-                    col = cols_suffix[0]
-                elif len(cols_prefix) > 0:
-                    col = cols_prefix[0]
-                elif len(cols) > 0:
-                    col = cols[0]
-                else:
-                    # This shouldn't happen.
-                    col = columns[0]
-                    # TO DO - raise an exception or something here. -----------------------------
-            return col
-
-        # Regions to limit to:
-        col = _find_region_column(region_type, hospitals.columns)
 
         # Pick out the region names with repeats:
         regions = hospitals[col].copy()

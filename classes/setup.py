@@ -16,6 +16,7 @@ class Setup(object):
         self.dir_data = 'data'
         self.dir_output_all_runs = 'output'
         self.dir_output = 'run'
+        self.dir_data_geojson = 'data_geojson'
 
         # Input file names:
         self.file_input_unit_services = 'stroke_unit_services.csv'
@@ -25,6 +26,14 @@ class Setup(object):
         self.file_input_lsoa_regions = 'LSOA_regions.csv'
         self.file_input_hospital_info = 'stroke_hospitals_2022_regions.csv'
         self.file_input_admissions = 'admissions_2017-2019.csv'
+        # Geojson files:
+        self.file_geojson_ccg = 'Clinical_Commissioning_Groups_April_2019_Boundaries_EN_BGC_2022_-7963862461000886750.geojson'
+        self.file_geojson_icb = 'ICB_JUL_2022_EN_BGC_V3_7901616774526941461.geojson'
+        self.file_geojson_lad = 'LAD_Dec_2017_GCB_GB_2022_5230662237199919616.geojson'
+        self.file_geojson_stp = 'STP_Apr_2019_GCB_in_England_2022_3138810296697318496.geojson'
+        self.file_geojson_lhb = 'Local_Health_Boards_April_2020_WA_BGC_2022_94310626700012506.geojson'
+        self.file_geojson_scn = 'SCN_Dec_2016_GCB_in_England_2022_8470122845735728627.geojson'
+        self.file_geojson_rgn = 'Regions_December_2022_EN_BGC_4589208765943883498.geojson'
 
         # Output file names:
         # Units():
@@ -39,6 +48,8 @@ class Setup(object):
         self.file_results_summary_all = 'results_summary_all.csv'
         self.file_results_summary_by_admitting_unit = (
             'results_summary_by_admitting_unit.csv')
+        # Map():
+        self.file_selected_units_map = 'map_selected_units.jpg'
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
