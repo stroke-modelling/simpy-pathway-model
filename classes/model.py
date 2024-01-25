@@ -4,6 +4,7 @@ Model class for running a simulation of the stroke pathway.
 import numpy as np
 import pandas as pd
 import simpy
+import os
 
 from classes.patient import Patient
 from classes.pathway import Pathway
@@ -113,6 +114,11 @@ class Model(object):
         # with shared keys so can be converted to DataFrame:
         self.results_all = pd.DataFrame(self.pathway.completed_patients)
 
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_results_all
+        path_to_file = os.path.join(dir_output, file_name)
+        self.results_all.to_csv(path_to_file, index=False)
 
         # Get outcomes
         self.get_outcomes()
@@ -123,17 +129,30 @@ class Model(object):
         aggregate_cols.remove('time_onset')
         # Add outcomes
         aggregate_cols.extend(['mRS shift', 'utility_shift', 'mRS 0-2'])
-  
+
         self.results_summary_all = (
             self.results_all[aggregate_cols].agg(['mean', 'std']))
         # Rename the index column:
         self.results_summary_all.index.name = 'statistic'
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_results_summary_all
+        path_to_file = os.path.join(dir_output, file_name)
+        self.results_summary_all.to_csv(path_to_file, index=False)
 
         # Group the results by first unit.
         # Group by unit, then take only the columns relating to time,
         # then take only their means and standard deviations.
         self.results_summary_by_admitting_unit = self.results_all.groupby(
             by='closest_ivt_unit')[aggregate_cols].agg(['mean', 'std'])
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_results_summary_by_admitting_unit
+        path_to_file = os.path.join(dir_output, file_name)
+        self.results_summary_by_admitting_unit.to_csv(
+            path_to_file, index=False)
 
     def generate_patient_arrival(self):
         """

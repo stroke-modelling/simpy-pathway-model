@@ -35,6 +35,10 @@ class Setup(object):
         self.file_selected_stroke_units = 'selected_stroke_units.csv'
         self.file_selected_lsoas = 'selected_lsoas.csv'
         # Model():
+        self.file_results_all = 'results_all.csv'
+        self.file_results_summary_all = 'results_summary_all.csv'
+        self.file_results_summary_by_admitting_unit = (
+            'results_summary_by_admitting_unit.csv')
 
         # Overwrite default values
         # (can take named arguments or a dictionary)

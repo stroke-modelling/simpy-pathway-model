@@ -367,7 +367,7 @@ class Units(object):
         df_results = df_results[cols_order]
 
         # Save this to self.
-        df_results = df_results.reset_index()
+        # df_results = df_results.reset_index()
         self.national_lsoa_nearest_units = df_results
 
         # Save output to output folder.

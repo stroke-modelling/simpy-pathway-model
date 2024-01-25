@@ -267,10 +267,10 @@ class Scenario(object):
             # and the MT units themselves:
             hospitals = pd.merge(
                 left=hospitals,
-                right=pd.Series(feeder_units, name='from_postcode'),
+                right=pd.Series(feeder_units, name='Postcode'),
                 left_on='Postcode',
-                right_on='from_postcode',
-                how='inner'
+                right_on='Postcode',
+                how='right'
             )
         elif self.limit_to_england:
             # Limit the data to English stroke units only.
@@ -279,13 +279,15 @@ class Scenario(object):
         else:
             # Use the full "hospitals" data.
             pass
+
+        hospitals = hospitals.set_index('Postcode')
         self.hospitals = hospitals
 
         # Save output to output folder.
         dir_output = self.setup.dir_output
         file_name = self.setup.file_selected_stroke_units
         path_to_file = os.path.join(dir_output, file_name)
-        hospitals.to_csv(path_to_file, index=False)
+        hospitals.to_csv(path_to_file)
 
     def _load_lsoa_names(self):
         """
@@ -343,7 +345,7 @@ class Scenario(object):
         dir_output = self.setup.dir_output
         file_name = self.setup.file_selected_lsoas
         path_to_file = os.path.join(dir_output, file_name)
-        lsoas_to_include.to_csv(path_to_file)
+        lsoas_to_include.to_csv(path_to_file, index=False)
 
     def _select_lsoas_by_nearest(self, df_travel):
         """
@@ -412,7 +414,13 @@ class Scenario(object):
 
         # Regions to limit to:
         col = _find_region_column(region_type, hospitals.columns)
-        regions = list(set(hospitals[col]))
+
+        # Pick out the region names with repeats:
+        regions = hospitals[col].copy()
+        # Remove missing values:
+        regions = regions.dropna()
+        # Remove repeats:
+        regions = list(set(regions))
 
         # Load data on LSOA names, codes, regions...
         dir_input = self.setup.dir_data
