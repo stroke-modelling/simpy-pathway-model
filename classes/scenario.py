@@ -140,6 +140,12 @@ class Scenario(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
+        # If no setup was given, create one now:
+        try:
+            self.setup
+        except AttributeError:
+            self.setup = Setup()
+
         # Convert run duration to minutes
         self.run_duration *= 1440
 
@@ -182,11 +188,13 @@ class Scenario(object):
         self._load_hospitals()
         # Stores:
         # + self.hospitals
+        #   --> saves to: file_selected_stroke_units
 
         # Find which LSOAs are in these stroke teams' catchment areas:
         self._load_lsoa_names()
         # Stores:
         # + self.lsoa_names
+        #   --> saves to: file_selected_lsoas
 
         # Import admissions statistics for those hospitals:
         self._load_admissions()
@@ -225,7 +233,10 @@ class Scenario(object):
             postcode, region, lat/long, provide IVT or MT...
         """
         # Load and parse hospital data
-        hospitals = pd.read_csv("./data/stroke_hospitals_2022_regions.csv")
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_hospital_info
+        path_to_file = os.path.join(dir_input, file_input)
+        hospitals = pd.read_csv(path_to_file)
         # Only keep stroke units that offer IVT, MT, and/or MSU:
         hospitals['Use'] = hospitals[
             ['Use_IVT', 'Use_MT', 'Use_MSU']].max(axis=1)
@@ -274,8 +285,9 @@ class Scenario(object):
 
         # Save output to output folder.
         dir_output = self.setup.dir_output
-        file_name = 'selected_stroke_units.csv'
-        hospitals.to_csv(f'{dir_output}{file_name}', index=False)
+        file_name = self.setup.file_selected_stroke_units
+        path_to_file = os.path.join(dir_output, file_name)
+        hospitals.to_csv(path_to_file, index=False)
 
     def _load_lsoa_names(self):
         """
@@ -331,8 +343,9 @@ class Scenario(object):
 
         # Save output to output folder.
         dir_output = self.setup.dir_output
-        file_name = 'selected_lsoas.csv'
-        lsoas_to_include.to_csv(f'{dir_output}{file_name}')
+        file_name = self.setup.file_selected_lsoas
+        path_to_file = os.path.join(dir_output, file_name)
+        lsoas_to_include.to_csv(path_to_file)
 
     def _select_lsoas_by_nearest(self, df_travel):
         """
@@ -465,7 +478,10 @@ class Scenario(object):
             considered stroke teams.
         """
         # Load and parse admissions data
-        admissions = pd.read_csv("./data/admissions_2017-2019.csv")
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_admissions
+        path_to_file = os.path.join(dir_input, file_input)
+        admissions = pd.read_csv(path_to_file)
 
         # Keep only these LSOAs in the admissions data:
         admissions = pd.merge(

@@ -12,9 +12,10 @@ class Setup(object):
     def __init__(self, *initial_data, **kwargs):
 
         # Directories:
+        # (don't include slashes please)
         self.dir_data = 'data'
         self.dir_output_all_runs = 'output'
-        self.dir_output = 'run'  # Don't put a slash at the end please.
+        self.dir_output = 'run'
 
         # Input file names:
         self.file_input_unit_services = 'stroke_unit_services.csv'
@@ -22,11 +23,18 @@ class Setup(object):
         self.file_input_travel_times_inter_unit = (
             'inter_hospital_time_calibrated.csv')
         self.file_input_lsoa_regions = 'LSOA_regions.csv'
+        self.file_input_hospital_info = 'stroke_hospitals_2022_regions.csv'
+        self.file_input_admissions = 'admissions_2017-2019.csv'
 
         # Output file names:
-        self.file_output_unit_services = 'national_stroke_unit_services.csv'
-        self.file_output_lsoa_units = 'national_travel_lsoa_stroke_units.csv'
-        self.file_output_feeder_units = 'national_stroke_unit_nearest_mt.csv'
+        # Units():
+        self.file_national_unit_services = 'national_unit_services.csv'
+        self.file_national_lsoa_travel = 'national_lsoa_travel_units.csv'
+        self.file_national_transfer_units = 'national_transfer_units.csv'
+        # Scenario():
+        self.file_selected_stroke_units = 'selected_stroke_units.csv'
+        self.file_selected_lsoas = 'selected_lsoas.csv'
+        # Model():
 
         # Overwrite default values
         # (can take named arguments or a dictionary)

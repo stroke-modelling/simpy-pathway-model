@@ -8,6 +8,7 @@ import simpy
 from classes.patient import Patient
 from classes.pathway import Pathway
 from classes.scenario import Scenario
+from classes.setup import Setup
 from stroke_outcome.continuous_outcome import Continuous_outcome
 
 
@@ -57,8 +58,6 @@ class Model(object):
         # Set up pathway
         self.pathway = Pathway(self.env, self.scenario)
 
-        self.setup = self.scenario.setup
-
         # Overwrite default values
         # (can take named arguments or a dictionary)
         for dictionary in initial_data:
@@ -67,6 +66,17 @@ class Model(object):
 
         for key in kwargs:
             setattr(self, key, kwargs[key])
+
+        # Transfer Setup from Scenario:
+        try:
+            self.setup = self.scenario.setup
+        except AttributeError:
+            # Check whether Setup was passed directly to Model:
+            try:
+                self.setup
+            except AttributeError:
+                # If no setup was given, create one now:
+                self.setup = Setup()
 
     def end_run_routine(self):
         """

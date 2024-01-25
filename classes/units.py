@@ -33,8 +33,6 @@ class Units(object):
         #     }
         self.services_updates = {}
 
-        self.setup = Setup()
-
         # Overwrite default values
         # (can take named arguments or a dictionary)
         for dictionary in initial_data:
@@ -43,6 +41,12 @@ class Units(object):
 
         for key in kwargs:
             setattr(self, key, kwargs[key])
+
+        # If no setup was given, create one now:
+        try:
+            self.setup
+        except AttributeError:
+            self.setup = Setup()
 
         # Load data:
         # (run this after MT hospitals are updated in
@@ -70,22 +74,26 @@ class Units(object):
         self._set_national_hospital_services()
         # Stores:
         # + self.national_hospital_services
+        #   --> saves to: file_national_unit_services
 
         # Find each LSOA's nearest IVT, MT, and MSU units:
         self._find_national_lsoa_nearest_units()
         # Stores:
         # + self.national_lsoa_nearest_units
+        #   --> saves to: file_national_lsoa_travel
 
         # Find which IVT units are feeders to each MT unit:
         self._find_national_mt_feeder_units()
         # Stores:
         # + self.national_ivt_feeder_units
+        #   --> saves to: file_national_transfer_units
 
         # Transfer stroke unit data.
         self._find_national_transfer_travel()
         # Stores:
         # + self.national_mt_transfer_time
         # + self.national_mt_transfer_unit
+        #   --> no file saved.
 
         # Place everything useful into a dict for returning:
         national_dict = dict(
@@ -178,7 +186,7 @@ class Units(object):
 
         # Save output to output folder.
         dir_output = self.setup.dir_output
-        file_name = self.setup.file_output_unit_services
+        file_name = self.setup.file_national_unit_services
         path_to_file = os.path.join(dir_output, file_name)
         services.to_csv(path_to_file, index=False)
 
@@ -364,7 +372,7 @@ class Units(object):
 
         # Save output to output folder.
         dir_output = self.setup.dir_output
-        file_name = self.setup.file_output_lsoa_units
+        file_name = self.setup.file_national_lsoa_travel
         path_to_file = os.path.join(dir_output, file_name)
         df_results.to_csv(path_to_file, index=False)
 
@@ -444,7 +452,7 @@ class Units(object):
 
         # Save output to output folder.
         dir_output = self.setup.dir_output
-        file_name = self.setup.file_output_feeder_units
+        file_name = self.setup.file_national_transfer_units
         path_to_file = os.path.join(dir_output, file_name)
         df_nearest_mt.to_csv(path_to_file)
 
