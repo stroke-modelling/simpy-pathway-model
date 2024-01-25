@@ -49,16 +49,12 @@ class Units(object):
             file_input_travel_times='lsoa_travel_time_matrix_calibrated.csv',
             file_input_travel_times_inter_unit=(
                 'inter_hospital_time_calibrated.csv'),
-            file_input_lsoa_regions='lsoa_to_msoa.csv',
+            file_input_lsoa_regions='LSOA_regions.csv',
             # Output file names:
             file_output_unit_services='national_stroke_unit_services.csv',
             file_output_lsoa_units='national_travel_lsoa_stroke_units.csv',
             file_output_feeder_units='national_stroke_unit_nearest_mt.csv'
         )
-        # TO DO - for some reason, using the LSOA_regions.csv instead
-        # of lsoa_to_msoa.csv makes the code considerably slower
-        # and/or get stuck in a loop. Why?
-        # The containing function is run twice. Doesn't take much longer.
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
@@ -454,7 +450,7 @@ class Units(object):
         dir_output = self.paths_dict['dir_output']
         file_name = self.paths_dict['file_output_lsoa_units']
         path_to_file = os.path.join(dir_output, file_name)
-        df_results.to_csv(path_to_file)
+        df_results.to_csv(path_to_file, index=False)
 
     def _find_national_mt_feeder_units(self):
         """
