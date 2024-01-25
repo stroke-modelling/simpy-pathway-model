@@ -81,11 +81,15 @@ class Units(object):
             file_input_travel_times='lsoa_travel_time_matrix_calibrated.csv',
             file_input_travel_times_inter_unit=(
                 'inter_hospital_time_calibrated.csv'),
+            file_input_lsoa_regions='lsoa_to_msoa.csv',
             # Output file names:
             file_output_unit_services='national_stroke_unit_services.csv',
             file_output_lsoa_units='national_travel_lsoa_stroke_units.csv',
             file_output_feeder_units='national_stroke_unit_nearest_mt.csv'
         )
+        # TO DO - for some reason, using the LSOA_regions.csv instead
+        # of lsoa_to_msoa.csv makes the code considerably slower
+        # and/or get stuck in a loop. Why?
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
@@ -181,8 +185,9 @@ class Units(object):
         # Load default stroke unit services:
         dir_input = self.paths_dict['dir_data']
         file_input = self.paths_dict['file_input_unit_services']
+        path_to_file = os.path.join(dir_input, file_input)
         services = pd.read_csv(
-            f'{dir_input}{file_input}',
+            path_to_file,
             index_col='Postcode'
             )
         # Each row is a stroke unit. The columns are 'Postcode' and
@@ -224,7 +229,8 @@ class Units(object):
         # Save output to output folder.
         dir_output = self.paths_dict['dir_output']
         file_name = self.paths_dict['file_output_unit_services']
-        services.to_csv(f'{dir_output}{file_name}')
+        path_to_file = os.path.join(dir_output, file_name)
+        services.to_csv(path_to_file)
 
         # Remove index column:
         services = services.reset_index()
@@ -250,8 +256,9 @@ class Units(object):
         # Load travel time matrix:
         dir_input = self.paths_dict['dir_data']
         file_input = self.paths_dict['file_input_travel_times']
+        path_to_file = os.path.join(dir_input, file_input)
         df_time_lsoa_hospital = pd.read_csv(
-            f'{dir_input}{file_input}',
+            path_to_file,
             index_col='LSOA'
             )
         # Each column is a postcode of a stroke team and
@@ -381,7 +388,10 @@ class Units(object):
                 df_results, df_stroke_teams, label)
 
         # Load data on LSOA names, codes, regions...
-        df_regions = pd.read_csv('./data/lsoa_to_msoa.csv')
+        dir_input = self.paths_dict['dir_data']
+        file_input = self.paths_dict['file_input_lsoa_regions']
+        path_to_file = os.path.join(dir_input, file_input)
+        df_regions = pd.read_csv(path_to_file)
         # Each row is a different LSOA and the columns include
         # LSOA11NM, LSOA11CD, longitude and latitude, and larger
         # regional groupings (e.g. Clinical Care Group names).
@@ -389,17 +399,10 @@ class Units(object):
         # Add in extra identifiers - LSOA11CD from ONS data.
         df_results = pd.merge(
             df_results,
-            df_regions[['lsoa11nm', 'lsoa11cd']],
+            df_regions[['LSOA11NM', 'LSOA11CD']],
             left_on='lsoa',
-            right_on='lsoa11nm'
+            right_on='LSOA11NM'
         )
-        # # Remove the repeat column:
-        # df_results = df_results.drop('lsoa', axis=1)
-        # Rename columns:
-        df_results = df_results.rename(columns={
-            'lsoa11nm': 'LSOA11NM',
-            'lsoa11cd': 'LSOA11CD',
-            })
         # Reorder columns:
         cols_order = ['LSOA11NM', 'LSOA11CD']
         for label in list(teams_dict.keys()):
@@ -416,7 +419,8 @@ class Units(object):
         # Save output to output folder.
         dir_output = self.paths_dict['dir_output']
         file_name = self.paths_dict['file_output_lsoa_units']
-        df_results.to_csv(f'{dir_output}{file_name}')
+        path_to_file = os.path.join(dir_output, file_name)
+        df_results.to_csv(path_to_file)
 
     def _find_national_mt_feeder_units(self):
         """
@@ -450,8 +454,9 @@ class Units(object):
         # Travel time matrix between hospitals:
         dir_input = self.paths_dict['dir_data']
         file_input = self.paths_dict['file_input_travel_times_inter_unit']
+        path_to_file = os.path.join(dir_input, file_input)
         df_time_inter_hospital = pd.read_csv(
-            f'{dir_input}{file_input}',
+            path_to_file,
             index_col='from_postcode'
             )
         # Reduce columns of inter-hospital time matrix to just MT hospitals:
@@ -494,7 +499,8 @@ class Units(object):
         # Save output to output folder.
         dir_output = self.paths_dict['dir_output']
         file_name = self.paths_dict['file_output_feeder_units']
-        df_nearest_mt.to_csv(f'{dir_output}{file_name}')
+        path_to_file = os.path.join(dir_output, file_name)
+        df_nearest_mt.to_csv(path_to_file)
 
     def _find_national_transfer_travel(self):
         """
