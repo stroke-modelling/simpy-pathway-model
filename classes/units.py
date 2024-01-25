@@ -3,6 +3,7 @@ Units class for defining choice of stroke unit through the pathway.
 """
 import numpy as np
 import pandas as pd
+import os  # For checking directory existence
 
 
 class Units(object):
@@ -32,12 +33,49 @@ class Units(object):
         self.services_updates = {}
 
         # Set up paths to files.
-        # TO DO - check if output folder already exists,
+        # Try this name for an output folder:
+        dir_output = './output/run/'
+        # Choose a delimiter that wouldn't normally go into a dir
+        # name just to make the naming easier.
+        delim = '!'
+        # Check if output folder already exists:
+        while os.path.isdir(dir_output):
+            if dir_output[-1] == '/':
+                # Remove final '/'
+                dir_output = dir_output[:-1]
+            # Split the dir name by every delim:
+            dir_parts = dir_output.split(delim)
+            # # Make a single string of everything up to the final delim:
+            # For now, assume that the delimiter doesn't appear
+            # elsewhere in the file name.
+            dir_start = dir_parts[0]
+            # dir_start = (
+            #     delim.join(dir_parts.split(delim)[:-1])
+            #     if len(dir_parts) > 1 else dir_output)
+            if len(dir_parts) == 1:
+                # No delim in it yet. Set up the suffix.
+                suffix = 1
+            else:
+                # Increase the number after the delim.
+                suffix = dir_parts[-1]
+                try:
+                    suffix = int(suffix)
+                    suffix += 1
+                except ValueError:
+                    # The final part of the directory name is not
+                    # a number.
+                    suffix = 1
+            # Update the directory name:
+            dir_output = f'{dir_start}{delim}{suffix}/'
+        # Create this directory:
+        os.mkdir(dir_output)
+        # TO DO - Windows uses the other type of slash, change this to pathlib or another way of accounting for this.
+
         # make a new output folder for each run.
         self.paths_dict = dict(
             # Directories:
             dir_data='./data/',
-            dir_output='./output/',
+            dir_output=dir_output,
             # Input file names:
             file_input_unit_services='stroke_unit_services.csv',
             file_input_travel_times='lsoa_travel_time_matrix_calibrated.csv',
