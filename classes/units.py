@@ -35,8 +35,18 @@ class Units(object):
         # TO DO - check if output folder already exists,
         # make a new output folder for each run.
         self.paths_dict = dict(
-            data_read_path='./data/',
-            output_folder='./output/',
+            # Directories:
+            dir_data='./data/',
+            dir_output='./output/',
+            # Input file names:
+            file_input_unit_services='stroke_unit_services.csv',
+            file_input_travel_times='lsoa_travel_time_matrix_calibrated.csv',
+            file_input_travel_times_inter_unit=(
+                'inter_hospital_time_calibrated.csv'),
+            # Output file names:
+            file_output_unit_services='national_stroke_unit_services.csv',
+            file_output_lsoa_units='national_travel_lsoa_stroke_units.csv',
+            file_output_feeder_units='national_stroke_unit_nearest_mt.csv'
         )
 
         # Overwrite default values
@@ -131,9 +141,10 @@ class Units(object):
             Columns for whether a team provides IVT, MT, and MSU.
         """
         # Load default stroke unit services:
-        dir_input = self.paths_dict['data_read_path']
+        dir_input = self.paths_dict['dir_data']
+        file_input = self.paths_dict['file_input_unit_services']
         services = pd.read_csv(
-            f'{dir_input}stroke_unit_services.csv',
+            f'{dir_input}{file_input}',
             index_col='Postcode'
             )
         # Each row is a stroke unit. The columns are 'Postcode' and
@@ -173,8 +184,8 @@ class Units(object):
                     pass
 
         # Save output to output folder.
-        dir_output = self.paths_dict['output_folder']
-        file_name = 'national_stroke_unit_services.csv'
+        dir_output = self.paths_dict['dir_output']
+        file_name = self.paths_dict['file_output_unit_services']
         services.to_csv(f'{dir_output}{file_name}')
 
         # Remove index column:
@@ -199,8 +210,10 @@ class Units(object):
             IVT, MT, and MSU for each LSOA and the travel times.
         """
         # Load travel time matrix:
+        dir_input = self.paths_dict['dir_data']
+        file_input = self.paths_dict['file_input_travel_times']
         df_time_lsoa_hospital = pd.read_csv(
-            './data/lsoa_travel_time_matrix_calibrated.csv',
+            f'{dir_input}{file_input}',
             index_col='LSOA'
             )
         # Each column is a postcode of a stroke team and
@@ -262,12 +275,6 @@ class Units(object):
             time_nearest_{label}
             postcode_nearest_{label}
             """
-            # if (df_results.index != df_time_lsoa_hospital.index).any():
-            #     # If a new dataframe was made, make sure the
-            #     # index column contains the LSOA names.
-            #     df_results.index = df_time_lsoa_hospital.index
-            # else:
-            #     pass
             # The smallest time in each row:
             df_results[f'time_nearest_{label}'] = (
                 df_time_lsoa_hospital[teams].min(axis='columns'))
@@ -369,8 +376,8 @@ class Units(object):
         self.national_lsoa_nearest_units = df_results
 
         # Save output to output folder.
-        dir_output = self.paths_dict['output_folder']
-        file_name = 'national_travel_lsoa_stroke_units.csv'
+        dir_output = self.paths_dict['dir_output']
+        file_name = self.paths_dict['file_output_lsoa_units']
         df_results.to_csv(f'{dir_output}{file_name}')
 
     def _find_national_mt_feeder_units(self):
@@ -403,8 +410,10 @@ class Units(object):
         # Each stroke unit will be assigned the MT unit that it is
         # closest to in travel time.
         # Travel time matrix between hospitals:
+        dir_input = self.paths_dict['dir_data']
+        file_input = self.paths_dict['file_input_travel_times_inter_unit']
         df_time_inter_hospital = pd.read_csv(
-            './data/inter_hospital_time_calibrated.csv',
+            f'{dir_input}{file_input}',
             index_col='from_postcode'
             )
         # Reduce columns of inter-hospital time matrix to just MT hospitals:
@@ -424,7 +433,8 @@ class Units(object):
 
         # Update the feeder units list with anything specified
         # by the user.
-        z = zip(self.services_updates.keys(), self.services_updates.values())
+        z = zip(self.services_updates.keys(),
+                self.services_updates.values())
         for stroke_unit, stroke_unit_dict in z:
             if 'Nearest_MT' in list(stroke_unit_dict.keys()):
                 # Name of the unit:
@@ -444,8 +454,8 @@ class Units(object):
         self.national_ivt_feeder_units = df_nearest_mt
 
         # Save output to output folder.
-        dir_output = self.paths_dict['output_folder']
-        file_name = 'national_stroke_unit_nearest_mt.csv'
+        dir_output = self.paths_dict['dir_output']
+        file_name = self.paths_dict['file_output_feeder_units']
         df_nearest_mt.to_csv(f'{dir_output}{file_name}')
 
     def _find_national_transfer_travel(self):
