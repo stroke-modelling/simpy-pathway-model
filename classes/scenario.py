@@ -171,7 +171,10 @@ class Scenario(object):
         of the methods that create them.
         """
         # ##### NATIONAL UNITS #####
-        units = Units({'services_updates': self.services_updates})
+        units = Units({
+            'services_updates': self.services_updates,
+            'setup': self.setup
+            })
         self.national_dict = units.load_data()
 
         # ##### SELECTED UNITS #####

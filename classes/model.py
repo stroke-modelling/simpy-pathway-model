@@ -43,7 +43,7 @@ class Model(object):
         Main model running method.
     """
 
-    def __init__(self, scenario: type[Scenario]):
+    def __init__(self, scenario: type[Scenario], *initial_data, **kwargs):
         """
         Constructor class for model
         """
@@ -56,6 +56,17 @@ class Model(object):
 
         # Set up pathway
         self.pathway = Pathway(self.env, self.scenario)
+
+        self.setup = self.scenario.setup
+
+        # Overwrite default values
+        # (can take named arguments or a dictionary)
+        for dictionary in initial_data:
+            for key in dictionary:
+                setattr(self, key, dictionary[key])
+
+        for key in kwargs:
+            setattr(self, key, kwargs[key])
 
     def end_run_routine(self):
         """

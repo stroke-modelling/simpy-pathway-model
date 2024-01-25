@@ -1,11 +1,11 @@
 """
 Units class for defining choice of stroke unit through the pathway.
 """
-import numpy as np
 import pandas as pd
 import os  # For checking directory existence
 
 from classes.setup import Setup
+
 
 class Units(object):
     """
@@ -169,7 +169,6 @@ class Units(object):
                 else:
                     # This isn't an entry about service provision.
                     pass
-
 
         # Remove index column:
         services = services.reset_index()
