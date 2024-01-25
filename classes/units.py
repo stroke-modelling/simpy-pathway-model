@@ -58,6 +58,7 @@ class Units(object):
         # TO DO - for some reason, using the LSOA_regions.csv instead
         # of lsoa_to_msoa.csv makes the code considerably slower
         # and/or get stuck in a loop. Why?
+        # The containing function is run twice. Doesn't take much longer.
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
@@ -71,7 +72,7 @@ class Units(object):
         # Load data:
         # (run this after MT hospitals are updated in
         # initial_data or kwargs).
-        self.load_data()
+        # self.load_data()
 
     def load_data(self):
         """
@@ -433,7 +434,8 @@ class Units(object):
             df_results,
             df_regions[['LSOA11NM', 'LSOA11CD']],
             left_on='lsoa',
-            right_on='LSOA11NM'
+            right_on='LSOA11NM',
+            how='left'
         )
         # Reorder columns:
         cols_order = ['LSOA11NM', 'LSOA11CD']
