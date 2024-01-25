@@ -33,15 +33,17 @@ class Units(object):
         self.services_updates = {}
 
         # Set up paths to files.
+        dir_output_all_runs = './output/'
         # Try this name for an output folder:
-        dir_output = './output/run/'
+        dir_output = 'run'
         # Choose a delimiter that wouldn't normally go into a dir
         # name just to make the naming easier.
         delim = '!'
         # Check if output folder already exists:
-        while os.path.isdir(dir_output):
-            if dir_output[-1] == '/':
-                # Remove final '/'
+        dir_output_this_run = os.path.join(dir_output_all_runs, dir_output)
+        while os.path.isdir(dir_output_this_run):
+            if ((dir_output[-1] == '/') | (dir_output[-1] == '\\')):
+                # Remove final '/' or '\'
                 dir_output = dir_output[:-1]
             # Split the dir name by every delim:
             dir_parts = dir_output.split(delim)
@@ -66,16 +68,17 @@ class Units(object):
                     # a number.
                     suffix = 1
             # Update the directory name:
-            dir_output = f'{dir_start}{delim}{suffix}/'
+            dir_output = f'{dir_start}{delim}{suffix}'
+            dir_output_this_run = os.path.join(dir_output_all_runs, dir_output)
         # Create this directory:
-        os.mkdir(dir_output)
+        os.mkdir(dir_output_this_run)
         # TO DO - Windows uses the other type of slash, change this to pathlib or another way of accounting for this.
 
         # make a new output folder for each run.
         self.paths_dict = dict(
             # Directories:
             dir_data='./data/',
-            dir_output=dir_output,
+            dir_output=dir_output_this_run,
             # Input file names:
             file_input_unit_services='stroke_unit_services.csv',
             file_input_travel_times='lsoa_travel_time_matrix_calibrated.csv',
