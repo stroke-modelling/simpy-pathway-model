@@ -129,8 +129,6 @@ class Scenario(object):
         #     }
         self.services_updates = {}
 
-        self.setup = Setup()
-
         # Overwrite default values
         # (can take named arguments or a dictionary)
         for dictionary in initial_data:
