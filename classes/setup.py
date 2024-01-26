@@ -27,6 +27,7 @@ class Setup(object):
         self.file_input_hospital_info = 'stroke_hospitals_2022_regions.csv'
         self.file_input_admissions = 'admissions_2017-2019.csv'
         # Geojson files:
+        self.file_geojson_lsoa = 'LSOA_(Dec_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson'
         self.file_geojson_ccg = 'Clinical_Commissioning_Groups_April_2019_Boundaries_EN_BGC_2022_-7963862461000886750.geojson'
         self.file_geojson_icb = 'ICB_JUL_2022_EN_BGC_V3_7901616774526941461.geojson'
         self.file_geojson_lad = 'LAD_Dec_2017_GCB_GB_2022_5230662237199919616.geojson'
@@ -50,6 +51,9 @@ class Setup(object):
             'results_summary_by_admitting_unit.csv')
         # Map():
         self.file_selected_units_map = 'map_selected_units.jpg'
+        self.file_drip_ship_map = 'map_catchment_dripship.jpg'
+        self.file_mothership_map = 'map_catchment_mothership.jpg'
+        self.file_msu_map = 'map_catchment_msu.jpg'
 
         # Overwrite default values
         # (can take named arguments or a dictionary)

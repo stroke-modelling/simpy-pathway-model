@@ -1,5 +1,10 @@
 """
 Stick this in a new home eventually. Not a class yet.
+
+crs reference:
++ EPSG:4326  - longitude / latitude.
++ CRS:84     - same as EPSG:4326.
++ EPSG:27700 - British National Grid (BNG).
 """
 import numpy as np
 import pandas as pd
@@ -16,6 +21,7 @@ from shapely import LineString  # For creating line geometry.
 def import_geojson(setup, col):
     # Select geojson file based on input "col":
     geojson_file_dict = {
+        'LSOA11NM': setup.file_geojson_lsoa,
         'CCG19NM': setup.file_geojson_ccg,
         'ICB22NM': setup.file_geojson_icb,
         'LAD17NM': setup.file_geojson_lad,
@@ -28,7 +34,12 @@ def import_geojson(setup, col):
     dir_input = setup.dir_data_geojson
     file_input = geojson_file_dict[col]
     path_to_file = os.path.join(dir_input, file_input)
-    gdf_boundaries = geopandas.read_file(path_to_file)#, crs='EPSG:27700')
+    gdf_boundaries = geopandas.read_file(path_to_file)
+    # If crs is given in the file, geopandas automatically
+    # pulls it through.
+    # Convert to National Grid coordinates:
+    if gdf_boundaries.crs != 'EPSG:27700':
+        gdf_boundaries = gdf_boundaries.to_crs('EPSG:27700')
     return gdf_boundaries
 
 
@@ -42,20 +53,21 @@ def import_selected_stroke_units(setup):
     # Create coordinates:
     # Current setup means sometimes these columns have different names.
     # TO DO - fix that please! ---------------------------------------------------
-    try:
-        long = df_units.Easting
-        lat = df_units.Northing
-    except AttributeError:
-        long = df_units.long_x
-        lat = df_units.lat_x
-    df_units['geometry'] = geopandas.points_from_xy(long, lat)
+    x = df_units['Easting']
+    y = df_units['Northing']
+    xy = df_units[['Easting', 'Northing']]
+    crs = 'EPSG:27700'
+
+    df_units['geometry'] = geopandas.points_from_xy(x, y)
     # Make a column of coordinates [x, y]:
-    df_units['coords'] = df_units[['Easting', 'Northing']].values.tolist()
+    df_units['coords'] = xy.values.tolist()
 
     # Convert to GeoDataFrame:
     gdf_units = geopandas.GeoDataFrame(
-        df_units, geometry=df_units['geometry']#, crs="EPSG:4326"
+        df_units, geometry=df_units['geometry'], crs=crs
     )
+    if crs != 'EPSG:27700':
+        gdf_units = gdf_units.to_crs('EPSG:27700')
     return gdf_units
 
 
@@ -64,19 +76,37 @@ def import_transfer_unit_data(setup):
     dir_input = setup.dir_output
     file_input = setup.file_national_transfer_units
     path_to_file = os.path.join(dir_input, file_input)
-    df_transfer = pd.read_csv(path_to_file)
-    return df_transfer
+    df = pd.read_csv(path_to_file)
+    return df
+
+
+def import_selected_lsoa(setup):
+    # Import selected stroke unit data:
+    dir_input = setup.dir_output
+    file_input = setup.file_selected_lsoas
+    path_to_file = os.path.join(dir_input, file_input)
+    df = pd.read_csv(path_to_file)
+    return df
+
+
+def import_lsoa_travel_data(setup):
+    # Import selected stroke unit data:
+    dir_input = setup.dir_output
+    file_input = setup.file_national_lsoa_travel
+    path_to_file = os.path.join(dir_input, file_input)
+    df = pd.read_csv(path_to_file)
+    return df
 
 
 def keep_only_selected_units(
-        df_transfer, df_units, left_col, right_col, how='right'):
+        df, df_units, left_col, right_col, how='right'):
     # Shorten the transfer unit data to just selected units.
-    df_transfer = pd.merge(
-        df_transfer, df_units[right_col],
+    df = pd.merge(
+        df, df_units[right_col],
         left_on=left_col, right_on=right_col,
         how=how
     )
-    return df_transfer
+    return df
 
 
 def copy_coords_selected_units(df_transfer, df_units):
@@ -116,18 +146,12 @@ def create_lines_from_coords(df_transfer):
 # ####################
 # ##### PLOTTING #####
 # ####################
-def draw_boundaries(ax, gdf_boundaries, column=None,
-                    cmap='Blues', edgecolor='silver', facecolor=None):
+def draw_boundaries(ax, gdf_boundaries, **kwargs):
     # Draw the main map with colours (choropleth):
     gdf_boundaries.plot(
         ax=ax,              # Set which axes to use for plot (only one here)
         antialiased=False,  # Avoids artifact boundry lines
-        facecolor=facecolor,
-        column=column,
-        cmap='Blues',
-        edgecolor='silver',
-        linewidth=0.5
-        # edgecolor='face',   # Make LSOA boundry same colour as area
+        **kwargs
         )
     return ax
 
@@ -217,7 +241,10 @@ def plot_map_selected_units(setup, col='ICB22NM'):
     # Plot the map.
     fig, ax = plt.subplots(figsize=(10, 10))  # Make max dimensions XxY inch
 
-    ax = draw_boundaries(ax, gdf_boundaries, column=gdf_boundaries.index.name)
+    ax = draw_boundaries(
+        ax, gdf_boundaries,
+        column=gdf_boundaries.index.name,
+        cmap='Blues', edgecolor='silver', linewidth=0.5)
     ax = scatter_units(ax, gdf_units)
     ax = plot_lines_between_units(ax, gdf_transfer)
     ax = annotate_unit_labels(ax, gdf_units)
@@ -230,3 +257,102 @@ def plot_map_selected_units(setup, col='ICB22NM'):
     path_to_file = os.path.join(dir_output, file_name)
     plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
     plt.close()
+
+
+def plot_map_drip_ship(setup, col='ICB22NM'):
+    """
+    WIP
+    """
+    # ----- Stroke unit setup -----
+    gdf_units = import_selected_stroke_units(setup)
+
+    # Find MT transfer units for plotting lines between units:
+    df_transfer = import_transfer_unit_data(setup)
+    df_transfer = keep_only_selected_units(
+        df_transfer, gdf_units,
+        left_col='from_postcode', right_col='Postcode')
+    df_transfer = copy_coords_selected_units(df_transfer, gdf_units)
+    gdf_transfer = create_lines_from_coords(df_transfer)
+
+    # Find regional boundaries for reference on the map:
+    gdf_boundaries = import_geojson(setup, col)
+    gdf_boundaries = keep_only_selected_units(
+        gdf_boundaries, gdf_units, left_col=col, right_col=col)
+
+    # ----- LSOA setup -----
+    df_lsoa = import_selected_lsoa(setup)
+
+    # Find LSOA boundaries:
+    gdf_boundaries_lsoa = import_geojson(setup, 'LSOA11NM')
+    gdf_boundaries_lsoa = keep_only_selected_units(
+        gdf_boundaries_lsoa,
+        df_lsoa, left_col='LSOA11CD', right_col='LSOA11CD')
+
+    # Match LSOA with its chosen stroke unit.
+    df_lsoa_travel = import_lsoa_travel_data(setup)
+    df_lsoa_travel = keep_only_selected_units(
+        df_lsoa_travel, df_lsoa, left_col='LSOA11CD', right_col='LSOA11CD')
+    cols_to_keep = [
+        'LSOA11CD', 'postcode_nearest_IVT',
+        'postcode_nearest_MT', 'postcode_nearest_MSU'
+        ]
+    gdf_boundaries_lsoa = pd.merge(
+        gdf_boundaries_lsoa,
+        df_lsoa_travel[cols_to_keep],
+        left_on='LSOA11CD', right_on='LSOA11CD',
+    )
+
+    # ----- Plotting setup -----
+    data_dicts = {
+        'Drip & Ship': {
+            'file': setup.file_drip_ship_map,
+            'boundary_kwargs': {
+                'column': 'postcode_nearest_IVT',
+                'cmap': 'Blues',
+                'edgecolor': 'face'
+                }
+            },
+        'Mothership': {
+            'file': setup.file_mothership_map,
+            'boundary_kwargs': {
+                'column': 'postcode_nearest_MT',
+                'cmap': 'Blues',
+                'edgecolor': 'face'
+                }
+            },
+        'MSU': {
+            'file': setup.file_msu_map,
+            'boundary_kwargs': {
+                'column': 'postcode_nearest_MSU',
+                'cmap': 'Blues',
+                'edgecolor': 'face'
+                }
+            },
+    }
+
+    # ----- Actual plotting -----
+    for model_type, data_dict in zip(data_dicts.keys(), data_dicts.values()):
+        # Plot the map.
+        fig, ax = plt.subplots(figsize=(10, 10))  # Make max dimensions XxY inch
+        ax.set_title(model_type)
+
+        ax = draw_boundaries(
+            ax, gdf_boundaries_lsoa,
+            **data_dict['boundary_kwargs']
+            )
+        ax = draw_boundaries(
+            ax, gdf_boundaries,
+            facecolor='none', edgecolor='k', linewidth=0.5
+            )
+        ax = scatter_units(ax, gdf_units)
+        ax = plot_lines_between_units(ax, gdf_transfer)
+        ax = annotate_unit_labels(ax, gdf_units)
+
+        ax.set_axis_off()  # Turn off axis line and numbers
+
+        # Save output to output folder.
+        dir_output = setup.dir_output
+        file_name = data_dict['file']
+        path_to_file = os.path.join(dir_output, file_name)
+        plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
+        plt.close()

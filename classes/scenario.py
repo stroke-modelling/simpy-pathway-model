@@ -256,8 +256,10 @@ class Scenario(object):
         # + self.lsoa_msu_travel_time
         # + self.lsoa_msu_unit
 
-        from classes.map import plot_map_selected_units
+        from classes.map import plot_map_selected_units, plot_map_drip_ship
         plot_map_selected_units(
+            self.setup, col=self.region_column_for_lsoa_selection)
+        plot_map_drip_ship(
             self.setup, col=self.region_column_for_lsoa_selection)
 
     # ##########################
@@ -352,6 +354,61 @@ class Scenario(object):
         lsoa_names:
             np.array. Names of all LSOAs considered.
         """
+        # Load data on LSOA names, codes, regions...
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_lsoa_regions
+        path_to_file = os.path.join(dir_input, file_input)
+        df_regions = pd.read_csv(path_to_file)
+        # Only keep LSOA name, code, and coordinates:
+        cols_to_keep = [
+            'LSOA11NM', 'LSOA11CD',
+            'LSOA11BNG_N', 'LSOA11BNG_E',
+            'LSOA11LONG', 'LSOA11LAT'
+        ]
+        df_regions = df_regions[cols_to_keep]
+
+        # Limit the available LSOAs if required.
+        if len(self.mt_hub_postcodes) > 0:
+            if isinstance(self.region_type_for_lsoa_selection, str):
+                lsoas_to_include = self._select_lsoas_by_region()
+            else:
+                lsoas_to_include = self._select_lsoas_by_nearest()
+        elif self.limit_to_england:
+            # Limit the data to English LSOAs only.
+            # The LSOA11CD (ONS code for each LSOA) begins with
+            # an "E" for English and "W" for Welsh LSOAs.
+            # All other characters are numbers.
+            mask_england = df_regions['LSOA11CD'].str.contains('E')
+            lsoas_to_include = df_regions['LSOA11NM'][mask_england]
+        else:
+            # Just use all LSOAs in the file.
+            lsoas_to_include = df_regions['LSOA11NM']
+
+        # Reduce the full LSOA data to just these chosen LSOAs:
+        df_regions = pd.merge(
+            df_regions, lsoas_to_include,
+            left_on='LSOA11NM', right_on='LSOA11NM',
+            how='right'
+            )
+
+        # Store in self:
+        self.lsoa_names = df_regions
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_selected_lsoas
+        path_to_file = os.path.join(dir_output, file_name)
+        df_regions.to_csv(path_to_file, index=False)
+
+    def _select_lsoas_by_nearest(self):
+        """
+        Limit LSOAs to those whose nearest stroke units are in the list.
+
+        TO DO -----------------------------------------------------------------------
+        Do we want to limit it to LSOAs nearest only the IVT units?
+        What about units who have their nearest MT unit in the list
+        but not their nearest IVT unit?
+        """
         # Take list of all LSOA names and travel times:
         df_travel = self.national_dict['lsoa_nearest_units']
         # This has one row for each LSOA nationally and columns
@@ -370,44 +427,7 @@ class Scenario(object):
         # + time_nearest_MSU
         # + postcode_nearest_MSU
         # + ssnap_name_nearest_MSU
-        lsoa11nm = df_travel['LSOA11NM'].copy()
-        lsoa11cd = df_travel['LSOA11CD'].copy()
 
-        # Limit the available hospitals if required.
-        if len(self.mt_hub_postcodes) > 0:
-            if isinstance(self.region_type_for_lsoa_selection, str):
-                lsoas_to_include = self._select_lsoas_by_region()
-            else:
-                lsoas_to_include = self._select_lsoas_by_nearest(df_travel)
-        elif self.limit_to_england:
-            # Limit the data to English LSOAs only.
-            # The LSOA11CD (ONS code for each LSOA) begins with
-            # an "E" for English and "W" for Welsh LSOAs.
-            # All other characters are numbers.
-            mask_england = lsoa11cd.str.contains('E')
-            lsoas_to_include = lsoa11nm[mask_england]
-        else:
-            # Just use all LSOAs in the file.
-            lsoas_to_include = lsoa11nm
-
-        # Store in self:
-        self.lsoa_names = lsoas_to_include
-
-        # Save output to output folder.
-        dir_output = self.setup.dir_output
-        file_name = self.setup.file_selected_lsoas
-        path_to_file = os.path.join(dir_output, file_name)
-        lsoas_to_include.to_csv(path_to_file, index=False)
-
-    def _select_lsoas_by_nearest(self, df_travel):
-        """
-        Limit LSOAs to those whose nearest stroke units are in the list.
-
-        TO DO -----------------------------------------------------------------------
-        Do we want to limit it to LSOAs nearest only the IVT units?
-        What about units who have their nearest MT unit in the list
-        but not their nearest IVT unit?
-        """
         # Which LSOAs are in the catchment areas for these IVT units?
         # For each stroke team, make a long list of True/False for
         # whether each LSOA has this as its nearest unit.
