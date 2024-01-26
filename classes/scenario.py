@@ -256,10 +256,10 @@ class Scenario(object):
         # + self.lsoa_msu_travel_time
         # + self.lsoa_msu_unit
 
-        from classes.map import plot_map_selected_units, plot_map_drip_ship
+        from classes.map import plot_map_selected_units, plot_map_catchment
         plot_map_selected_units(
             self.setup, col=self.region_column_for_lsoa_selection)
-        plot_map_drip_ship(
+        plot_map_catchment(
             self.setup, col=self.region_column_for_lsoa_selection)
 
     # ##########################
