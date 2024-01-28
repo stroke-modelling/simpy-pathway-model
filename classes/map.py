@@ -339,9 +339,9 @@ def draw_boundaries(ax, gdf, **kwargs):
     return ax
 
 
-def scatter_units(ax, gdf):
+def scatter_ivt_units(ax, gdf):
     """
-    Draw scatter markers for stroke units.
+    Draw scatter markers for IVT stroke units.
 
     Inputs
     ------
@@ -361,17 +361,58 @@ def scatter_units(ax, gdf):
         marker='o',
         zorder=2
         )
+    return ax
 
-    # TO DO - split off MT and MSU better -----------------------------------------------
-    # Scatter marker star for MT/MSU units:
+
+def scatter_mt_units(ax, gdf):
+    """
+    Draw scatter markers for MT stroke units.
+
+    Inputs
+    ------
+    ax     - pyplot axis. Where to draw the scatter markers.
+    gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
+
+    Returns
+    -------
+    ax - pyplot axis. Same as input but with scatter markers.
+    """
+    # Scatter marker star for MT units:
     mask = gdf['Use_MT'] == 1
-    MSU = gdf[mask]
-    MSU.plot(
+    MT = gdf[mask]
+    MT.plot(
         ax=ax,
         edgecolor='k',
         facecolor='y',
         markersize=300,
         marker='*',
+        zorder=2
+        )
+    return ax
+
+
+def scatter_msu_units(ax, gdf):
+    """
+    Draw scatter markers for MSU stroke units.
+
+    Inputs
+    ------
+    ax     - pyplot axis. Where to draw the scatter markers.
+    gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
+
+    Returns
+    -------
+    ax - pyplot axis. Same as input but with scatter markers.
+    """
+    # Scatter marker star for MT/MSU units:
+    mask = gdf['Use_MSU'] == 1
+    MSU = gdf[mask]
+    MSU.plot(
+        ax=ax,
+        edgecolor='k',
+        facecolor='orange',
+        markersize=50,
+        marker='s',
         zorder=2
         )
     return ax
@@ -416,11 +457,18 @@ def annotate_unit_labels(ax, gdf):
     -------
     ax - pyplot axis. Same as input but with scatter markers.
     """
+    try:
+        mask = gdf['labels_mask']
+        gdf_labels = gdf[mask]
+    except KeyError:
+        # No mask column was given.
+        gdf_labels = gdf
+
     # Define "z" to shorten following "for" line:
     z = zip(
-        gdf.geometry.x,
-        gdf.geometry.y,
-        gdf.Hospital_name
+        gdf_labels.geometry.x,
+        gdf_labels.geometry.y,
+        gdf_labels.Hospital_name
         )
     for x, y, label in z:
         # Edit the label to put a space in the postcode when displayed:
@@ -518,7 +566,9 @@ def plot_map_selected_units(setup, col='ICB22NM'):
         ax, gdf_boundaries,
         column=gdf_boundaries.index.name,  # For colour choice
         cmap='Blues', edgecolor='silver', linewidth=0.5)
-    ax = scatter_units(ax, gdf_units)
+    ax = scatter_ivt_units(ax, gdf_units)
+    ax = scatter_mt_units(ax, gdf_units)
+    ax = scatter_msu_units(ax, gdf_units)
     ax = plot_lines_between_units(ax, gdf_transfer)
     ax = annotate_unit_labels(ax, gdf_units)
 
@@ -602,7 +652,7 @@ def plot_map_catchment(setup, col='ICB22NM'):
         left_col='from_postcode', right_col='Postcode')
     # Copy over coordinates of each stroke unit...
     df_transfer = copy_columns_from_dataframe(
-        df_transfer, gdf_units, 
+        df_transfer, gdf_units,
         cols_to_copy=['coords'],
         cols_to_rename_dict={'coords': 'unit_coords'},
         left_col='from_postcode', right_col='Postcode', how='right'
@@ -652,7 +702,10 @@ def plot_map_catchment(setup, col='ICB22NM'):
                 'column': 'postcode_nearest_IVT',
                 'cmap': 'Blues',
                 'edgecolor': 'face'
-                }
+                },
+            'scatter_ivt': True,
+            'scatter_mt': True,
+            'scatter_msu': False,
             },
         'Mothership': {
             'file': setup.file_mothership_map,
@@ -660,7 +713,10 @@ def plot_map_catchment(setup, col='ICB22NM'):
                 'column': 'postcode_nearest_MT',
                 'cmap': 'Blues',
                 'edgecolor': 'face'
-                }
+                },
+            'scatter_ivt': False,
+            'scatter_mt': True,
+            'scatter_msu': False,
             },
         'MSU': {
             'file': setup.file_msu_map,
@@ -668,7 +724,10 @@ def plot_map_catchment(setup, col='ICB22NM'):
                 'column': 'postcode_nearest_MSU',
                 'cmap': 'Blues',
                 'edgecolor': 'face'
-                }
+                },
+            'scatter_ivt': False,
+            'scatter_mt': False,
+            'scatter_msu': True,
             },
     }
 
@@ -687,8 +746,24 @@ def plot_map_catchment(setup, col='ICB22NM'):
             ax, gdf_boundaries,
             facecolor='none', edgecolor='k', linewidth=0.5
             )
-        ax = scatter_units(ax, gdf_units)
-        ax = plot_lines_between_units(ax, gdf_transfer)
+
+        gdf_units['labels_mask'] = False
+        if data_dict['scatter_ivt']:
+            ax = scatter_ivt_units(ax, gdf_units)
+            gdf_units.loc[gdf_units['Use_IVT'] == 1, 'labels_mask'] = True
+        if data_dict['scatter_mt']:
+            ax = scatter_mt_units(ax, gdf_units)
+            gdf_units.loc[gdf_units['Use_MT'] == 1, 'labels_mask'] = True
+        if data_dict['scatter_msu']:
+            ax = scatter_msu_units(ax, gdf_units)
+            gdf_units.loc[gdf_units['Use_MSU'] == 1, 'labels_mask'] = True
+
+        draw_lines_bool = (
+            (data_dict['scatter_ivt'] & data_dict['scatter_mt']) |
+            (data_dict['scatter_ivt'] & data_dict['scatter_msu'])
+        )
+        if draw_lines_bool:
+            ax = plot_lines_between_units(ax, gdf_transfer)
         ax = annotate_unit_labels(ax, gdf_units)
 
         ax.set_axis_off()  # Turn off axis line and numbers

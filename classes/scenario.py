@@ -292,21 +292,25 @@ class Scenario(object):
         file_input = self.setup.file_input_hospital_info
         path_to_file = os.path.join(dir_input, file_input)
         hospitals = pd.read_csv(path_to_file)
-        # Only keep stroke units that offer IVT, MT, and/or MSU:
+
         # Load and parse hospital services data
         dir_input = self.setup.dir_output
         file_input = self.setup.file_national_unit_services
         path_to_file = os.path.join(dir_input, file_input)
         services = pd.read_csv(path_to_file)
-        services['Use'] = services[
-            ['Use_IVT', 'Use_MT', 'Use_MSU']].max(axis=1)
-        mask = services['Use'] == 1
-        services = services[mask]
-        # Keep only the list of hospitals in "services":
+
+        # Update hospital data with services data:
+        hospitals = hospitals.drop(['Use_IVT', 'Use_MT', 'Use_MSU'], axis=1)
         hospitals = pd.merge(
-            hospitals, services['Postcode'],
-            left_on='Postcode', right_on='Postcode', how='right'
-            )
+            hospitals, services[['Postcode', 'Use_IVT', 'Use_MT', 'Use_MSU']],
+            left_on='Postcode', right_on='Postcode', how='left'
+        )
+
+        # Only keep stroke units that offer IVT, MT, and/or MSU:
+        hospitals['Use'] = hospitals[
+            ['Use_IVT', 'Use_MT', 'Use_MSU']].max(axis=1)
+        mask = hospitals['Use'] == 1
+        hospitals = hospitals[mask]
 
         # Limit the available hospitals if required.
         if len(self.mt_hub_postcodes) > 0:
