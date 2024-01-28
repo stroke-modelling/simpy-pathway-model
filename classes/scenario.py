@@ -86,6 +86,8 @@ class Scenario(object):
 
     def __init__(self, *initial_data, **kwargs):
         """Constructor method for model parameters"""
+        # Name that will also be used for output directory:
+        self.name = 'scenario'
 
         # Which LSOAs will we use?
         self.mt_hub_postcodes = []
@@ -127,6 +129,7 @@ class Scenario(object):
         # self.services_updates = {
         #     'hospital_name1': {'Use_MT': 0},
         #     'hospital_name2': {'Use_IVT': 0, 'Use_MSU': None},
+        #     'hospital_name3': {'Nearest_MT': 'EX25DW'},
         #     }
         self.services_updates = {}
 
@@ -144,6 +147,9 @@ class Scenario(object):
             self.setup
         except AttributeError:
             self.setup = Setup()
+        # And create an output directory for this Scenario:
+        dir_output = self.name
+        self.setup.create_output_dir(dir_output)
 
         # Convert run duration to minutes
         self.run_duration *= 1440
@@ -259,8 +265,9 @@ class Scenario(object):
         from classes.map import plot_map_selected_units, plot_map_catchment
         plot_map_selected_units(
             self.setup, col=self.region_column_for_lsoa_selection)
-        plot_map_catchment(
-            self.setup, col=self.region_column_for_lsoa_selection)
+        # TEMPORARILY commented out for speed of running. 28th Jan 2024
+        # plot_map_catchment(
+        #     self.setup, col=self.region_column_for_lsoa_selection)
 
     # ##########################
     # ##### SELECTED UNITS #####
@@ -287,10 +294,20 @@ class Scenario(object):
         path_to_file = os.path.join(dir_input, file_input)
         hospitals = pd.read_csv(path_to_file)
         # Only keep stroke units that offer IVT, MT, and/or MSU:
-        hospitals['Use'] = hospitals[
+        # Load and parse hospital services data
+        dir_input = self.setup.dir_output
+        file_input = self.setup.file_national_unit_services
+        path_to_file = os.path.join(dir_input, file_input)
+        services = pd.read_csv(path_to_file)
+        services['Use'] = services[
             ['Use_IVT', 'Use_MT', 'Use_MSU']].max(axis=1)
-        mask = hospitals['Use'] == 1
-        hospitals = hospitals[mask]
+        mask = services['Use'] == 1
+        services = services[mask]
+        # Keep only the list of hospitals in "services":
+        hospitals = pd.merge(
+            hospitals, services['Postcode'],
+            left_on='Postcode', right_on='Postcode', how='right'
+            )
 
         # Limit the available hospitals if required.
         if len(self.mt_hub_postcodes) > 0:
