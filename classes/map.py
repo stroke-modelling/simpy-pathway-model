@@ -67,7 +67,7 @@ def import_geojson(setup: 'Setup', region_type: 'str'):
     return gdf_boundaries
 
 
-def import_selected_stroke_units(setup: 'Setup'):
+def make_gdf_selected_stroke_unit_coords(setup: 'Setup'):
     """
     Import GeoDataFrame of selected stroke unit data.
 
@@ -115,6 +115,13 @@ def import_selected_stroke_units(setup: 'Setup'):
     if crs != 'EPSG:27700':
         gdf_units = gdf_units.to_crs('EPSG:27700')
     return gdf_units
+
+
+def make_series_regions_containing_selected_stroke_units(
+        gdf_units, region_type):
+    """# List of intended areas:"""
+    intended_regions = gdf_units[region_type].drop_duplicates().values
+    return intended_regions
 
 
 def import_transfer_unit_data(setup: 'Setup'):
@@ -216,8 +223,16 @@ def keep_only_selected_units(
     -------
     df - pd.DataFrame. Reduced DataFrame.
     """
+    if isinstance(df_units, pd.Series):
+        df_to_merge = df_units
+    elif isinstance(df_units, (pd.DataFrame, geopandas.GeoDataFrame)):
+        df_to_merge = df_units[right_col]
+    else:
+        # This shouldn't happen!
+        df_to_merge = df_units[right_col]
+        # TO DO - some sort of error message, or more checks for what works here? -----------------
     df = pd.merge(
-        df, df_units[right_col],
+        df, df_to_merge,
         left_on=left_col, right_on=right_col,
         how=how
     )
@@ -269,6 +284,35 @@ def copy_columns_from_dataframe(
     return df_left
 
 
+def make_gdf_lines_to_transfer_units(setup):
+    """
+    WRITE ME
+    """
+    gdf_units = make_gdf_selected_stroke_unit_coords(setup)
+
+    # Find MT transfer units for plotting lines between units:
+    df_transfer = import_transfer_unit_data(setup)
+    df_transfer = keep_only_selected_units(
+        df_transfer, gdf_units,
+        left_col='from_postcode', right_col='Postcode')
+    # Copy over coordinates of each stroke unit...
+    df_transfer = copy_columns_from_dataframe(
+        df_transfer, gdf_units,
+        cols_to_copy=['coords'],
+        cols_to_rename_dict={'coords': 'unit_coords'},
+        left_col='from_postcode', right_col='Postcode', how='right'
+        )
+    # ... and its MT transfer unit:
+    df_transfer = copy_columns_from_dataframe(
+        df_transfer, gdf_units,
+        cols_to_copy=['coords'],
+        cols_to_rename_dict={'coords': 'transfer_coords'},
+        left_col='name_nearest_MT', right_col='Postcode', how='left')
+    gdf_transfer = create_lines_from_coords(
+        df_transfer, ['unit_coords', 'transfer_coords'])
+    return gdf_transfer
+
+
 def create_lines_from_coords(df, cols_with_coords):
     """
     Convert DataFrame with coords to GeoDataFrame with LineString.
@@ -308,6 +352,181 @@ def create_lines_from_coords(df, cols_with_coords):
     )
     # TO DO - implement CRS explicitly ---------------------------------------------
     return gdf
+
+
+def make_gdf_lsoa_boundaries(setup):
+    df_lsoa = import_selected_lsoa(setup)
+
+    # Find LSOA boundaries:
+    gdf_boundaries_lsoa = import_geojson(setup, 'LSOA11NM')
+    gdf_boundaries_lsoa = keep_only_selected_units(
+        gdf_boundaries_lsoa, df_lsoa,
+        left_col='LSOA11CD', right_col='LSOA11CD', how='right'
+        )
+
+    # Match LSOA with its chosen stroke unit.
+    df_lsoa_travel = import_lsoa_travel_data(setup)
+    df_lsoa_travel = keep_only_selected_units(
+        df_lsoa_travel, df_lsoa,
+        left_col='LSOA11CD', right_col='LSOA11CD'
+        )
+    cols_to_keep = [
+        'LSOA11CD', 'postcode_nearest_IVT',
+        'postcode_nearest_MT', 'postcode_nearest_MSU'
+        ]
+    gdf_boundaries_lsoa = pd.merge(
+        gdf_boundaries_lsoa,
+        df_lsoa_travel[cols_to_keep],
+        left_on='LSOA11CD', right_on='LSOA11CD',
+    )
+    return gdf_boundaries_lsoa
+
+
+def make_gdf_boundaries_regions_containing_possible_lsoa(
+        setup,
+        col,
+        series_regions_containing_units
+        ):
+    # Find regional boundaries for reference on the map.
+    # Assume that every stroke unit has at least one LSOA in the same
+    # region as it. (This should always happen!)
+    # So select the regional boundaries to make sure every LSOA
+    # is drawn:
+    regions_to_plot = find_region_catchment_across_all_model_types(setup, col)
+
+    gdf_boundaries = import_geojson(setup, col)
+    gdf_boundaries = keep_only_selected_units(
+        gdf_boundaries, regions_to_plot,
+        left_col=col, right_col=col, how='right'
+        )
+    # Drop any missing values
+    # TO DO - this happens due to mismatch of Welsh and English regions - need better linkage ------------
+    gdf_boundaries = gdf_boundaries.dropna(subset=[col])
+
+    # Split off regions that are explicitly requested
+    # (they contain a selected stroke team)
+    # from those that get swept in by the LSOA catchment area
+    # (and do not contain a selected stroke team).
+
+    # Set all regions to be unintented...
+    gdf_boundaries['additional_region'] = True
+    # ... and then find which ones were intended.
+    region_mask = [
+        gdf_boundaries[col].str.contains(region)
+        for region in series_regions_containing_units
+        ]
+    region_mask = np.any(region_mask, axis=0)
+    # Update the ones that were intended.
+    gdf_boundaries.loc[region_mask, 'additional_region'] = False
+    return gdf_boundaries
+
+
+def find_region_catchment_across_all_model_types(setup, col='ICB22NM'):
+    """
+    Limit LSOAs to those whose nearest stroke units are in the list.
+
+    Example: square island. We model only the MT unit, and the
+    national data includes the IVT-only unit too.
+    In the mothership model, the whole island is in the catchment
+    area of the MT unit. However in the drip-and-ship model, only
+    half of the island is in the catchment area of the MT unit.
+
+            Drip-and-ship           Mothership
+        +-------------+        +-------------+
+        |~~o~~~~~~~~_/|        |  o          |    o - IVT-only unit
+        |~~~~~~~~__/  |        |             |    * - MT unit
+        |~~~~~__/     |        |             |
+        |~~__/        |        |             |    ~ - not in MT unit
+        |_/        *  |        |          *  |        catchment.
+        +-------------+        +-------------+
+    """
+    # First find the LSOAs that will travel to any selected
+    # stroke unit *for any destination model type*.
+    # This means easier comparison of maps later between
+    # different model types. The same regions will be plotted
+    # in both even if some regions contain LSOAs that only
+    # are included for some model types.
+
+    # Take list of all LSOA names and travel times:
+    dir_input = setup.dir_output
+    file_input = setup.file_national_lsoa_travel
+    path_to_file = os.path.join(dir_input, file_input)
+    df_travel = pd.read_csv(path_to_file)
+    # This has one row for each LSOA nationally and columns
+    # for LSOA name and ONS code (LSOA11NM and LSOA11CD),
+    # and time, postcode, and SSNAP name of the nearest unit
+    # for each unit type (IVT, MT, MSU).
+    # Columns:
+    # + LSOA11NM
+    # + LSOA11CD
+    # + time_nearest_IVT
+    # + postcode_nearest_IVT
+    # + ssnap_name_nearest_IVT
+    # + time_nearest_MT
+    # + postcode_nearest_MT
+    # + ssnap_name_nearest_MT
+    # + time_nearest_MSU
+    # + postcode_nearest_MSU
+    # + ssnap_name_nearest_MSU
+
+    # Which LSOAs are in the catchment areas for these IVT units?
+    # For each stroke team, make a long list of True/False for
+    # whether each LSOA has this as its nearest unit.
+    postcode_cols = [
+        'postcode_nearest_IVT',
+        'postcode_nearest_MT',
+        'postcode_nearest_MSU',
+    ]
+    # Assume that "hospitals" has "Postcode" as its index.
+    lsoa_bool = [
+        _find_lsoa_catchment_mask(setup, df_travel, col)
+        for col in postcode_cols
+        ]
+    # Mask is True for any LSOA that is True in any of the
+    # lists in lsoa_bool.
+    mask = np.any(lsoa_bool, axis=0)
+    # Limit the data to just these LSOAs:
+    lsoas_to_include = df_travel['LSOA11NM'][mask]
+
+    # Match these to the region names:
+    dir_input = setup.dir_data
+    file_input = setup.file_input_lsoa_regions
+    path_to_file = os.path.join(dir_input, file_input)
+    df_lsoa_regions = pd.read_csv(path_to_file)
+
+    # Restrict big LSOA region file to only the included LSOA:
+    df_lsoa_regions = keep_only_selected_units(
+        df_lsoa_regions, lsoas_to_include,
+        left_col='LSOA11NM', right_col='LSOA11NM', how='right'
+        )
+
+    # Take only the regions that contain these LSOA
+    # and remove repeats:
+    regions_to_plot = df_lsoa_regions[col].drop_duplicates()
+
+    return regions_to_plot
+
+
+def _find_lsoa_catchment_mask(setup, df_travel, col):
+    """
+    DUPLICATED from Scenario - find a better way to do this.
+    """
+    # Save output to output folder.
+    dir_output = setup.dir_output
+    file_name = setup.file_selected_stroke_units
+    path_to_file = os.path.join(dir_output, file_name)
+    hospitals = pd.read_csv(path_to_file, index_col='Postcode')
+
+    # Which LSOAs are in the catchment areas for these units?
+    # For each stroke team, make a long list of True/False for
+    # whether each LSOA has this as its nearest unit.
+    # Assume that "hospitals" has "Postcode" as its index.
+    lsoa_bool = [df_travel[col].str.contains(s)
+                 for s in hospitals.index.values]
+    # Mask is True for any LSOA that is True in any of the
+    # lists in lsoa_bool.
+    mask = np.any(lsoa_bool, axis=0)
+    return mask
 
 
 # ####################
@@ -528,34 +747,15 @@ def plot_map_selected_units(setup, col='ICB22NM'):
     Result is saved as the name given in setup.file_selected_units_map.
     """
     # ----- Setup -----
-    # Import stroke unit data:
-    gdf_units = import_selected_stroke_units(setup)
-    df_transfer = import_transfer_unit_data(setup)
-    df_transfer = keep_only_selected_units(
-        df_transfer, gdf_units,
-        left_col='from_postcode', right_col='Postcode')
 
-    # Gather stroke unit coordinates to make connecting lines:
-    # Copy over coordinates of each stroke unit...
-    df_transfer = copy_columns_from_dataframe(
-        df_transfer, gdf_units, 
-        cols_to_copy=['coords'],
-        cols_to_rename_dict={'coords': 'unit_coords'},
-        left_col='from_postcode', right_col='Postcode', how='right'
-        )
-    # ... and its MT transfer unit:
-    df_transfer = copy_columns_from_dataframe(
-        df_transfer, gdf_units,
-        cols_to_copy=['coords'],
-        cols_to_rename_dict={'coords': 'transfer_coords'},
-        left_col='name_nearest_MT', right_col='Postcode', how='left')
-    gdf_transfer = create_lines_from_coords(
-        df_transfer, ['unit_coords', 'transfer_coords'])
+    # Stroke unit setup
+    gdf_points_units = make_gdf_selected_stroke_unit_coords(setup)
+    gdf_lines_transfer = make_gdf_lines_to_transfer_units(setup)
 
     # Import background region shapes:
     gdf_boundaries = import_geojson(setup, col)
     gdf_boundaries = keep_only_selected_units(
-        gdf_boundaries, gdf_units, left_col=col, right_col=col)
+        gdf_boundaries, gdf_points_units, left_col=col, right_col=col)
 
     # ----- Plotting -----
     # Plot the map.
@@ -566,11 +766,11 @@ def plot_map_selected_units(setup, col='ICB22NM'):
         ax, gdf_boundaries,
         column=gdf_boundaries.index.name,  # For colour choice
         cmap='Blues', edgecolor='silver', linewidth=0.5)
-    ax = scatter_ivt_units(ax, gdf_units)
-    ax = scatter_mt_units(ax, gdf_units)
-    ax = scatter_msu_units(ax, gdf_units)
-    ax = plot_lines_between_units(ax, gdf_transfer)
-    ax = annotate_unit_labels(ax, gdf_units)
+    ax = scatter_ivt_units(ax, gdf_points_units)
+    ax = scatter_mt_units(ax, gdf_points_units)
+    ax = scatter_msu_units(ax, gdf_points_units)
+    ax = plot_lines_between_units(ax, gdf_lines_transfer)
+    ax = annotate_unit_labels(ax, gdf_points_units)
 
     ax.set_axis_off()  # Turn off axis line and numbers
 
@@ -642,57 +842,25 @@ def plot_map_catchment(setup, col='ICB22NM'):
     + file_mothership_map
     + file_msu_map
     """
-    # ----- Stroke unit setup -----
-    gdf_units = import_selected_stroke_units(setup)
+    # Stroke unit setup
+    gdf_points_units = make_gdf_selected_stroke_unit_coords(setup)
+    gdf_lines_transfer = make_gdf_lines_to_transfer_units(setup)
 
-    # Find MT transfer units for plotting lines between units:
-    df_transfer = import_transfer_unit_data(setup)
-    df_transfer = keep_only_selected_units(
-        df_transfer, gdf_units,
-        left_col='from_postcode', right_col='Postcode')
-    # Copy over coordinates of each stroke unit...
-    df_transfer = copy_columns_from_dataframe(
-        df_transfer, gdf_units,
-        cols_to_copy=['coords'],
-        cols_to_rename_dict={'coords': 'unit_coords'},
-        left_col='from_postcode', right_col='Postcode', how='right'
-        )
-    # ... and its MT transfer unit:
-    df_transfer = copy_columns_from_dataframe(
-        df_transfer, gdf_units,
-        cols_to_copy=['coords'],
-        cols_to_rename_dict={'coords': 'transfer_coords'},
-        left_col='name_nearest_MT', right_col='Postcode', how='left')
-    gdf_transfer = create_lines_from_coords(
-        df_transfer, ['unit_coords', 'transfer_coords'])
+    series_regions_containing_units = (
+        make_series_regions_containing_selected_stroke_units(
+            gdf_points_units, col))
 
-    # Find regional boundaries for reference on the map:
-    gdf_boundaries = import_geojson(setup, col)
-    gdf_boundaries = keep_only_selected_units(
-        gdf_boundaries, gdf_units, left_col=col, right_col=col)
+    # LSOA setup
+    gdf_boundaries_lsoa = make_gdf_lsoa_boundaries(setup)
 
-    # ----- LSOA setup -----
-    df_lsoa = import_selected_lsoa(setup)
+    # Background regions setup
+    gdf_boundaries_regions = (
+        make_gdf_boundaries_regions_containing_possible_lsoa(
+            setup,
+            col,
+            series_regions_containing_units
+            ))
 
-    # Find LSOA boundaries:
-    gdf_boundaries_lsoa = import_geojson(setup, 'LSOA11NM')
-    gdf_boundaries_lsoa = keep_only_selected_units(
-        gdf_boundaries_lsoa,
-        df_lsoa, left_col='LSOA11CD', right_col='LSOA11CD')
-
-    # Match LSOA with its chosen stroke unit.
-    df_lsoa_travel = import_lsoa_travel_data(setup)
-    df_lsoa_travel = keep_only_selected_units(
-        df_lsoa_travel, df_lsoa, left_col='LSOA11CD', right_col='LSOA11CD')
-    cols_to_keep = [
-        'LSOA11CD', 'postcode_nearest_IVT',
-        'postcode_nearest_MT', 'postcode_nearest_MSU'
-        ]
-    gdf_boundaries_lsoa = pd.merge(
-        gdf_boundaries_lsoa,
-        df_lsoa_travel[cols_to_keep],
-        left_on='LSOA11CD', right_on='LSOA11CD',
-    )
 
     # ----- Plotting setup -----
     data_dicts = {
@@ -742,29 +910,41 @@ def plot_map_catchment(setup, col='ICB22NM'):
             ax, gdf_boundaries_lsoa,
             **data_dict['boundary_kwargs']
             )
+        gdf_boundaries_unintended = gdf_boundaries_regions.loc[
+            gdf_boundaries_regions['additional_region'] == True]
         ax = draw_boundaries(
-            ax, gdf_boundaries,
+            ax, gdf_boundaries_unintended,
+            facecolor='none', edgecolor='grey', linewidth=0.5, linestyle='--'
+            )
+
+        gdf_boundaries_intended = gdf_boundaries_regions.loc[
+            gdf_boundaries_regions['additional_region'] == False]
+        ax = draw_boundaries(
+            ax, gdf_boundaries_intended,
             facecolor='none', edgecolor='k', linewidth=0.5
             )
 
-        gdf_units['labels_mask'] = False
+        gdf_points_units['labels_mask'] = False
         if data_dict['scatter_ivt']:
-            ax = scatter_ivt_units(ax, gdf_units)
-            gdf_units.loc[gdf_units['Use_IVT'] == 1, 'labels_mask'] = True
+            ax = scatter_ivt_units(ax, gdf_points_units)
+            gdf_points_units.loc[
+                gdf_points_units['Use_IVT'] == 1, 'labels_mask'] = True
         if data_dict['scatter_mt']:
-            ax = scatter_mt_units(ax, gdf_units)
-            gdf_units.loc[gdf_units['Use_MT'] == 1, 'labels_mask'] = True
+            ax = scatter_mt_units(ax, gdf_points_units)
+            gdf_points_units.loc[
+                gdf_points_units['Use_MT'] == 1, 'labels_mask'] = True
         if data_dict['scatter_msu']:
-            ax = scatter_msu_units(ax, gdf_units)
-            gdf_units.loc[gdf_units['Use_MSU'] == 1, 'labels_mask'] = True
+            ax = scatter_msu_units(ax, gdf_points_units)
+            gdf_points_units.loc[
+                gdf_points_units['Use_MSU'] == 1, 'labels_mask'] = True
 
         draw_lines_bool = (
             (data_dict['scatter_ivt'] & data_dict['scatter_mt']) |
             (data_dict['scatter_ivt'] & data_dict['scatter_msu'])
         )
         if draw_lines_bool:
-            ax = plot_lines_between_units(ax, gdf_transfer)
-        ax = annotate_unit_labels(ax, gdf_units)
+            ax = plot_lines_between_units(ax, gdf_lines_transfer)
+        ax = annotate_unit_labels(ax, gdf_points_units)
 
         ax.set_axis_off()  # Turn off axis line and numbers
 

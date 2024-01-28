@@ -92,6 +92,7 @@ class Scenario(object):
         # Which LSOAs will we use?
         self.mt_hub_postcodes = []
         self.limit_to_england = True
+        self.select_lsoa_method = 'nearest'
         self.region_type_for_lsoa_selection = None
         self.region_column_for_lsoa_selection = None
 
@@ -100,7 +101,9 @@ class Scenario(object):
 
         # Which stroke team choice model will we use?
         self.destination_decision_type = 0
-        # 0 is 'drip-and-ship'
+        #   0 is 'drip-and-ship',
+        #   1 is 'mothership',
+        #   2 is 'MSU'.
 
         # Are we using any extra units?
         # i.e. not used in the main IVT and MT units list.
@@ -383,16 +386,25 @@ class Scenario(object):
         cols_to_keep = [
             'LSOA11NM', 'LSOA11CD',
             'LSOA11BNG_N', 'LSOA11BNG_E',
-            'LSOA11LONG', 'LSOA11LAT'
+            'LSOA11LONG', 'LSOA11LAT',
+            self.region_column_for_lsoa_selection
         ]
         df_regions = df_regions[cols_to_keep]
 
         # Limit the available LSOAs if required.
         if len(self.mt_hub_postcodes) > 0:
-            if isinstance(self.region_type_for_lsoa_selection, str):
-                lsoas_to_include = self._select_lsoas_by_region()
-            else:
+            if self.select_lsoa_method == 'nearest':
+                # Only include LSOAs that have their nearest
+                # {stroke unit type} in the selected units.
+                # The list of LSOAs will be different for the
+                # same list of selected stroke units depending
+                # on whether the model type is drip-and-ship or
+                # mothership. Some units have their nearest MT
+                # unit in the selected list but their transfer
+                # MT unit outside the selected list.
                 lsoas_to_include = self._select_lsoas_by_nearest()
+            else:
+                lsoas_to_include = self._select_lsoas_by_region()
         elif self.limit_to_england:
             # Limit the data to English LSOAs only.
             # The LSOA11CD (ONS code for each LSOA) begins with
@@ -420,14 +432,22 @@ class Scenario(object):
         path_to_file = os.path.join(dir_output, file_name)
         df_regions.to_csv(path_to_file, index=False)
 
+    def _find_lsoa_catchment_mask(self, df_travel, col):
+        # Which LSOAs are in the catchment areas for these units?
+        # For each stroke team, make a long list of True/False for
+        # whether each LSOA has this as its nearest unit.
+        # Assume that "hospitals" has "Postcode" as its index.
+        lsoa_bool = [df_travel[col].str.contains(s)
+                    for s in self.hospitals.index.values]
+        # Mask is True for any LSOA that is True in any of the
+        # lists in lsoa_bool.
+        mask = np.any(lsoa_bool, axis=0)
+        return mask
+
+
     def _select_lsoas_by_nearest(self):
         """
-        Limit LSOAs to those whose nearest stroke units are in the list.
-
-        TO DO -----------------------------------------------------------------------
-        Do we want to limit it to LSOAs nearest only the IVT units?
-        What about units who have their nearest MT unit in the list
-        but not their nearest IVT unit?
+        Limit LSOAs to those whose nearest stroke units are selected.
         """
         # Take list of all LSOA names and travel times:
         df_travel = self.national_dict['lsoa_nearest_units']
@@ -448,24 +468,22 @@ class Scenario(object):
         # + postcode_nearest_MSU
         # + ssnap_name_nearest_MSU
 
-        # Which LSOAs are in the catchment areas for these IVT units?
-        # For each stroke team, make a long list of True/False for
-        # whether each LSOA has this as its nearest unit.
-        postcode_cols = [
-            'postcode_nearest_IVT',
-            'postcode_nearest_MT',
-            'postcode_nearest_MSU',
-        ]
-        lsoa_bool = [
-            df_travel[col].str.contains(s)
-            for col in postcode_cols
-            for s in self.hospitals['Postcode'].values
-            ]
-        # Mask is True for any LSOA that is True in any of the
-        # lists in lsoa_bool.
-        mask = np.any(lsoa_bool, axis=0)
+        # Limit to just the LSOAs for the selected model type.
+        if self.destination_decision_type == 0:
+            # Drip and ship.
+            col = 'postcode_nearest_IVT'
+        elif self.destination_decision_type == 1:
+            # Mothership.
+            col = 'postcode_nearest_MT'
+        else:
+            # MSU / other.
+            col = 'postcode_nearest_MSU'
+
+        mask = self._find_lsoa_catchment_mask(df_travel, col)
+
         # Limit the data to just these LSOAs:
         lsoas_to_include = df_travel['LSOA11NM'][mask]
+
         return lsoas_to_include
 
     def _select_lsoas_by_region(self):
