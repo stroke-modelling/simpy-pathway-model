@@ -266,8 +266,8 @@ class Scenario(object):
         plot_map_selected_units(
             self.setup, col=self.region_column_for_lsoa_selection)
         # TEMPORARILY commented out for speed of running. 28th Jan 2024
-        # plot_map_catchment(
-        #     self.setup, col=self.region_column_for_lsoa_selection)
+        plot_map_catchment(
+            self.setup, col=self.region_column_for_lsoa_selection)
 
     # ##########################
     # ##### SELECTED UNITS #####

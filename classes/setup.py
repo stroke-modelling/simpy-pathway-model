@@ -17,6 +17,9 @@ class Setup(object):
         self.dir_output_all_runs = 'output'
         self.dir_output = 'run'
         self.dir_data_geojson = 'data_geojson'
+        # Keep a list of output directories, e.g. one directory for
+        # each scenario:
+        self.list_dir_output = []
 
         # Input file names:
         self.file_input_unit_services = 'stroke_unit_services.csv'
@@ -64,15 +67,7 @@ class Setup(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-        # Set up paths to files.
-        # Make a new output folder for each run.
-        # Check if the requested output folder name already exists.
-        # If it does then choose another one.
-        # Then create a directory for the output files to go into.
-        self.dir_output = self._create_output_dir(
-            self.dir_output_all_runs, self.dir_output)
-
-    def _create_output_dir(self, dir_output_all_runs, dir_output, delim='!'):
+    def create_output_dir(self, dir_output, delim='!'):
         """
         Create a directory for storing the output of this run.
 
@@ -85,8 +80,6 @@ class Setup(object):
 
         Inputs
         ------
-        dir_output_all_runs - str. Name of the main output directory
-                              for all runs.
         dir_output          - str. Requested name of the output directory
                               for this run of the model only.
         delim               - str. A character to split off the requested
@@ -94,7 +87,8 @@ class Setup(object):
                               function adds to it.
         """
         # Check if output folder already exists:
-        dir_output_this_run = os.path.join(dir_output_all_runs, dir_output)
+        dir_output_this_run = os.path.join(
+            self.dir_output_all_runs, dir_output)
 
         # While the requested output folder already exists:
         while os.path.isdir(dir_output_this_run):
@@ -129,9 +123,17 @@ class Setup(object):
             # Update the directory name:
             dir_output = f'{dir_start}{delim}{suffix}'
             dir_output_this_run = os.path.join(
-                dir_output_all_runs, dir_output)
+                self.dir_output_all_runs, dir_output)
         # Create this directory:
         os.mkdir(dir_output_this_run)
+
+        # Add the output directory to the list:
+        self.list_dir_output.append(dir_output_this_run)
+
+        # Save to self
+        # (and so overwrite any name that was there before):
+        self.dir_output = dir_output_this_run
+
         # Return the name so that we can point the code
         # at this directory:
         return dir_output_this_run
