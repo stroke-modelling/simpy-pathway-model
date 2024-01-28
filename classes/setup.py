@@ -14,6 +14,7 @@ class Setup(object):
         # Directories:
         # (don't include slashes please)
         self.dir_data = 'data'
+        self.dir_output_this_setup = 'output'
         self.dir_output_all_runs = 'output'
         self.dir_output = 'run'
         self.dir_data_geojson = 'data_geojson'
@@ -67,7 +68,12 @@ class Setup(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-    def create_output_dir(self, dir_output, delim='!'):
+        # Check if this top output directory exists,
+        # rename if necessary, then create the dictionary:
+        self.dir_output_all_runs = self.create_output_dir(
+            self.dir_output_all_runs, path_to_dir=self.dir_output_this_setup)
+
+    def create_output_dir(self, dir_output, delim='!', path_to_dir=None):
         """
         Create a directory for storing the output of this run.
 
@@ -86,15 +92,28 @@ class Setup(object):
                               directory name from the suffix that this
                               function adds to it.
         """
+        if path_to_dir is None:
+            path_to_dir = self.dir_output_all_runs
+            subdir = True
+        else:
+            subdir = False
+
         # Check if output folder already exists:
         dir_output_this_run = os.path.join(
-            self.dir_output_all_runs, dir_output)
+            path_to_dir, dir_output)
 
         # While the requested output folder already exists:
         while os.path.isdir(dir_output_this_run):
-            if ((dir_output[-1] == '/') | (dir_output[-1] == '\\')):
-                # Remove final '/' or '\'
-                dir_output = dir_output[:-1]
+            if len(dir_output) > 0:
+                if (dir_output[-1] == '/') | (dir_output[-1] == '\\'):
+                    # Remove final '/' or '\'
+                    dir_output = dir_output[:-1]
+                else:
+                    # Don't change the name.
+                    pass
+            else:
+                # The name is just an empty string.
+                pass
             # Split the dir name by every delim:
             dir_parts = dir_output.split(delim)
             # # Make a single string of everything up to the final delim:
@@ -123,16 +142,16 @@ class Setup(object):
             # Update the directory name:
             dir_output = f'{dir_start}{delim}{suffix}'
             dir_output_this_run = os.path.join(
-                self.dir_output_all_runs, dir_output)
+                path_to_dir, dir_output)
         # Create this directory:
         os.mkdir(dir_output_this_run)
 
-        # Add the output directory to the list:
-        self.list_dir_output.append(dir_output_this_run)
-
-        # Save to self
-        # (and so overwrite any name that was there before):
-        self.dir_output = dir_output_this_run
+        if subdir:
+            # Add the output directory to the list:
+            self.list_dir_output.append(dir_output_this_run)
+            # Save to self
+            # (and so overwrite any name that was there before):
+            self.dir_output = dir_output_this_run
 
         # Return the name so that we can point the code
         # at this directory:
