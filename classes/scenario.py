@@ -86,11 +86,14 @@ class Scenario(object):
 
     def __init__(self, *initial_data, **kwargs):
         """Constructor method for model parameters"""
+        # Name that will also be used for output directory:
+        self.name = 'scenario'
 
         # Which LSOAs will we use?
         self.mt_hub_postcodes = []
         self.limit_to_england = True
         self.region_type_for_lsoa_selection = None
+        self.region_column_for_lsoa_selection = None
 
         self.run_duration = 365  # Days
         self.warm_up = 50
@@ -126,6 +129,7 @@ class Scenario(object):
         # self.services_updates = {
         #     'hospital_name1': {'Use_MT': 0},
         #     'hospital_name2': {'Use_IVT': 0, 'Use_MSU': None},
+        #     'hospital_name3': {'Nearest_MT': 'EX25DW'},
         #     }
         self.services_updates = {}
 
@@ -143,14 +147,60 @@ class Scenario(object):
             self.setup
         except AttributeError:
             self.setup = Setup()
+        # And create an output directory for this Scenario:
+        dir_output = self.name
+        self.setup.create_output_dir(dir_output)
 
         # Convert run duration to minutes
         self.run_duration *= 1440
+
+        if isinstance(self.region_type_for_lsoa_selection, str):
+            # Load and parse hospital data
+            dir_input = self.setup.dir_data
+            file_input = self.setup.file_input_hospital_info
+            path_to_file = os.path.join(dir_input, file_input)
+            hospitals = pd.read_csv(path_to_file)
+            # Regions to limit to:
+            self.region_column_for_lsoa_selection = self._find_region_column(
+                self.region_type_for_lsoa_selection,
+                hospitals.columns
+                )
+        else:
+            pass
 
         # Load data:
         # (run this after MT hospitals are updated in
         # initial_data or kwargs).
         self.load_data()
+
+    def _find_region_column(self, region_type, columns):
+        """
+        Find the column name that best matches the region type.
+        """
+        if region_type in columns:
+            # Use this column.
+            col = region_type
+        else:
+            # Guess which one is intended.
+            cols = [c for c in columns if region_type in c]
+            # Prioritise the ones that start with the region type.
+            cols_prefix = [c for c in cols if (
+                (len(c) >= len(region_type)) &
+                (c[:len(region_type)] == region_type)
+            )]
+            # Prioritise the ones that end with 'NM':
+            cols_suffix = [c for c in cols if c[-2:] == 'NM']
+            if len(cols_suffix) > 0:
+                col = cols_suffix[0]
+            elif len(cols_prefix) > 0:
+                col = cols_prefix[0]
+            elif len(cols) > 0:
+                col = cols[0]
+            else:
+                # This shouldn't happen.
+                col = columns[0]
+                # TO DO - raise an exception or something here. -----------------------------
+        return col
 
     def load_data(self):
         """
@@ -211,6 +261,13 @@ class Scenario(object):
         # + self.lsoa_msu_travel_time
         # + self.lsoa_msu_unit
 
+        from classes.map import plot_map_selected_units, plot_map_catchment
+        plot_map_selected_units(
+            self.setup, col=self.region_column_for_lsoa_selection)
+        # TEMPORARILY commented out for speed of running. 28th Jan 2024
+        plot_map_catchment(
+            self.setup, col=self.region_column_for_lsoa_selection)
+
     # ##########################
     # ##### SELECTED UNITS #####
     # ##########################
@@ -236,10 +293,20 @@ class Scenario(object):
         path_to_file = os.path.join(dir_input, file_input)
         hospitals = pd.read_csv(path_to_file)
         # Only keep stroke units that offer IVT, MT, and/or MSU:
-        hospitals['Use'] = hospitals[
+        # Load and parse hospital services data
+        dir_input = self.setup.dir_output
+        file_input = self.setup.file_national_unit_services
+        path_to_file = os.path.join(dir_input, file_input)
+        services = pd.read_csv(path_to_file)
+        services['Use'] = services[
             ['Use_IVT', 'Use_MT', 'Use_MSU']].max(axis=1)
-        mask = hospitals['Use'] == 1
-        hospitals = hospitals[mask]
+        mask = services['Use'] == 1
+        services = services[mask]
+        # Keep only the list of hospitals in "services":
+        hospitals = pd.merge(
+            hospitals, services['Postcode'],
+            left_on='Postcode', right_on='Postcode', how='right'
+            )
 
         # Limit the available hospitals if required.
         if len(self.mt_hub_postcodes) > 0:
@@ -303,6 +370,61 @@ class Scenario(object):
         lsoa_names:
             np.array. Names of all LSOAs considered.
         """
+        # Load data on LSOA names, codes, regions...
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_lsoa_regions
+        path_to_file = os.path.join(dir_input, file_input)
+        df_regions = pd.read_csv(path_to_file)
+        # Only keep LSOA name, code, and coordinates:
+        cols_to_keep = [
+            'LSOA11NM', 'LSOA11CD',
+            'LSOA11BNG_N', 'LSOA11BNG_E',
+            'LSOA11LONG', 'LSOA11LAT'
+        ]
+        df_regions = df_regions[cols_to_keep]
+
+        # Limit the available LSOAs if required.
+        if len(self.mt_hub_postcodes) > 0:
+            if isinstance(self.region_type_for_lsoa_selection, str):
+                lsoas_to_include = self._select_lsoas_by_region()
+            else:
+                lsoas_to_include = self._select_lsoas_by_nearest()
+        elif self.limit_to_england:
+            # Limit the data to English LSOAs only.
+            # The LSOA11CD (ONS code for each LSOA) begins with
+            # an "E" for English and "W" for Welsh LSOAs.
+            # All other characters are numbers.
+            mask_england = df_regions['LSOA11CD'].str.contains('E')
+            lsoas_to_include = df_regions['LSOA11NM'][mask_england]
+        else:
+            # Just use all LSOAs in the file.
+            lsoas_to_include = df_regions['LSOA11NM']
+
+        # Reduce the full LSOA data to just these chosen LSOAs:
+        df_regions = pd.merge(
+            df_regions, lsoas_to_include,
+            left_on='LSOA11NM', right_on='LSOA11NM',
+            how='right'
+            )
+
+        # Store in self:
+        self.lsoa_names = df_regions
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_selected_lsoas
+        path_to_file = os.path.join(dir_output, file_name)
+        df_regions.to_csv(path_to_file, index=False)
+
+    def _select_lsoas_by_nearest(self):
+        """
+        Limit LSOAs to those whose nearest stroke units are in the list.
+
+        TO DO -----------------------------------------------------------------------
+        Do we want to limit it to LSOAs nearest only the IVT units?
+        What about units who have their nearest MT unit in the list
+        but not their nearest IVT unit?
+        """
         # Take list of all LSOA names and travel times:
         df_travel = self.national_dict['lsoa_nearest_units']
         # This has one row for each LSOA nationally and columns
@@ -321,45 +443,7 @@ class Scenario(object):
         # + time_nearest_MSU
         # + postcode_nearest_MSU
         # + ssnap_name_nearest_MSU
-        lsoa11nm = df_travel['LSOA11NM'].copy()
-        lsoa11cd = df_travel['LSOA11CD'].copy()
 
-        # Limit the available hospitals if required.
-        if len(self.mt_hub_postcodes) > 0:
-            if isinstance(self.region_type_for_lsoa_selection, str):
-                lsoas_to_include = self._select_lsoas_by_region(
-                    self.region_type_for_lsoa_selection)
-            else:
-                lsoas_to_include = self._select_lsoas_by_nearest(df_travel)
-        elif self.limit_to_england:
-            # Limit the data to English LSOAs only.
-            # The LSOA11CD (ONS code for each LSOA) begins with
-            # an "E" for English and "W" for Welsh LSOAs.
-            # All other characters are numbers.
-            mask_england = lsoa11cd.str.contains('E')
-            lsoas_to_include = lsoa11nm[mask_england]
-        else:
-            # Just use all LSOAs in the file.
-            lsoas_to_include = lsoa11nm
-
-        # Store in self:
-        self.lsoa_names = lsoas_to_include
-
-        # Save output to output folder.
-        dir_output = self.setup.dir_output
-        file_name = self.setup.file_selected_lsoas
-        path_to_file = os.path.join(dir_output, file_name)
-        lsoas_to_include.to_csv(path_to_file, index=False)
-
-    def _select_lsoas_by_nearest(self, df_travel):
-        """
-        Limit LSOAs to those whose nearest stroke units are in the list.
-
-        TO DO -----------------------------------------------------------------------
-        Do we want to limit it to LSOAs nearest only the IVT units?
-        What about units who have their nearest MT unit in the list
-        but not their nearest IVT unit?
-        """
         # Which LSOAs are in the catchment areas for these IVT units?
         # For each stroke team, make a long list of True/False for
         # whether each LSOA has this as its nearest unit.
@@ -380,44 +464,14 @@ class Scenario(object):
         lsoas_to_include = df_travel['LSOA11NM'][mask]
         return lsoas_to_include
 
-    def _select_lsoas_by_region(self, region_type='ICB'):
+    def _select_lsoas_by_region(self):
         """
         Limit LSOAs to those in the same region as stroke units.
         """
+        # Column:
+        col = self.region_column_for_lsoa_selection
         # List of hospitals selected and the regions containing them:
         hospitals = self.hospitals
-
-        def _find_region_column(region_type, columns):
-            """
-            Find the column name that best matches the region type.
-            """
-            if region_type in columns:
-                # Use this column.
-                col = region_type
-            else:
-                # Guess which one is intended.
-                cols = [c for c in columns if region_type in c]
-                # Prioritise the ones that start with the region type.
-                cols_prefix = [c for c in cols if (
-                    (len(c) >= len(region_type)) &
-                    (c[:len(region_type)] == region_type)
-                )]
-                # Prioritise the ones that end with 'NM':
-                cols_suffix = [c for c in cols if c[-2:] == 'NM']
-                if len(cols_suffix) > 0:
-                    col = cols_suffix[0]
-                elif len(cols_prefix) > 0:
-                    col = cols_prefix[0]
-                elif len(cols) > 0:
-                    col = cols[0]
-                else:
-                    # This shouldn't happen.
-                    col = columns[0]
-                    # TO DO - raise an exception or something here. -----------------------------
-            return col
-
-        # Regions to limit to:
-        col = _find_region_column(region_type, hospitals.columns)
 
         # Pick out the region names with repeats:
         regions = hospitals[col].copy()
