@@ -173,7 +173,6 @@ class Scenario(object):
         # initial_data or kwargs).
         self.load_data()
 
-
     def _find_region_column(self, region_type, columns):
         """
         Find the column name that best matches the region type.
@@ -202,7 +201,7 @@ class Scenario(object):
                 col = columns[0]
                 # TO DO - raise an exception or something here. -----------------------------
         return col
-    
+
     def load_data(self):
         """
         Load required data.

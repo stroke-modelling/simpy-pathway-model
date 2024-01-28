@@ -1,12 +1,16 @@
 """
-Class for organising paths etc.
+Class for organising paths, directory and file names.
 """
 import os  # For defining paths.
 
 
 class Setup(object):
     """
-    Paths and that - TO DO WRITE ME
+    Global directory and file names for the pathway.
+
+    All attributes are defined in __init__.
+    The output directory attributes can be changed later using
+    the method create_output_dir.
     """
 
     def __init__(self, *initial_data, **kwargs):
@@ -92,18 +96,10 @@ class Setup(object):
                               directory name from the suffix that this
                               function adds to it.
         """
-        if path_to_dir is None:
-            path_to_dir = self.dir_output_all_runs
-            subdir = True
-        else:
-            subdir = False
-
-        # Check if output folder already exists:
-        dir_output_this_run = os.path.join(
-            path_to_dir, dir_output)
-
-        # While the requested output folder already exists:
-        while os.path.isdir(dir_output_this_run):
+        def _iterate_dir_suffix(dir_output, delim):
+            """
+            Update string for dir!{x} to dir!{x+1}.
+            """
             if len(dir_output) > 0:
                 if (dir_output[-1] == '/') | (dir_output[-1] == '\\'):
                     # Remove final '/' or '\'
@@ -141,8 +137,25 @@ class Setup(object):
                     suffix = 1
             # Update the directory name:
             dir_output = f'{dir_start}{delim}{suffix}'
+            return dir_output
+
+        if path_to_dir is None:
+            path_to_dir = self.dir_output_all_runs
+            subdir = True
+        else:
+            subdir = False
+
+        # Check if output folder already exists:
+        dir_output_this_run = os.path.join(
+            path_to_dir, dir_output)
+
+        # While the requested output folder already exists,
+        # add a suffix or increase its number until there's a new name.
+        while os.path.isdir(dir_output_this_run):
+            dir_output = _iterate_dir_suffix(dir_output, delim)
             dir_output_this_run = os.path.join(
                 path_to_dir, dir_output)
+
         # Create this directory:
         os.mkdir(dir_output_this_run)
 
