@@ -444,7 +444,6 @@ class Scenario(object):
         mask = np.any(lsoa_bool, axis=0)
         return mask
 
-
     def _select_lsoas_by_nearest(self):
         """
         Limit LSOAs to those whose nearest stroke units are selected.
@@ -511,9 +510,9 @@ class Scenario(object):
         # LSOA11NM, LSOA11CD, longitude and latitude, and larger
         # regional groupings (e.g. Clinical Care Group names).
 
-        # Which LSOAs are in the catchment areas for these IVT units?
-        # For each stroke team, make a long list of True/False for
-        # whether each LSOA has this as its nearest unit.
+        # Which LSOAs are in the selected regions?
+        # For each region, make a long list of True/False for
+        # whether each LSOA is in this region.
         # List of LSOAs:
         lsoa_bool = [
             df_regions[col].str.contains(s)

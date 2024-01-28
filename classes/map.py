@@ -529,6 +529,178 @@ def _find_lsoa_catchment_mask(setup, df_travel, col):
     return mask
 
 
+def assign_colours_to_regions(gdf, region_type):
+
+    colours = ['ForestGreen', 'LimeGreen', 'RebeccaPurple', 'Teal']
+
+    # TO DO - this neighbours function isn't working right -----------------------------
+    # currently says that Gloucestershire doesn't border Bristol or Bath regions -------
+    gdf = find_neighbours_for_regions(gdf, region_type)
+    gdf = gdf.sort_values('total_neighbours', ascending=False)
+
+    neighbour_list = gdf[region_type].tolist()
+
+    neighbour_grid = np.full((len(gdf), len(gdf)), False)
+    for row, neighbour_list_here in enumerate(gdf['neighbour_list']):
+        for n in neighbour_list_here:
+            col = neighbour_list.index(n)
+            neighbour_grid[row, col] = True
+            neighbour_grid[col, row] = True
+
+    # Make a grid. One column per colour, one row per region.
+    colour_grid = np.full((len(gdf), len(colours)), True)
+    # To index row x: colour_grid[x, :]
+    # To index col x: colour_grid[:, x]
+
+    for row, region in enumerate(neighbour_list):
+        # Which colours can this be?
+        colours_here = colour_grid[row, :]
+
+        # Pick the first available colour.
+        ind_to_pick = np.where(colours_here == True)[0][0]
+
+        # Update its neighbours' colour information.
+        rows_neighbours = np.where(neighbour_grid[row, :] == True)[0]
+        # Only keep these rows when we haven't checked them yet:
+        rows_neighbours = [r for r in rows_neighbours if r > row]
+        colour_grid[rows_neighbours, ind_to_pick] = False
+
+        # Update its own colour information.
+        colour_grid[row, :] = False
+        colour_grid[row, ind_to_pick] = True
+
+    # Use the bool colour grid to assign colours:
+    colour_arr = np.full(len(neighbour_list), colours[0], dtype=object)
+    for i, colour in enumerate(colours):
+        colour_arr[np.where(colour_grid[:, i] == True)] = colour
+
+    # Add to the DataFrame:
+    gdf['colour'] = colour_arr
+
+    # Use any old colours as debug:
+    # np.random.seed(42)
+    # colour_arr = np.random.choice(colours, size=len(gdf))
+
+    return gdf
+
+
+def round_coordinates(df_geojson):
+    from shapely.geometry import shape, mapping  # For conversion from shapely polygon to geojson and back
+    # Remove floating point errors
+    for i in range(len(df_geojson)):
+        poly = df_geojson['geometry'][i]
+        # Convert shapely object to geojson object
+        gpoly = mapping(poly)
+        if len(gpoly['coordinates']) == 1:
+            # This is probably a normal polygon.
+            a_coords = np.array(gpoly['coordinates'])
+            new_coords = np.round(a_coords, 3)
+        else:
+            # This is probably a multipolygon but could be a polygon
+            # that has multiple sets of coordinates for some reason
+            # (maybe a hole, doughnut-shaped polygon?).
+            new_coords = []
+            for c, coords in enumerate(gpoly['coordinates']):
+                a_coords = np.array(gpoly['coordinates'][c])
+                a_coords = np.round(a_coords, 3)
+                new_coords.append(a_coords)
+        gpoly['coordinates'] = new_coords
+
+        # Convert back to shapely object
+        poly = shape(gpoly)
+        # Place back into the DataFrame
+        df_geojson['geometry'][i] = poly
+        return df_geojson
+
+
+def find_neighbours_for_regions(df_geojson, col='ICG22NM'):
+    import shapely
+
+    def split_multipolygons(df_geojson):
+        # Expand the dataframe - need a separate row for each polygon, so split apart any multipolygons.
+        df = df_geojson.copy()
+        df_new = pd.DataFrame(columns=df.columns)
+
+        r = 0
+        for i in range(len(df)):
+            row = df.iloc[i]
+            if isinstance(row['geometry'], shapely.geometry.polygon.Polygon):
+                # All ok here, copy row contents exactly:
+                df_new.loc[r] = df.iloc[i]
+                r += 1
+            else:
+                # MultiPolygon! Split it.
+                # Place each Polygon on its own row.
+                multipoly = row['geometry']
+                for poly in list(multipoly.geoms):
+                    row_new = row.copy()
+                    row_new['geometry'] = poly
+                    df_new.loc[r] = row_new
+                    r += 1
+
+        # Convert this to a GeoDataFrame to match the input df_geojson:
+        df_new = geopandas.GeoDataFrame(
+            df_new, geometry=df_new['geometry']#, crs="EPSG:4326"
+        )
+        return df_new
+
+    def find_neighbours(df_new, col):
+        df = df_new.copy()
+        df['my_neighbors'] = [[]] * len(df)
+
+        for index, row in df.iterrows():
+            if isinstance(row['geometry'], shapely.geometry.polygon.Polygon): 
+                neighbors = df[df.geometry.touches(row['geometry'])][col].tolist()
+            elif not isinstance(row['geometry'], shapely.geometry.point.Point):
+                # This is a MultiPolygon. Check each Polygon separately.
+                multipoly = row['geometry']
+                neighbors = []
+                for polygon in list(multipoly.geoms):
+                    neighbours_here = df[df.geometry.intersects(polygon)].index.tolist()
+                    neighbors += neighbours_here
+            else:
+                # It's a point! Ignore.
+                pass
+            try:
+                # Don't let the place be its own neighbour.
+                neighbors = neighbors.remove(row.name)
+            except ValueError:
+                # Its own name is not in the list of neighbours.
+                pass
+            df.at[index, 'my_neighbors'] = neighbors
+            # df.loc[index]['my_neighbors'] = neighbors #", ".join([f'{n}' for n in neighbors])
+
+        df_neighbours = df.copy()
+        return df_neighbours
+
+    def unsplit_multipolygons(df_geojson, df_neighbours):
+        df = df_geojson.copy()
+        df['neighbour_list'] = [[]] * len(df)
+
+        for i in range(len(df)):
+            # What is this called in the original dataframe?
+            objectid = df.iloc[i]['OBJECTID']
+            # region_name = df.iloc[i]['CCG19CD']
+            # Where did this end up in the polygon dataframe?
+            df_here = df_neighbours[df_neighbours['OBJECTID'] == objectid]
+            # Combine multiple lists of neighbours into one list:
+            list_of_neighbours = np.concatenate(df_here['my_neighbors'].values)
+            # Remove any repeats:
+            list_of_neighbours = list(set(list_of_neighbours))
+            df.at[i, 'neighbour_list'] = list_of_neighbours
+        return df
+
+    df_geojson = round_coordinates(df_geojson)
+    df_new = split_multipolygons(df_geojson)
+    df_neighbours = find_neighbours(df_new, col)
+    df = unsplit_multipolygons(df_geojson, df_neighbours)
+
+    # Record the number of neighbours:
+    df['total_neighbours'] = df['neighbour_list'].str.len()
+    return df
+
+
+
 # ####################
 # ##### PLOTTING #####
 # ####################
@@ -755,7 +927,8 @@ def plot_map_selected_units(setup, col='ICB22NM'):
     # Import background region shapes:
     gdf_boundaries = import_geojson(setup, col)
     gdf_boundaries = keep_only_selected_units(
-        gdf_boundaries, gdf_points_units, left_col=col, right_col=col)
+        gdf_boundaries, gdf_points_units[[col]].drop_duplicates(), left_col=col, right_col=col, how='right')
+    gdf_boundaries = assign_colours_to_regions(gdf_boundaries, col)
 
     # ----- Plotting -----
     # Plot the map.
@@ -764,8 +937,8 @@ def plot_map_selected_units(setup, col='ICB22NM'):
 
     ax = draw_boundaries(
         ax, gdf_boundaries,
-        column=gdf_boundaries.index.name,  # For colour choice
-        cmap='Blues', edgecolor='silver', linewidth=0.5)
+        color=gdf_boundaries['colour'],
+        edgecolor='k')
     ax = scatter_ivt_units(ax, gdf_points_units)
     ax = scatter_mt_units(ax, gdf_points_units)
     ax = scatter_msu_units(ax, gdf_points_units)
@@ -861,7 +1034,6 @@ def plot_map_catchment(setup, col='ICB22NM'):
             series_regions_containing_units
             ))
 
-
     # ----- Plotting setup -----
     data_dicts = {
         'Drip & Ship': {
@@ -906,17 +1078,21 @@ def plot_map_catchment(setup, col='ICB22NM'):
         fig, ax = plt.subplots(figsize=(10, 10))
         ax.set_title(model_type)
 
+        # LSOAs:
         ax = draw_boundaries(
             ax, gdf_boundaries_lsoa,
             **data_dict['boundary_kwargs']
             )
+
+        # Regions containing LSOAs but not stroke units:
         gdf_boundaries_unintended = gdf_boundaries_regions.loc[
             gdf_boundaries_regions['additional_region'] == True]
         ax = draw_boundaries(
             ax, gdf_boundaries_unintended,
-            facecolor='none', edgecolor='grey', linewidth=0.5, linestyle='--'
+            facecolor='none', edgecolor='silver', linewidth=0.5, linestyle='--'
             )
 
+        # Regions containing stroke units:
         gdf_boundaries_intended = gdf_boundaries_regions.loc[
             gdf_boundaries_regions['additional_region'] == False]
         ax = draw_boundaries(
@@ -924,6 +1100,8 @@ def plot_map_catchment(setup, col='ICB22NM'):
             facecolor='none', edgecolor='k', linewidth=0.5
             )
 
+        # Stroke unit markers.
+        # Keep track of which units to label in here:
         gdf_points_units['labels_mask'] = False
         if data_dict['scatter_ivt']:
             ax = scatter_ivt_units(ax, gdf_points_units)
@@ -938,12 +1116,16 @@ def plot_map_catchment(setup, col='ICB22NM'):
             gdf_points_units.loc[
                 gdf_points_units['Use_MSU'] == 1, 'labels_mask'] = True
 
+        # Transfer unit lines.
+        # Check whether they need to be drawn:
         draw_lines_bool = (
             (data_dict['scatter_ivt'] & data_dict['scatter_mt']) |
             (data_dict['scatter_ivt'] & data_dict['scatter_msu'])
         )
         if draw_lines_bool:
             ax = plot_lines_between_units(ax, gdf_lines_transfer)
+
+        # Stroke unit labels.
         ax = annotate_unit_labels(ax, gdf_points_units)
 
         ax.set_axis_off()  # Turn off axis line and numbers
