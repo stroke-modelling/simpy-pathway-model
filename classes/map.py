@@ -451,20 +451,23 @@ def find_region_catchment_across_all_model_types(setup, col='ICB22NM'):
     """
     Limit LSOAs to those whose nearest stroke units are in the list.
 
-    Example: square island. We model only the MT unit, and the
-    national data includes the IVT-only unit too.
-    In the mothership model, the whole island is in the catchment
-    area of the MT unit. However in the drip-and-ship model, only
-    half of the island is in the catchment area of the MT unit.
+    Example catchment areas:
+    The two right-hand units are in the selected regions
+    and the two units on the left are national units,
+    not modelled directly.
 
-            Drip-and-ship           Mothership
-        +-------------+        +-------------+
-        |~~o~~~~~~~~_/|        |  o          |    o - IVT-only unit
-        |~~~~~~~~__/  |        |             |    * - MT unit
-        |~~~~~__/     |        |             |
-        |~~__/        |        |             |    ~ - not in MT unit
-        |_/        *  |        |          *  |        catchment.
-        +-------------+        +-------------+
+        ▓▓▓▓▓▓▓▓▓░░░░░░░░█████▒▒▒▒▒    Drip-and-ship    +------------+
+            *        o     o   *                        | * MT unit  |
+        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒    Mothership       | o IVT unit |
+                   -->▏ ▕<--                            +------------+
+                   Difference
+
+    The catchment area boundaries are halfway between adjacent units.
+
+    In the mothership model, the right-hand MT unit's catchment area
+    covers the whole right half of the rectangle.
+    In the drip-and-ship model, some of that area is instead assigned
+    to the out-of-area IVT unit in the centre of the rectangle.
     """
     # First find the LSOAs that will travel to any selected
     # stroke unit *for any destination model type*.
