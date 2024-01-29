@@ -195,6 +195,33 @@ def import_lsoa_travel_data(setup: 'Setup'):
     return df
 
 
+def import_lsoa_outcomes(setup: 'Setup'):
+    """
+    Import data on selected LSOAs.
+
+    Inputs
+    ------
+    setup - Setup() object. Contains attributes for paths to the
+            data directory and the geojson file names.
+
+    Returns
+    -------
+    df - pd.DataFrame. Names, codes, coordinates of selected LSOAs.
+         ['LSOA11NM', 'LSOA11CD', 'LSOA11BNG_N', 'LSOA11BNG_E',
+          'LSOA11LONG', 'LSOA11LAT']
+    """
+    dir_input = setup.dir_output
+    file_input = setup.file_results_summary_by_lsoa
+    path_to_file = os.path.join(dir_input, file_input)
+    # Specify header to import as a multiindex DataFrame.
+    df = pd.read_csv(path_to_file, header=[0, 1])
+
+    # Convert to normal index:
+    df.columns = ["_".join(a) for a in df.columns.to_flat_index()]
+    # Rename the first column which didn't have multiindex levels:
+    df = df.rename(columns={df.columns[0]: 'lsoa'})
+    return df
+
 def keep_only_selected_units(
         df: 'pd.DataFrame', df_units: 'pd.DataFrame',
         left_col: 'str', right_col: 'str', how: 'str' = 'right'
@@ -278,7 +305,6 @@ def copy_columns_from_dataframe(
         left_on=left_col, right_on=right_col,
         how=how
     )
-
     # Rename columns in df_left:
     df_left = df_left.rename(columns=cols_to_rename_dict)
     return df_left
@@ -533,6 +559,20 @@ def assign_colours_to_regions(gdf, region_type):
 
     colours = ['ForestGreen', 'LimeGreen', 'RebeccaPurple', 'Teal']
 
+    # Use any old colours as debug:
+    np.random.seed(42)
+    colour_arr = np.random.choice(colours, size=len(gdf))
+
+    # Add to the DataFrame:
+    gdf['colour'] = colour_arr
+
+    return gdf
+
+
+def assign_colours_to_regions_BROKEN(gdf, region_type):
+
+    colours = ['ForestGreen', 'LimeGreen', 'RebeccaPurple', 'Teal']
+
     # TO DO - this neighbours function isn't working right -----------------------------
     # currently says that Gloucestershire doesn't border Bristol or Bath regions -------
     gdf = find_neighbours_for_regions(gdf, region_type)
@@ -698,7 +738,6 @@ def find_neighbours_for_regions(df_geojson, col='ICG22NM'):
     # Record the number of neighbours:
     df['total_neighbours'] = df['neighbour_list'].str.len()
     return df
-
 
 
 # ####################
@@ -927,7 +966,8 @@ def plot_map_selected_units(setup, col='ICB22NM'):
     # Import background region shapes:
     gdf_boundaries = import_geojson(setup, col)
     gdf_boundaries = keep_only_selected_units(
-        gdf_boundaries, gdf_points_units[[col]].drop_duplicates(), left_col=col, right_col=col, how='right')
+        gdf_boundaries, gdf_points_units[[col]].drop_duplicates(),
+        left_col=col, right_col=col, how='right')
     gdf_boundaries = assign_colours_to_regions(gdf_boundaries, col)
 
     # ----- Plotting -----
@@ -1127,6 +1167,244 @@ def plot_map_catchment(setup, col='ICB22NM'):
 
         # Stroke unit labels.
         ax = annotate_unit_labels(ax, gdf_points_units)
+
+        ax.set_axis_off()  # Turn off axis line and numbers
+
+        # Save output to output folder.
+        dir_output = setup.dir_output
+        file_name = data_dict['file']
+        path_to_file = os.path.join(dir_output, file_name)
+        plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
+        plt.close()
+
+
+def plot_map_outcome(setup, col='ICB22NM', outcome='mrs_shift', destination_type=0):
+    """
+    Map the selected units, containing regions, and catchment areas.
+
+    UPDATE ME
+
+    Creates three maps.
+    + "Drip & Ship" - catchment area of each IVT unit.
+    + "Mothership" - catchment area of each MT unit, no IVT units.
+    + "MSU" - catchment area of each MSU unit.
+
+    Properties of all maps:
+    + Each stroke unit is shown with a scatter marker.
+    + Non-MT units are shown as circles and MT units as stars.
+    + Lines are drawn between each non-MT unit and its chosen MT unit.
+    + Each stroke unit is labelled in an offset text box.
+    + The regions that contain the selected units are drawn in
+      the background with each region given a different colour from
+      its neighbours. These regions have an outline.
+
+    Required data files:
+    + geojson file of choice.
+      Must contain:
+      + coordinates of each feature / region boundary shape.
+    + selected stroke unit file
+      Output from Scenario.
+      Must contain:
+      + Postcode
+        - for unit name matching.
+        - for labels on the map.
+      + Use_MT
+        - for scatter marker choice.
+      + [region]
+        - region names to match the geojson file, for limiting the
+          plotted areas to just those containing the stroke units.
+      + Easting, Northing
+        - for placement of the scatter markers.
+    + national transfer unit file
+      Output from Units.
+      + from_postcode
+        - for unit name matching.
+      + name_nearest_MT
+        - for setting up lines drawn between each stroke unit and
+          its nearest MT unit.
+    + geojson file of LSOA boundaries.
+      Must contain:
+      + coordinates of each LSOA boundary.
+    + selected LSOA name file.
+      Must contain:
+      + column LSOA11CD, one row per selected LSOA.
+    + national LSOA travel data.
+      Must contain:
+      + column LSOA11CD for name matching.
+      + postcode_nearest_IVT
+      + postcode_nearest_MT
+      + postcode_nearest_MSU
+
+    Result is saved as the name given in setup class:
+    + file_drip_ship_map
+    + file_mothership_map
+    + file_msu_map
+    """
+    # Stroke unit setup
+    gdf_points_units = make_gdf_selected_stroke_unit_coords(setup)
+    gdf_lines_transfer = make_gdf_lines_to_transfer_units(setup)
+
+    series_regions_containing_units = (
+        make_series_regions_containing_selected_stroke_units(
+            gdf_points_units, col))
+
+    # LSOA setup
+    gdf_boundaries_lsoa = make_gdf_lsoa_boundaries(setup)
+
+    # Background regions setup
+    gdf_boundaries_regions = (
+        make_gdf_boundaries_regions_containing_possible_lsoa(
+            setup,
+            col,
+            series_regions_containing_units
+            ))
+
+    # Outcomes setup
+    df_outcomes_by_lsoa = import_lsoa_outcomes(setup)
+    # Merge into geographic data:
+    gdf_boundaries_lsoa = copy_columns_from_dataframe(
+        gdf_boundaries_lsoa, df_outcomes_by_lsoa,
+        cols_to_copy=[
+            'mRS shift_mean',
+            'utility_shift_mean',
+            'mRS 0-2_mean'
+            ],
+        cols_to_rename_dict={
+            'mRS shift_mean': 'mRS shift',
+            'utility_shift_mean': 'utility_shift',
+            'mRS 0-2_mean': 'mRS 0-2'
+        },
+        left_col='LSOA11NM', right_col='lsoa', how='left'
+        )
+
+    # ----- Plotting setup -----
+
+    data_dicts = {
+        'mrs_shift': {
+            'title': 'mRS shift',
+            'file': setup.file_outcome_map_mrs_shift,
+            'boundary_kwargs': {
+                'column': 'mRS shift',
+                'cmap': 'plasma',
+                'edgecolor': 'face',
+                # Adjust size of colourmap key, and add label
+                'legend_kwds': {
+                    'shrink': 0.5,
+                    'label': 'mRS shift'
+                    },
+                # Set to display legend
+                'legend': True
+                }
+            },
+        'utility_shift': {
+            'title': 'Utility shift',
+            'file': setup.file_outcome_map_utility_shift,
+            'boundary_kwargs': {
+                'column': 'utility_shift',
+                'cmap': 'plasma',
+                'edgecolor': 'face',
+                # Adjust size of colourmap key, and add label
+                'legend_kwds': {
+                    'shrink': 0.5,
+                    'label': 'Utility shift'
+                    },
+                # Set to display legend
+                'legend': True,
+                },
+            },
+        'mrs_02': {
+            'title': 'mRS 0-2',
+            'file': setup.file_outcome_map_mrs_02,
+            'boundary_kwargs': {
+                'column': 'mRS 0-2',
+                'cmap': 'plasma',
+                'edgecolor': 'face',
+                # Adjust size of colourmap key, and add label
+                'legend_kwds': {
+                    'shrink': 0.5,
+                    'label': 'mRS 0-2'
+                    },
+                # Set to display legend
+                'legend': True,
+                }
+            },
+    }
+
+    if destination_type == 0:
+        unit_dict = {
+            'scatter_ivt': True,
+            'scatter_mt': True,
+            'scatter_msu': False,
+        }
+    elif destination_type == 1:
+        unit_dict = {
+            'scatter_ivt': False,
+            'scatter_mt': True,
+            'scatter_msu': False,
+            }
+    else:
+        unit_dict = {
+            'scatter_ivt': False,
+            'scatter_mt': False,
+            'scatter_msu': True,
+            }
+
+    # ----- Actual plotting -----
+    for outcome, data_dict in zip(data_dicts.keys(), data_dicts.values()):
+        # Plot the map.
+        # Make max dimensions XxY inch:
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.set_title(data_dict['title'])
+
+        # LSOAs:
+        ax = draw_boundaries(
+            ax, gdf_boundaries_lsoa,
+            **data_dict['boundary_kwargs']
+            )
+
+        # Regions containing LSOAs but not stroke units:
+        gdf_boundaries_unintended = gdf_boundaries_regions.loc[
+            gdf_boundaries_regions['additional_region'] == True]
+        ax = draw_boundaries(
+            ax, gdf_boundaries_unintended,
+            facecolor='none', edgecolor='silver', linewidth=0.5, linestyle='--'
+            )
+
+        # Regions containing stroke units:
+        gdf_boundaries_intended = gdf_boundaries_regions.loc[
+            gdf_boundaries_regions['additional_region'] == False]
+        ax = draw_boundaries(
+            ax, gdf_boundaries_intended,
+            facecolor='none', edgecolor='k', linewidth=0.5
+            )
+
+        # Stroke unit markers.
+        # Keep track of which units to label in here:
+        gdf_points_units['labels_mask'] = False
+        if unit_dict['scatter_ivt']:
+            ax = scatter_ivt_units(ax, gdf_points_units)
+            gdf_points_units.loc[
+                gdf_points_units['Use_IVT'] == 1, 'labels_mask'] = True
+        if unit_dict['scatter_mt']:
+            ax = scatter_mt_units(ax, gdf_points_units)
+            gdf_points_units.loc[
+                gdf_points_units['Use_MT'] == 1, 'labels_mask'] = True
+        if unit_dict['scatter_msu']:
+            ax = scatter_msu_units(ax, gdf_points_units)
+            gdf_points_units.loc[
+                gdf_points_units['Use_MSU'] == 1, 'labels_mask'] = True
+
+        # # Transfer unit lines.
+        # # Check whether they need to be drawn:
+        # draw_lines_bool = (
+        #     (unit_dict['scatter_ivt'] & unit_dict['scatter_mt']) |
+        #     (unit_dict['scatter_ivt'] & unit_dict['scatter_msu'])
+        # )
+        # if draw_lines_bool:
+        #     ax = plot_lines_between_units(ax, gdf_lines_transfer)
+
+        # # Stroke unit labels.
+        # ax = annotate_unit_labels(ax, gdf_points_units)
 
         ax.set_axis_off()  # Turn off axis line and numbers
 

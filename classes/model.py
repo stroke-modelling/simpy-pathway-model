@@ -114,14 +114,14 @@ class Model(object):
         # with shared keys so can be converted to DataFrame:
         self.results_all = pd.DataFrame(self.pathway.completed_patients)
 
+        # Get outcomes
+        self.get_outcomes()
+
         # Save output to output folder.
         dir_output = self.setup.dir_output
         file_name = self.setup.file_results_all
         path_to_file = os.path.join(dir_output, file_name)
         self.results_all.to_csv(path_to_file, index=False)
-
-        # Get outcomes
-        self.get_outcomes()
 
         # Keep only those that begin with "time":
         aggregate_cols = [x for x in completed_patients_keys if x[0:4] == 'time']
@@ -139,19 +139,34 @@ class Model(object):
         dir_output = self.setup.dir_output
         file_name = self.setup.file_results_summary_all
         path_to_file = os.path.join(dir_output, file_name)
-        self.results_summary_all.to_csv(path_to_file, index=False)
+        self.results_summary_all.to_csv(path_to_file)
 
         # Group the results by first unit.
         # Group by unit, then take only the columns relating to time,
         # then take only their means and standard deviations.
-        self.results_summary_by_admitting_unit = self.results_all.groupby(
+        self.results_summary_by_admitting_unit = self.results_all.copy().groupby(
             by='closest_ivt_unit')[aggregate_cols].agg(['mean', 'std'])
+        self.results_summary_by_admitting_unit = self.results_summary_by_admitting_unit.reset_index()
 
         # Save output to output folder.
         dir_output = self.setup.dir_output
         file_name = self.setup.file_results_summary_by_admitting_unit
         path_to_file = os.path.join(dir_output, file_name)
         self.results_summary_by_admitting_unit.to_csv(
+            path_to_file, index=False)
+
+        # Group the results by LSOA.
+        # Group by LSOA, then take only the columns relating to time,
+        # then take only their means and standard deviations.
+        self.results_summary_by_lsoa = self.results_all.copy().groupby(
+            by='lsoa')[aggregate_cols].agg(['mean', 'std'])
+        self.results_summary_by_lsoa = self.results_summary_by_lsoa.reset_index()
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_results_summary_by_lsoa
+        path_to_file = os.path.join(dir_output, file_name)
+        self.results_summary_by_lsoa.to_csv(
             path_to_file, index=False)
 
     def generate_patient_arrival(self):

@@ -57,11 +57,16 @@ class Setup(object):
         self.file_results_summary_all = 'results_summary_all.csv'
         self.file_results_summary_by_admitting_unit = (
             'results_summary_by_admitting_unit.csv')
+        self.file_results_summary_by_lsoa = (
+            'results_summary_by_lsoa.csv')
         # Map():
         self.file_selected_units_map = 'map_selected_units.jpg'
         self.file_drip_ship_map = 'map_catchment_dripship.jpg'
         self.file_mothership_map = 'map_catchment_mothership.jpg'
         self.file_msu_map = 'map_catchment_msu.jpg'
+        self.file_outcome_map_mrs_shift = 'map_outcome_mrs_shift.jpg'
+        self.file_outcome_map_utility_shift = 'map_outcome_utility_shift.jpg'
+        self.file_outcome_map_mrs_02 = 'map_outcome_mrs_02.jpg'
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
