@@ -456,10 +456,10 @@ def find_region_catchment_across_all_model_types(setup, col='ICB22NM'):
     and the two units on the left are national units,
     not modelled directly.
 
-        ▓▓▓▓▓▓▓▓▓░░░░░░░░█████▒▒▒▒▒    Drip-and-ship    +------------+
-            *        o     o   *                        | * MT unit  |
-        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒    Mothership       | o IVT unit |
-                   -->▏ ▕<--                            +------------+
+        ▓▓▓▓▓▓▓▓▓░░░░░░░░█████▒▒▒▒▒  <-- Drip-and-ship   +------------+
+        ▏   *        o     o   *  ▕                      | * MT unit  |
+        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒  <-- Mothership      | o IVT unit |
+                   -->▏ ▕<--                             +------------+
                    Difference
 
     The catchment area boundaries are halfway between adjacent units.
