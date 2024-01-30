@@ -52,6 +52,7 @@ class Setup(object):
         # Scenario():
         self.file_selected_stroke_units = 'selected_stroke_units.csv'
         self.file_selected_lsoas = 'selected_lsoas.csv'
+        self.file_selected_regions = 'selected_regions.csv'
         # Model():
         self.file_results_all = 'results_all.csv'
         self.file_results_summary_all = 'results_summary_all.csv'
@@ -59,6 +60,13 @@ class Setup(object):
             'results_summary_by_admitting_unit.csv')
         self.file_results_summary_by_lsoa = (
             'results_summary_by_lsoa.csv')
+        # Combined:
+        self.file_combined_selected_lsoas = 'combined_selected_lsoas.csv'
+        self.file_combined_selected_regions = 'combined_selected_regions.csv'
+        self.file_combined_results_summary_by_admitting_unit = (
+            'combined_results_summary_by_admitting_unit.csv')
+        self.file_combined_results_summary_by_lsoa = (
+            'combined_results_summary_by_lsoa.csv')
         # Map():
         self.file_selected_units_map = 'map_selected_units.jpg'
         self.file_drip_ship_map = 'map_catchment_dripship.jpg'

@@ -247,6 +247,10 @@ class Scenario(object):
         # + self.lsoa_names
         #   --> saves to: file_selected_lsoas
 
+        # Find which regions contain a stroke team and/or LSOA.
+        self._assign_regions()
+        # --> saves to: file_selected_regions
+
         # Import admissions statistics for those hospitals:
         self._load_admissions()
         # Stores:
@@ -263,7 +267,6 @@ class Scenario(object):
         # + self.lsoa_mt_unit
         # + self.lsoa_msu_travel_time
         # + self.lsoa_msu_unit
-
 
     # ##########################
     # ##### SELECTED UNITS #####
@@ -526,7 +529,53 @@ class Scenario(object):
         # Need to make sure that LSOAs within the region but closer
         # to a stroke unit outside the region are forced to travel to
         # a stroke unit within the region.
+        # Maybe just set all other stroke unit services to 0?
         return lsoas_to_include
+
+    def _assign_regions(self):
+        """
+        WIP
+        Save names of regions containing selected stroke teams and LSOAs.
+
+        Stores
+        ------
+        lsoa_names:
+            np.array. Names of all LSOAs considered.
+        """
+        region_type = self.region_column_for_lsoa_selection
+
+        # List of regions containing selected stroke teams:
+        # TEMPORARILY REMOVE NAN - TO DO - SORT OUT MISSING DATA FOR WALES VS ENGLAND ----------------
+        regions_with_units = sorted(list(set(self.hospitals[region_type].dropna())))
+        series_units = pd.Series(
+            [1]*len(regions_with_units),
+            index=regions_with_units,
+            name='contains_selected_unit'
+            )
+
+        # List of regions containing selected LSOAs:
+        # TEMPORARILY REMOVE NAN - TO DO - SORT OUT MISSING DATA FOR WALES VS ENGLAND ----------------
+        regions_with_lsoa = sorted(list(set(self.lsoa_names[region_type].dropna())))
+        series_lsoa = pd.Series(
+            [1]*len(regions_with_lsoa),
+            index=regions_with_lsoa,
+            name='contains_selected_lsoa'
+            )
+
+        df_selected_regions = pd.concat((series_units, series_lsoa), axis=1)
+        df_selected_regions.index.name = region_type
+
+        # Fill missing values with 0.
+        df_selected_regions = df_selected_regions.fillna(0)
+        # Update dtypes in case NaN changed ints to floats.
+        df_selected_regions = df_selected_regions.convert_dtypes()
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_selected_regions
+        path_to_file = os.path.join(dir_output, file_name)
+        df_selected_regions.to_csv(path_to_file)
+
 
     def _load_admissions(self):
         """

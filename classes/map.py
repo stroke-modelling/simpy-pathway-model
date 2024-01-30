@@ -16,6 +16,19 @@ from shapely import LineString  # For creating line geometry.
 
 
 # ##########################
+# ##### FILE SELECTION #####
+# ##########################
+def load_combined_data():
+    # TO DO
+    pass
+
+
+def load_individual_data():
+    # TO DO
+    pass
+
+
+# ##########################
 # ##### DATA WRANGLING #####
 # ##########################
 def import_geojson(setup: 'Setup', region_type: 'str'):
@@ -172,6 +185,28 @@ def import_selected_lsoa(setup: 'Setup'):
     return df
 
 
+def import_selected_regions(setup: 'Setup'):
+    """
+    Import data on selected regions.
+
+    Inputs
+    ------
+    setup - Setup() object. Contains attributes for paths to the
+            data directory and the geojson file names.
+
+    Returns
+    -------
+    df - pd.DataFrame. Names and usage of selected regions.
+         ['{region type}', 'contains_selected_unit',
+          'contains_selected_lsoa']
+    """
+    dir_input = setup.dir_output
+    file_input = setup.file_selected_regions
+    path_to_file = os.path.join(dir_input, file_input)
+    df = pd.read_csv(path_to_file)
+    return df
+
+
 def import_lsoa_travel_data(setup: 'Setup'):
     """
     Import each LSOA's chosen stroke units and travel times.
@@ -216,11 +251,14 @@ def import_lsoa_outcomes(setup: 'Setup'):
     # Specify header to import as a multiindex DataFrame.
     df = pd.read_csv(path_to_file, header=[0, 1])
 
+    first_column_name = df.columns[0][0]
+
     # Convert to normal index:
     df.columns = ["_".join(a) for a in df.columns.to_flat_index()]
     # Rename the first column which didn't have multiindex levels:
-    df = df.rename(columns={df.columns[0]: 'lsoa'})
+    df = df.rename(columns={df.columns[0]: first_column_name})
     return df
+
 
 def keep_only_selected_units(
         df: 'pd.DataFrame', df_units: 'pd.DataFrame',
@@ -408,43 +446,43 @@ def make_gdf_lsoa_boundaries(setup):
     return gdf_boundaries_lsoa
 
 
-def make_gdf_boundaries_regions_containing_possible_lsoa(
-        setup,
-        col,
-        series_regions_containing_units
-        ):
-    # Find regional boundaries for reference on the map.
-    # Assume that every stroke unit has at least one LSOA in the same
-    # region as it. (This should always happen!)
-    # So select the regional boundaries to make sure every LSOA
-    # is drawn:
-    regions_to_plot = find_region_catchment_across_all_model_types(setup, col)
+# def make_gdf_boundaries_regions_containing_possible_lsoa(
+#         setup,
+#         col,
+#         series_regions_containing_units
+#         ):
+#     # Find regional boundaries for reference on the map.
+#     # Assume that every stroke unit has at least one LSOA in the same
+#     # region as it. (This should always happen!)
+#     # So select the regional boundaries to make sure every LSOA
+#     # is drawn:
+#     regions_to_plot = find_region_catchment_across_all_model_types(setup, col)
 
-    gdf_boundaries = import_geojson(setup, col)
-    gdf_boundaries = keep_only_selected_units(
-        gdf_boundaries, regions_to_plot,
-        left_col=col, right_col=col, how='right'
-        )
-    # Drop any missing values
-    # TO DO - this happens due to mismatch of Welsh and English regions - need better linkage ------------
-    gdf_boundaries = gdf_boundaries.dropna(subset=[col])
+#     gdf_boundaries = import_geojson(setup, col)
+#     gdf_boundaries = keep_only_selected_units(
+#         gdf_boundaries, regions_to_plot,
+#         left_col=col, right_col=col, how='right'
+#         )
+#     # Drop any missing values
+#     # TO DO - this happens due to mismatch of Welsh and English regions - need better linkage ------------
+#     gdf_boundaries = gdf_boundaries.dropna(subset=[col])
 
-    # Split off regions that are explicitly requested
-    # (they contain a selected stroke team)
-    # from those that get swept in by the LSOA catchment area
-    # (and do not contain a selected stroke team).
+#     # Split off regions that are explicitly requested
+#     # (they contain a selected stroke team)
+#     # from those that get swept in by the LSOA catchment area
+#     # (and do not contain a selected stroke team).
 
-    # Set all regions to be unintented...
-    gdf_boundaries['additional_region'] = True
-    # ... and then find which ones were intended.
-    region_mask = [
-        gdf_boundaries[col].str.contains(region)
-        for region in series_regions_containing_units
-        ]
-    region_mask = np.any(region_mask, axis=0)
-    # Update the ones that were intended.
-    gdf_boundaries.loc[region_mask, 'additional_region'] = False
-    return gdf_boundaries
+#     # Set all regions to be unintented...
+#     gdf_boundaries['additional_region'] = True
+#     # ... and then find which ones were intended.
+#     region_mask = [
+#         gdf_boundaries[col].str.contains(region)
+#         for region in series_regions_containing_units
+#         ]
+#     region_mask = np.any(region_mask, axis=0)
+#     # Update the ones that were intended.
+#     gdf_boundaries.loc[region_mask, 'additional_region'] = False
+#     return gdf_boundaries
 
 
 def find_region_catchment_across_all_model_types(setup, col='ICB22NM'):
@@ -749,6 +787,40 @@ def find_neighbours_for_regions(df_geojson, col='ICG22NM'):
 # n.b. The following functions mostly just use plt.plot()
 # but are given different wrappers anyway for the sake of
 # applying some kwargs automatically.
+def draw_boundaries_by_contents(ax, gdf_boundaries_regions):
+    # Regions containing neither LSOAs nor stroke units here:
+    mask = (
+        (gdf_boundaries_regions['contains_selected_unit'] == 0) &
+        (gdf_boundaries_regions['contains_selected_lsoa'] == 0)
+    )
+    gdf_boundaries_with_nowt = gdf_boundaries_regions.loc[mask]
+    ax = draw_boundaries(
+        ax, gdf_boundaries_with_nowt,
+        facecolor='none', edgecolor='none'
+        )
+    # Make these invisible but draw them anyway to make sure the
+    # extent of the map is similar to other runs.
+
+    # Regions containing LSOAs but not stroke units:
+    mask = (
+        (gdf_boundaries_regions['contains_selected_unit'] == 0) &
+        (gdf_boundaries_regions['contains_selected_lsoa'] == 1)
+    )
+    gdf_boundaries_with_lsoa = gdf_boundaries_regions.loc[mask]
+    ax = draw_boundaries(
+        ax, gdf_boundaries_with_lsoa,
+        facecolor='none', edgecolor='silver', linewidth=0.5, linestyle='--'
+        )
+
+    # Regions containing stroke units:
+    mask = (gdf_boundaries_regions['contains_selected_unit'] == 1)
+    gdf_boundaries_with_units = gdf_boundaries_regions.loc[mask]
+    ax = draw_boundaries(
+        ax, gdf_boundaries_with_units,
+        facecolor='none', edgecolor='k', linewidth=0.5
+        )
+    return ax
+
 def draw_boundaries(ax, gdf, **kwargs):
     """
     Draw regions from a GeoDataFrame.
@@ -966,12 +1038,23 @@ def plot_map_selected_units(setup, col='ICB22NM'):
     gdf_points_units = make_gdf_selected_stroke_unit_coords(setup)
     gdf_lines_transfer = make_gdf_lines_to_transfer_units(setup)
 
-    # Import background region shapes:
-    gdf_boundaries = import_geojson(setup, col)
-    gdf_boundaries = keep_only_selected_units(
-        gdf_boundaries, gdf_points_units[[col]].drop_duplicates(),
-        left_col=col, right_col=col, how='right')
-    gdf_boundaries = assign_colours_to_regions(gdf_boundaries, col)
+    # Background regions setup
+    gdf_boundaries_regions = import_geojson(setup, col)
+    df_selected_regions = import_selected_regions(setup)
+    # Merge in region types
+    # and limit the boundaries file to only selected regions.
+    gdf_boundaries_regions = copy_columns_from_dataframe(
+        gdf_boundaries_regions, df_selected_regions,
+        cols_to_copy=['contains_selected_unit'],
+        left_col=col, right_col=col, how='right'
+        )
+    # Limit to only regions containing stroke units.
+    mask = df_selected_regions['contains_selected_unit'] == 1
+    gdf_boundaries_regions = keep_only_selected_units(
+        gdf_boundaries_regions, df_selected_regions.loc[mask],
+        left_col=col, right_col=col, how='right'
+        )
+    gdf_boundaries_regions = assign_colours_to_regions(gdf_boundaries_regions, col)
 
     # ----- Plotting -----
     # Plot the map.
@@ -979,8 +1062,8 @@ def plot_map_selected_units(setup, col='ICB22NM'):
     fig, ax = plt.subplots(figsize=(10, 10))
 
     ax = draw_boundaries(
-        ax, gdf_boundaries,
-        color=gdf_boundaries['colour'],
+        ax, gdf_boundaries_regions,
+        color=gdf_boundaries_regions['colour'],
         edgecolor='k')
     ax = scatter_ivt_units(ax, gdf_points_units)
     ax = scatter_mt_units(ax, gdf_points_units)
@@ -1062,20 +1145,19 @@ def plot_map_catchment(setup, col='ICB22NM'):
     gdf_points_units = make_gdf_selected_stroke_unit_coords(setup)
     gdf_lines_transfer = make_gdf_lines_to_transfer_units(setup)
 
-    series_regions_containing_units = (
-        make_series_regions_containing_selected_stroke_units(
-            gdf_points_units, col))
-
     # LSOA setup
     gdf_boundaries_lsoa = make_gdf_lsoa_boundaries(setup)
 
     # Background regions setup
-    gdf_boundaries_regions = (
-        make_gdf_boundaries_regions_containing_possible_lsoa(
-            setup,
-            col,
-            series_regions_containing_units
-            ))
+    gdf_boundaries_regions = import_geojson(setup, col)
+    df_selected_regions = import_selected_regions(setup)
+    # Merge in region types
+    # and limit the boundaries file to only selected regions.
+    gdf_boundaries_regions = copy_columns_from_dataframe(
+        gdf_boundaries_regions, df_selected_regions,
+        cols_to_copy=['contains_selected_unit', 'contains_selected_lsoa'],
+        left_col=col, right_col=col, how='right'
+        )
 
     # ----- Plotting setup -----
     data_dicts = {
@@ -1114,6 +1196,12 @@ def plot_map_catchment(setup, col='ICB22NM'):
             },
     }
 
+    # TO DO - only plot the one catchment type that matches the one used --------------------
+    # Which data dict should be used?
+    # destination_type = self.
+    # destination_str = # convert int to string
+    # data_dict = data_dicts[destination_type]
+
     # ----- Actual plotting -----
     for model_type, data_dict in zip(data_dicts.keys(), data_dicts.values()):
         # Plot the map.
@@ -1127,21 +1215,8 @@ def plot_map_catchment(setup, col='ICB22NM'):
             **data_dict['boundary_kwargs']
             )
 
-        # Regions containing LSOAs but not stroke units:
-        gdf_boundaries_unintended = gdf_boundaries_regions.loc[
-            gdf_boundaries_regions['additional_region'] == True]
-        ax = draw_boundaries(
-            ax, gdf_boundaries_unintended,
-            facecolor='none', edgecolor='silver', linewidth=0.5, linestyle='--'
-            )
-
-        # Regions containing stroke units:
-        gdf_boundaries_intended = gdf_boundaries_regions.loc[
-            gdf_boundaries_regions['additional_region'] == False]
-        ax = draw_boundaries(
-            ax, gdf_boundaries_intended,
-            facecolor='none', edgecolor='k', linewidth=0.5
-            )
+        # Background regions:
+        ax = draw_boundaries_by_contents(ax, gdf_boundaries_regions)
 
         # Stroke unit markers.
         # Keep track of which units to label in here:
@@ -1245,22 +1320,20 @@ def plot_map_outcome(setup, col='ICB22NM', outcome='mrs_shift', destination_type
     """
     # Stroke unit setup
     gdf_points_units = make_gdf_selected_stroke_unit_coords(setup)
-    gdf_lines_transfer = make_gdf_lines_to_transfer_units(setup)
-
-    series_regions_containing_units = (
-        make_series_regions_containing_selected_stroke_units(
-            gdf_points_units, col))
 
     # LSOA setup
     gdf_boundaries_lsoa = make_gdf_lsoa_boundaries(setup)
 
     # Background regions setup
-    gdf_boundaries_regions = (
-        make_gdf_boundaries_regions_containing_possible_lsoa(
-            setup,
-            col,
-            series_regions_containing_units
-            ))
+    gdf_boundaries_regions = import_geojson(setup, col)
+    df_selected_regions = import_selected_regions(setup)
+    # Merge in region types
+    # and limit the boundaries file to only selected regions.
+    gdf_boundaries_regions = copy_columns_from_dataframe(
+        gdf_boundaries_regions, df_selected_regions,
+        cols_to_copy=['contains_selected_unit', 'contains_selected_lsoa'],
+        left_col=col, right_col=col, how='right'
+        )
 
     # Outcomes setup
     df_outcomes_by_lsoa = import_lsoa_outcomes(setup)
@@ -1365,21 +1438,8 @@ def plot_map_outcome(setup, col='ICB22NM', outcome='mrs_shift', destination_type
             **data_dict['boundary_kwargs']
             )
 
-        # Regions containing LSOAs but not stroke units:
-        gdf_boundaries_unintended = gdf_boundaries_regions.loc[
-            gdf_boundaries_regions['additional_region'] == True]
-        ax = draw_boundaries(
-            ax, gdf_boundaries_unintended,
-            facecolor='none', edgecolor='silver', linewidth=0.5, linestyle='--'
-            )
-
-        # Regions containing stroke units:
-        gdf_boundaries_intended = gdf_boundaries_regions.loc[
-            gdf_boundaries_regions['additional_region'] == False]
-        ax = draw_boundaries(
-            ax, gdf_boundaries_intended,
-            facecolor='none', edgecolor='k', linewidth=0.5
-            )
+        # Background regions:
+        ax = draw_boundaries_by_contents(ax, gdf_boundaries_regions)
 
         # Stroke unit markers.
         # Keep track of which units to label in here:
@@ -1396,15 +1456,6 @@ def plot_map_outcome(setup, col='ICB22NM', outcome='mrs_shift', destination_type
             ax = scatter_msu_units(ax, gdf_points_units)
             gdf_points_units.loc[
                 gdf_points_units['Use_MSU'] == 1, 'labels_mask'] = True
-
-        # # Transfer unit lines.
-        # # Check whether they need to be drawn:
-        # draw_lines_bool = (
-        #     (unit_dict['scatter_ivt'] & unit_dict['scatter_mt']) |
-        #     (unit_dict['scatter_ivt'] & unit_dict['scatter_msu'])
-        # )
-        # if draw_lines_bool:
-        #     ax = plot_lines_between_units(ax, gdf_lines_transfer)
 
         # # Stroke unit labels.
         # ax = annotate_unit_labels(ax, gdf_points_units)
