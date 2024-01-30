@@ -153,10 +153,8 @@ class Units(object):
         # outside of this class.
 
         # Define "kv" to shorten following line:
-        kv = zip(self.services_updates.keys(),
-                 self.services_updates.values())
-        for hospital, service_dict in kv:
-            for key, value in zip(service_dict.keys(), service_dict.values()):
+        for hospital, service_dict in self.services_updates.items():
+            for key, value in service_dict.items():
                 if key[:4] == 'Use_':
                     success = True
                     try:
@@ -333,7 +331,7 @@ class Units(object):
         # is a different LSOA:
         df_results = pd.DataFrame(index=df_time_lsoa_hospital.index)
         # Fill in the nearest stroke unit info:
-        for label, teams in zip(teams_dict.keys(), teams_dict.values()):
+        for label, teams in teams_dict.items():
             df_results = _find_nearest_units(
                 df_time_lsoa_hospital.copy(), teams, label, df_results)
             df_results = _merge_unit_info(
@@ -430,9 +428,7 @@ class Units(object):
 
         # Update the feeder units list with anything specified
         # by the user.
-        z = zip(self.services_updates.keys(),
-                self.services_updates.values())
-        for stroke_unit, stroke_unit_dict in z:
+        for stroke_unit, stroke_unit_dict in self.services_updates.items():
             if stroke_unit in df_stroke_teams.index.values:
                 # This stroke unit has at least one service
                 # (Use_IVT, Use_MT, and/or Use_MSU = 1).
