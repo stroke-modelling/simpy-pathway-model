@@ -2,6 +2,7 @@
 Class for organising paths, directory and file names.
 """
 import os  # For defining paths.
+import yaml
 
 
 class Setup(object):
@@ -182,3 +183,22 @@ class Setup(object):
         # Return the name so that we can point the code
         # at this directory:
         return dir_output_this_run
+
+    def save_to_file(self):
+        """Save the variable dict as a .yml file."""
+        setup_vars = vars(self)
+
+        dir_output = self.dir_output_all_runs
+        file_output = 'setup.yml'
+        file_setup_vars = os.path.join(dir_output, file_output)
+
+        with open(file_setup_vars, 'w') as f:
+            yaml.dump(setup_vars, f)
+
+    def import_from_file(self, path_to_setup_file):
+        """Import a .yml file and overwrite attributes here."""
+        with open(path_to_setup_file, 'r') as f:
+            setup_vars_imported = yaml.safe_load(f)
+
+        for key, val in setup_vars_imported.items():
+            setattr(self, key, val)
