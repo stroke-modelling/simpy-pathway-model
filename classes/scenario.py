@@ -1,5 +1,11 @@
 """
 Scenario class with global parameters for the pathway model.
+
+TO DO -----------------------------------------------------------------------------
+- write this docstring
+- load national data from file
+- save vars to yml - what about dataframes? (repr?)
+- only save inputs to Scenario() for init?
 """
 import numpy as np
 import pandas as pd
