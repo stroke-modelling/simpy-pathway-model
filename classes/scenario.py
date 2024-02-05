@@ -252,6 +252,12 @@ class Scenario(object):
         # Stores:
         # + self.lsoa_names
         #   --> saves to: file_selected_lsoas
+        # + self.lsoa_ivt_travel_time
+        # + self.lsoa_ivt_unit
+        # + self.lsoa_mt_travel_time
+        # + self.lsoa_mt_unit
+        # + self.lsoa_msu_travel_time
+        # + self.lsoa_msu_unit
 
         # Find which regions contain a stroke team and/or LSOA.
         self._assign_regions()
@@ -263,16 +269,6 @@ class Scenario(object):
         # + self.total_admissions
         # + self.lsoa_relative_frequency
         # + self.inter_arrival_time
-
-        # Stroke unit data for each LSOA.
-        self._load_lsoa_travel()
-        # Stores:
-        # + self.lsoa_ivt_travel_time
-        # + self.lsoa_ivt_unit
-        # + self.lsoa_mt_travel_time
-        # + self.lsoa_mt_unit
-        # + self.lsoa_msu_travel_time
-        # + self.lsoa_msu_unit
 
     # ##########################
     # ##### SELECTED UNITS #####
@@ -299,6 +295,24 @@ class Scenario(object):
         path_to_file = os.path.join(dir_input, file_input)
         hospitals = pd.read_csv(path_to_file)
 
+        # Reduce the number of columns:
+        hospitals = hospitals[[
+            'Postcode',
+            'Hospital_name',
+            'SSNAP name',
+            self.region_column_for_lsoa_selection,
+            'Easting',
+            'Northing',
+            'long_x',
+            'lat_x',
+        ]]
+        hospitals = hospitals.rename(columns={'long_x': 'long', 'lat_x': 'lat'})
+        # TO DO - sort out the _x suffix unwanted -----------------------------------
+
+        # Keep a copy of the coordinates:
+        hospital_coords = hospitals[[
+            'Postcode', 'Easting', 'Northing', 'long', 'lat']].copy()
+
         # Load and parse hospital services data
         dir_input = self.setup.dir_output
         file_input = self.setup.file_national_unit_services
@@ -306,7 +320,7 @@ class Scenario(object):
         services = pd.read_csv(path_to_file)
 
         # Update hospital data with services data:
-        hospitals = hospitals.drop(['Use_IVT', 'Use_MT', 'Use_MSU'], axis=1)
+        # hospitals = hospitals.drop(['Use_IVT', 'Use_MT', 'Use_MSU'], axis=1)
         hospitals = pd.merge(
             hospitals, services[['Postcode', 'Use_IVT', 'Use_MT', 'Use_MSU']],
             left_on='Postcode', right_on='Postcode', how='left'
@@ -361,6 +375,30 @@ class Scenario(object):
             # Use the full "hospitals" data.
             pass
 
+        # Merge in transfer unit names.
+        # Load and parse hospital transfer data
+        dir_input = self.setup.dir_output
+        file_input = self.setup.file_national_transfer_units
+        path_to_file = os.path.join(dir_input, file_input)
+        transfer = pd.read_csv(path_to_file)
+
+        transfer = transfer.drop(['time_nearest_MT'], axis='columns')
+        # Merge in the transfer unit coordinates:
+        transfer = pd.merge(
+            transfer, hospital_coords,
+            left_on='name_nearest_MT', right_on='Postcode',
+            how='left', suffixes=('_mt', None)
+            )
+
+        hospitals = pd.merge(
+            hospitals,
+            transfer,
+            left_on='Postcode',
+            right_on='from_postcode',
+            how='left', suffixes=(None, '_mt')
+        )
+        # TO DO - tidy up the excess columns in hospitals ---------------------------
+
         hospitals = hospitals.set_index('Postcode')
         self.hospitals = hospitals
 
@@ -379,6 +417,18 @@ class Scenario(object):
         ------
         lsoa_names:
             np.array. Names of all LSOAs considered.
+
+        lsoa_ivt_travel_time:
+            dict. Each LSOA's nearest IVT unit travel time.
+
+        lsoa_ivt_unit:
+            dict. Each LSOA's nearest IVT unit name.
+
+        lsoa_mt_travel_time:
+            dict. Each LSOA's nearest MT unit travel time.
+
+        lsoa_mt_unit:
+            dict. Each LSOA's nearest MT unit name.
         """
         # Load data on LSOA names, codes, regions...
         dir_input = self.setup.dir_data
@@ -425,6 +475,65 @@ class Scenario(object):
             left_on='LSOA11NM', right_on='LSOA11NM',
             how='right'
             )
+
+        # Stroke unit data for each LSOA.
+        # Take list of all LSOA names and travel times:
+        df_travel = self.national_dict['lsoa_nearest_units']
+        # This has one row for each LSOA nationally and columns
+        # for LSOA name and ONS code (LSOA11NM and LSOA11CD),
+        # and time, postcode, and SSNAP name of the nearest unit
+        # for each unit type (IVT, MT, MSU).
+        # Columns:
+        # + LSOA11NM
+        # + LSOA11CD
+        # + time_nearest_IVT
+        # + postcode_nearest_IVT
+        # + ssnap_name_nearest_IVT
+        # + time_nearest_MT
+        # + postcode_nearest_MT
+        # + ssnap_name_nearest_MT
+        # + time_nearest_MSU
+        # + postcode_nearest_MSU
+        # + ssnap_name_nearest_MSU
+    
+        # Limit the big DataFrame to just the LSOAs wanted:
+        df_travel = pd.merge(
+            df_regions,
+            df_travel.drop(['LSOA11CD'], axis='columns'),
+            left_on='LSOA11NM',
+            right_on='LSOA11NM'
+            )
+        df_travel = df_travel.set_index('LSOA11NM')
+
+        # Separate out the columns and store in self:
+        self.lsoa_ivt_travel_time = dict(df_travel['time_nearest_IVT'])
+        self.lsoa_ivt_unit = dict(df_travel['postcode_nearest_IVT'])
+        self.lsoa_mt_travel_time = dict(df_travel['time_nearest_MT'])
+        self.lsoa_mt_unit = dict(df_travel['postcode_nearest_MT'])
+        self.lsoa_msu_travel_time = dict(df_travel['time_nearest_MSU'])
+        self.lsoa_msu_unit = dict(df_travel['postcode_nearest_MSU'])
+
+        # Limit to just the LSOAs for the selected model type.
+        s = ('IVT' if self.destination_decision_type == 0
+             else 'MT' if self.destination_decision_type == 1
+             else 'MSU')
+        cols_to_drop = []
+        for d in ['IVT', 'MT', 'MSU']:
+            cols = [
+                    f'postcode_nearest_{d}',
+                    f'time_nearest_{d}',
+                    f'ssnap_name_nearest_{d}',
+                ]
+            if d != s:
+                cols_to_drop += cols
+            else:
+                cols_to_drop += cols[1:]
+                cols = cols[:1]
+                cols_to_rename = dict(zip(
+                    cols, [c.split(f'_{s}')[0] for c in cols]))
+        df_regions = df_travel
+        df_regions = df_regions.drop(cols_to_drop, axis='columns')
+        df_regions = df_regions.rename(columns=cols_to_rename)
 
         # Store in self:
         self.lsoa_names = df_regions
@@ -638,62 +747,3 @@ class Scenario(object):
         self.lsoa_names = list(admissions["area"])
         # Average time between admissions to these hospitals in a year:
         self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions
-
-    def _load_lsoa_travel(self):
-        """
-        WIP
-        Stroke unit data for each LSOA.
-
-        Stores
-        ------
-
-        lsoa_ivt_travel_time:
-            dict. Each LSOA's nearest IVT unit travel time.
-
-        lsoa_ivt_unit:
-            dict. Each LSOA's nearest IVT unit name.
-
-        lsoa_mt_travel_time:
-            dict. Each LSOA's nearest MT unit travel time.
-
-        lsoa_mt_unit:
-            dict. Each LSOA's nearest MT unit name.
-        """
-        # Use the list of LSOA names to include:
-        lsoa_names = self.lsoa_names
-
-        # Take list of all LSOA names and travel times:
-        df_travel = self.national_dict['lsoa_nearest_units']
-        # This has one row for each LSOA nationally and columns
-        # for LSOA name and ONS code (LSOA11NM and LSOA11CD),
-        # and time, postcode, and SSNAP name of the nearest unit
-        # for each unit type (IVT, MT, MSU).
-        # Columns:
-        # + LSOA11NM
-        # + LSOA11CD
-        # + time_nearest_IVT
-        # + postcode_nearest_IVT
-        # + ssnap_name_nearest_IVT
-        # + time_nearest_MT
-        # + postcode_nearest_MT
-        # + ssnap_name_nearest_MT
-        # + time_nearest_MSU
-        # + postcode_nearest_MSU
-        # + ssnap_name_nearest_MSU
-
-        # Limit the big DataFrame to just the LSOAs wanted:
-        df_travel = pd.merge(
-            df_travel,
-            pd.DataFrame(lsoa_names, columns=['LSOA11NM']),
-            left_on='LSOA11NM',
-            right_on='LSOA11NM'
-            )
-        df_travel = df_travel.set_index('LSOA11NM')
-
-        # Separate out the columns and store in self:
-        self.lsoa_ivt_travel_time = dict(df_travel['time_nearest_IVT'])
-        self.lsoa_ivt_unit = dict(df_travel['postcode_nearest_IVT'])
-        self.lsoa_mt_travel_time = dict(df_travel['time_nearest_MT'])
-        self.lsoa_mt_unit = dict(df_travel['postcode_nearest_MT'])
-        self.lsoa_msu_travel_time = dict(df_travel['time_nearest_MSU'])
-        self.lsoa_msu_unit = dict(df_travel['postcode_nearest_MSU'])

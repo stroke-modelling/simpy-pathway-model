@@ -1,6 +1,8 @@
 """
 Combine features from multiple runs.
 
+Welcome to MultiIndex hell. *Doom trumpets*
+
 TO DO - write me --------------------------------------------------------------------
 """
 import numpy as np
@@ -46,156 +48,466 @@ class Combine(object):
     # ##### SPECIFIC FILES #####
     # ##########################
 
-    def combine_selected_lsoa(self):
-        """Combine selected LSOA"""
+    def combine_selected_lsoa(self, save_to_file=True):
+        """
+        Combine selected LSOA.
+
+        Each file input:
+        +------+-----+
+        | LSOA | ... |
+        +------+-----+
+        |    1 | ... |
+        |    2 | ... |
+        |    3 | ... |
+        |  ... | ... |
+        |    n | ... |
+        +------+-----+
+
+        Resulting DataFrame:
+        +------+-----+------------+------------+
+        | LSOA | ... | scenario_1 | scenario_2 |
+        +------+-----+------------+------------+
+        |    1 | ... |       True |      False |
+        |    2 | ... |       True |      False |
+        |    3 | ... |       True |       True |
+        |  ... | ... |        ... |        ... |
+        |    n | ... |      False |       True |
+        +------+-----+------------+------------+
+        """
         file_to_merge = self.setup.file_selected_lsoas
 
-        df = self._merge_multiple_dataframes(file_to_merge)
+        try:
+            df = self._merge_multiple_dataframes(file_to_merge)
+        except FileNotFoundError:
+            # TO DO - set up proper error message ----------------------------------
+            pass
 
-        # Save to file:
-        output_dir = self.setup.dir_output_all_runs
-        output_filename = self.setup.file_combined_selected_lsoas
-        path_to_file = os.path.join(output_dir, output_filename)
-        df.to_csv(path_to_file, index=False)
+        if save_to_file:
+            output_dir = self.setup.dir_output_all_runs
+            output_filename = self.setup.file_combined_selected_lsoas
+            path_to_file = os.path.join(output_dir, output_filename)
+            df.to_csv(path_to_file, index=False)
 
-    def combine_selected_regions(self):
-        """Combine selected regions"""
+    def combine_selected_regions(self, save_to_file=True):
+        """
+        Combine selected regions.
+
+        Each file input:
+        +--------+-----------+----------+
+        | Region | has_units | has_lsoa |
+        +--------+-----------+----------+
+        |      1 |      True |     True |
+        |      2 |      True |     True |
+        |      3 |     False |     True |
+        |    ... |       ... |      ... |
+        |      n |     False |     True |
+        +--------+-----------+----------+
+
+        Resulting DataFrame:
+                 +----------------------+----------------------+
+                 |      scenario_1      |      scenario_2      |
+        +--------+-----------+----------+-----------+----------+
+        | Region | has_units | has_lsoa | has_units | has_lsoa |
+        +--------+-----------+----------+-----------+----------+
+        |      1 |      True |     True |      True |     True |
+        |      2 |      True |     True |     False |     True |
+        |      3 |     False |     True |      True |     True |
+        |    ... |       ... |      ... |       ... |      ... |
+        |      n |     False |     True |     False |     True |
+        +--------+-----------+----------+-----------+----------+
+        """
         file_to_merge = self.setup.file_selected_regions
 
-        df = self._hstack_multiple_dataframes(file_to_merge)
+        try:
+            df = self._hstack_multiple_dataframes(file_to_merge)
+        except FileNotFoundError:
+            # TO DO - set up proper error message ----------------------------------
+            pass
 
-        # Save to file:
-        output_dir = self.setup.dir_output_all_runs
-        output_filename = self.setup.file_combined_selected_regions
-        path_to_file = os.path.join(output_dir, output_filename)
-        df.to_csv(path_to_file)
+        if save_to_file:
+            output_dir = self.setup.dir_output_all_runs
+            output_filename = self.setup.file_combined_selected_regions
+            path_to_file = os.path.join(output_dir, output_filename)
+            df.to_csv(path_to_file, index=False)
 
-    def combine_results_summary_by_lsoa(self):
-        """Group by LSOA summary"""
+    def combine_results_summary_by_lsoa(self, save_to_file=True):
+        """
+        Group by LSOA summary.
+
+        Each file input:
+        +------+-------------+-------------+
+        |      |   time_1    |    shift_1  |
+        +------+------+------+------+------+
+        | LSOA | mean |  std | mean |  std |
+        +------+------+------+------+------+
+        |    1 | x.xx | x.xx | y.yy | y.yy |
+        |    2 | x.xx | x.xx | y.yy | y.yy |
+        |    3 | x.xx | x.xx | y.yy | y.yy |
+        |  ... |  ... |  ... |  ... |  ... |
+        |    n | x.xx | x.xx | y.yy | y.yy |
+        +------+------+------+------+------+
+
+        Resulting DataFrame:
+        +------+------+------+------+------+------+------+
+        |      |  scenario_1 |  scenario_2 |    diff     |
+        +------+------+------+------+------+------+------+
+        |      |    shift    |    shift    |    shift    |
+        +------+------+------+------+------+------+------+
+        | LSOA | mean |  std | mean |  std | mean |  std |
+        +------+------+------+------+------+------+------+
+        |    1 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        |    2 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        |    3 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        |  ... |  ... |  ... |  ... |  ... |  ... |  ... |
+        |    n | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        +------+------+------+------+------+------+------+
+        """
         file_to_merge = self.setup.file_results_summary_by_lsoa
 
-        data = self._stack_multiple_dataframes(file_to_merge)
+        try:
+            data = self._hstack_multiple_dataframes(file_to_merge, csv_header=[0, 1])
+        except FileNotFoundError:
+            # TO DO - set up proper error message ----------------------------------
+            pass
 
-        col_to_group = data.columns[0]
-        cols_to_keep = ['utility_shift_mean', 'mRS shift_mean', 'mRS 0-2_mean']
-        df = self._group_data_and_diff(data, col_to_group, cols_to_keep)
+        # col_to_group = data.columns[0]
+        cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
+        # Same LSOA appearing in multiple files will currently have
+        # multiple mostly-empty rows in the "data" DataFrame.
+        # Group matching rows:
+        # df = self._group_data(data, col_to_group, cols_to_keep)
 
-        # Save to file:
-        output_dir = self.setup.dir_output_all_runs
-        output_filename = self.setup.file_combined_results_summary_by_lsoa
-        path_to_file = os.path.join(output_dir, output_filename)
-        df.to_csv(path_to_file, index=False)
+        # Create new columns of this diff that:
+        df = self._diff_data(data, cols_to_keep)
 
-    def combine_results_summary_by_admitting_unit(self):
-        """Group by admitting unit summary"""
+        if save_to_file:
+            output_dir = self.setup.dir_output_all_runs
+            output_filename = self.setup.file_combined_results_summary_by_lsoa
+            path_to_file = os.path.join(output_dir, output_filename)
+            df.to_csv(path_to_file, index=False)
+
+    def combine_results_summary_by_admitting_unit(self, save_to_file=True):
+        """
+        Group by admitting unit summary.
+
+        Each file input:
+        +------+-------------+-------------+
+        |      |   time_1    |    shift_1  |
+        +------+------+------+------+------+
+        | Unit | mean |  std | mean |  std |
+        +------+------+------+------+------+
+        |    1 | x.xx | x.xx | y.yy | y.yy |
+        |    2 | x.xx | x.xx | y.yy | y.yy |
+        |    3 | x.xx | x.xx | y.yy | y.yy |
+        |  ... |  ... |  ... |  ... |  ... |
+        |    n | x.xx | x.xx | y.yy | y.yy |
+        +------+------+------+------+------+
+
+        Resulting DataFrame:
+        +------+------+------+------+------+------+------+
+        |  any |  scenario_1 |  scenario_2 |    diff     |
+        +------+------+------+------+------+------+------+
+        |      |    shift    |    shift    |    shift    |
+        +------+------+------+------+------+------+------+
+        | Unit | mean |  std | mean |  std | mean |  std |
+        +------+------+------+------+------+------+------+
+        |    1 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        |    2 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        |    3 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        |  ... |  ... |  ... |  ... |  ... |  ... |  ... |
+        |    n | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        +------+------+------+------+------+------+------+
+        """
         file_to_merge = self.setup.file_results_summary_by_admitting_unit
 
-        data = self._stack_multiple_dataframes(file_to_merge)
+        try:
+            data = self._hstack_multiple_dataframes(file_to_merge, csv_header=[0, 1])
+        except FileNotFoundError:
+            # TO DO - set up proper error message ----------------------------------
+            pass
 
-        col_to_group = data.columns[0]
-        cols_to_keep = ['utility_shift_mean', 'mRS shift_mean', 'mRS 0-2_mean']
-        df = self._group_data_and_diff(data, col_to_group, cols_to_keep)
+        # col_to_group = data.columns[0]
+        cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
+        # Same LSOA appearing in multiple files will currently have
+        # multiple mostly-empty rows in the "data" DataFrame.
+        # Group matching rows:
+        # df = self._group_data(data, col_to_group, cols_to_keep)
 
-        # Save to file:
-        output_dir = self.setup.dir_output_all_runs
-        output_filename = self.setup.file_combined_results_summary_by_admitting_unit
-        path_to_file = os.path.join(output_dir, output_filename)
-        df.to_csv(path_to_file, index=False)
+        # Create new columns of this diff that:
+        df = self._diff_data(data, cols_to_keep)
 
+        if save_to_file:
+            output_dir = self.setup.dir_output_all_runs
+            output_filename = self.setup.file_combined_results_summary_by_admitting_unit
+            path_to_file = os.path.join(output_dir, output_filename)
+            df.to_csv(path_to_file, index=False)
+
+    # def combine_lsoa_select_and_results(self, save_to_file=True):
+    #     input_dir = self.setup.dir_output_all_runs
+    #     select_filename = self.setup.file_combined_selected_lsoas
+    #     results_filename = self.setup.file_combined_results_summary_by_lsoa
+        
+    #     path_to_file = os.path.join(input_dir, select_filename)
+
+    #     path_to_file = os.path.join(input_dir, results_filename)
 
     # ############################
     # ##### HELPER FUNCTIONS #####
     # ############################
-    def _stack_multiple_dataframes(self, file_to_merge):
-        # Combine multiple DataFrames from different scenarios into here.
-        # Stacks all DataFrames one on top of the other with no other
-        # change in columns.
-        data = pd.DataFrame()
+    # def _stack_multiple_dataframes(self, file_to_merge):
+    #     """
+        
+    #     """
+    #     # Combine multiple DataFrames from different scenarios into here.
+    #     # Stacks all DataFrames one on top of the other with no other
+    #     # change in columns.
+    #     # data = pd.DataFrame()
 
-        for d, dir_output in enumerate(self.setup.list_dir_output):
-            file_input = file_to_merge
-            path_to_file = os.path.join(dir_output, file_input)
+    #     dfs_to_merge = {}
+            
+    #     for d, dir_output in enumerate(self.setup.list_dir_output):
+    #         file_input = file_to_merge
+    #         path_to_file = os.path.join(dir_output, file_input)
 
-            # Specify header to import as a multiindex DataFrame.
-            df = pd.read_csv(path_to_file, header=[0, 1])
+    #         # Specify header to import as a multiindex DataFrame.
+    #         df = pd.read_csv(path_to_file, header=[0, 1])
+            
+    #         # if len(dfs_to_merge.items()) < 1:
+    #         #     shared_col_name = df.columns[0]
+    #         #     dfs_to_merge['any'] = df[shared_col_name]
+                    
+    #         # first_column_name = df.columns[0][0]
 
-            first_column_name = df.columns[0][0]
+    #         # # Convert to normal index:
+    #         # df.columns = ['!'.join(a) for a in df.columns.to_flat_index()]
+    #         # # Rename the first column which didn't have multiindex levels:
+    #         # df = df.rename(columns={df.columns[0]: first_column_name})
 
-            # Convert to normal index:
-            df.columns = ["_".join(a) for a in df.columns.to_flat_index()]
-            # Rename the first column which didn't have multiindex levels:
-            df = df.rename(columns={df.columns[0]: first_column_name})
+    #         # Create a name for this scenario:
+    #         scenario_name = os.path.split(dir_output)[-1]
+        
+    #         dfs_to_merge[scenario_name] = df
 
-            # Create a name for this scenario:
-            scenario_name = os.path.split(dir_output)[-1]
-            df['scenario'] = scenario_name
-            data = pd.concat([data, df], axis=0)
-        return data
+    #         # # Add another MultiIndex layer for the scenario name:
+    #         # df = pd.DataFrame(
+    #         #     df.values,
+    #         #     columns=([
+    #         #         np.array([scenario_name] * len(df.columns))
+    #         #     ] + [
+    #         #         np.array(df.columns.get_level_values(i))
+    #         #         for i in range(df.columns.nlevels)
+    #         #     ])
+    #         # )
+    #         # # Introduce "any" scenario.
+    #         # # These should be shared between scenarios.
+    #         # cols_for_any = df.columns.get_level_values(1)[0]
+    #         # current_top_cols = df.loc[:, pd.IndexSlice[:, cols_for_any]].columns.get_level_values(0).to_list()
+    #         # df.rename(columns=dict(zip(current_top_cols, ['any'] * len(current_top_cols))))
+            
+    #     data = pd.concat(
+    #         dfs_to_merge.values(), axis='rows', keys=dfs_to_merge.keys())
+        
+    #     # print(data.columns)
+    #     # print(data)
 
-    def _group_data_and_diff(self, data, col_to_group, cols_to_keep):
+    #     # # Drop the extra region columns.
+    #     # for scenario_name in list(dfs_to_merge.keys())[1:]:
+    #     #     data = data.drop((scenario_name, *shared_col_name), axis='columns')
+
+    #     return data
+
+    # def _group_data(self, data, col_to_group, cols_to_keep):
+    #     """
+    #     Combine multiple rows for the same thing.
+    #     """
+    #     # Combine data into this DataFrame:
+    #     df = pd.DataFrame(columns=[col_to_group])
+    #     # Select top level of multiindex:
+    #     scenario_name_list = sorted(list(set(data.columns.get_level_values(0).to_list())))
+    #     scenario_name_list.remove('any')
+    #     # scenario_name_list = sorted(list(set(data['scenario'])))
+
+    #     # mask_dict = dict(zip(
+    #     #     scenario_name_list,
+    #     #     [data['scenario'] == s for s in scenario_name_list]
+    #     # ))
+
+    #     for c in cols_to_keep:
+    #         cols = [col_to_group, c]
+    #         # Copy over this column for each scenario
+    #         # and where a column has multiple entries for one thing (e.g. LSOA),
+    #         # then take the average value of the multiple entries.
+    #         # If there's only one entry, it uses that.
+    #         # (see Muster dev branch temp/)
+    #         for scenario in scenario_name_list:
+    #             # data_new_col = data[
+    #             #     mask_dict[scenario]][cols].groupby(col_to_group).mean()
+    #             print(scenario)
+    #             # data_new_col = data[['any', scenario]][cols].groupby(col_to_group).mean()
+
+    #             # Only keep 'any' scenario and this scenario data.
+    #             data_new_col = data[['any', scenario]]
+    #             # Drop the top level of the multiindex.
+    #             data_new_col = data_new_col.droplevel(0, axis='columns')
+    #             # data_new_col should now look like the original file.
+    #             data_new_col = data_new_col[cols]
+    #             print(data_new_col)
+    #             data_new_col = data_new_col.groupby(col_to_group)
+    #             print(data_new_col)
+    #             data_new_col = data_new_col.mean()
+    #             print(data_new_col)
+    #             # TO DO - what about std? ----------------------------------------------
+    #             data_new_col = data_new_col.reset_index()
+    #             print(data_new_col)
+    #             # Assume that this is a Series.
+    #             # data_new_col = data_new_col.rename(columns={c: f'{c}_{scenario}'})
+
+    #             # Convert to MultiIndex:
+    #             data_new_col = pd.DataFrame(
+    #                 data_new_col,
+    #                 columns=([
+    #                     np.array([scenario] * len(data_new_col.columns))
+    #                     ] + [
+    #                     np.array(data_new_col.columns.get_level_values(i))
+    #                           for i in range(data_new_col.columns.nlevels)])
+    #                 )
+
+    #             # Merge into the existing DataFrame and retain any empty rows.
+    #             df = pd.merge(
+    #                 df, data_new_col,
+    #                 left_on=col_to_group, right_on=col_to_group,
+    #                 how='outer'
+    #             )
+
+    #     return df
+
+    def _diff_data(self, df, cols_to_diff):
         """
-        CHECK - is this function necessary? Are things already averaged before this?
-        Do need to keep the diff part though.
+        C
         """
         # Combine data into this DataFrame:
-        df = pd.DataFrame(columns=[col_to_group])
-        scenario_name_list = sorted(list(set(data['scenario'])))
-        # For scenarios [A, B, C], get a list of pairs [[A, B], [A, C], [B, C]].
+
+        # Change to select top level of multiindex:
+        scenario_name_list = sorted(list(set(df.columns.get_level_values(0).to_list())))
+        # Drop 'any' scenario:
+        scenario_name_list.remove('any')
+        # For scenarios [A, B, C], get a list of pairs
+        # [[A, B], [A, C], [B, C]].
         scenario_name_pairs = list(combinations(scenario_name_list, 2))
 
-        mask_dict = dict(zip(
-            scenario_name_list,
-            [data['scenario'] == s for s in scenario_name_list]
-        ))
-
-        for c in cols_to_keep:
-            cols = [col_to_group, c]
-            # Copy over this column for each scenario
-            # and where a column has multiple entries for one thing (e.g. LSOA),
-            # then take the average value of the multiple entries.
-            # (see Muster dev branch temp/)
-            for scenario in scenario_name_list:
-                data_new_col = data[
-                    mask_dict[scenario]][cols].groupby(col_to_group).mean()
-                data_new_col = data_new_col.reset_index()
-                # Assume that this is a Series.
-                data_new_col = data_new_col.rename(columns={c: f'{c}_{scenario}'})
-
-                # Merge into the existing DataFrame and retain any empty rows.
-                df = pd.merge(
-                    df, data_new_col,
-                    left_on=col_to_group, right_on=col_to_group,
-                    how='outer'
-                )
-
+        for c in cols_to_diff:
             # Take the difference between each pair of scenarios:
             for pair in scenario_name_pairs:
                 p0 = pair[0]
                 p1 = pair[1]
-                diff_col_name = f'{c}_diff_{p0}_minus_{p1}'
-                df[diff_col_name] = df[f'{c}_{p0}'] - df[f'{c}_{p1}']
+                diff_col_name = f'diff_{p0}_minus_{p1}'
 
+                data0 = df[p0][c]
+                data1 = df[p1][c]
+                try:
+                    for col in data0.columns:
+                        if col in ['mean', 'median']:
+                            # Take the difference between averages.
+                            data_diff = data0[col] - data1[col]
+                        elif col in ['std']:
+                            # Propagate errors for std.
+                            data_diff = np.sqrt(np.sum(
+                                [data0[col]**2.0,  data1[col]**2.0]))
+                        else:
+                            # Don't know what to do with the rest yet. ----------------------
+                            # TO DO
+                            data_diff = ['help'] * len(df)
+                        df[diff_col_name, c, col] = data_diff
+                except AttributeError:
+                    # No more nested column index levels.
+                    data_diff = data0 - data1
+                    df[diff_col_name, c] = data_diff
         return df
 
-    def _hstack_multiple_dataframes(self, file_to_merge):
+    def _hstack_multiple_dataframes(self, file_to_merge, csv_header=None):
+        """
         # Combine multiple DataFrames from different scenarios into here.
         # Stacks all DataFrames one on top of the other with no other
         # change in columns.
-        data = pd.DataFrame()
+
+        Each file input:
+        +--------+-----------+----------+
+        | Region | has_units | has_lsoa |
+        +--------+-----------+----------+
+        |      1 |      True |     True |
+        |      2 |      True |     True |
+        |      3 |     False |     True |
+        |    ... |       ... |      ... |
+        |      n |     False |     True |
+        +--------+-----------+----------+
+
+        Resulting DataFrame:
+                 +----------------------+----------------------+
+                 |      scenario_1      |      scenario_2      |
+        +--------+-----------+----------+-----------+----------+
+        | Region | has_units | has_lsoa | has_units | has_lsoa |
+        +--------+-----------+----------+-----------+----------+
+        |      1 |      True |     True |      True |     True |
+        |      2 |      True |     True |     False |     True |
+        |      3 |     False |     True |      True |     True |
+        |    ... |       ... |      ... |       ... |      ... |
+        |      n |     False |     True |     False |     True |
+        +--------+-----------+----------+-----------+----------+
+        """
+        # data = pd.DataFrame()
+
+        dfs_to_merge = {}
 
         for d, dir_output in enumerate(self.setup.list_dir_output):
             file_input = file_to_merge
             path_to_file = os.path.join(dir_output, file_input)
 
-            df = pd.read_csv(path_to_file, index_col=0)
+            if csv_header is None:
+                df = pd.read_csv(path_to_file)
+            else:
+                # Specify header to import as a multiindex DataFrame.
+                df = pd.read_csv(path_to_file, header=csv_header)
+
+            if len(dfs_to_merge.items()) < 1:
+                shared_col_name = df.columns[0]
+                dfs_to_merge['any'] = df[shared_col_name]
 
             # Create a name for this scenario:
             scenario_name = os.path.split(dir_output)[-1]
-            df = df.rename(columns=dict(zip(df.columns, [f'{c}_{scenario_name}' for c in df.columns])))
-            data = pd.concat([data, df], axis=1)
+
+            dfs_to_merge[scenario_name] = df
+
+            # # Covnert to MultiIndex:
+            # df = pd.DataFrame(
+            #     df.values,
+            #     columns=[
+            #         np.array([scenario_name]*len(df.columns)),
+            #         np.array(df.columns)
+            #         ]
+            #     )
+            # # 
+            # # Merge this data onto the side:
+            # data = pd.concat([data, df], axis='columns')
+
+        data = pd.concat(
+            dfs_to_merge.values(),
+            axis='columns',
+            keys=dfs_to_merge.keys()  # Names for extra index row
+            )
+
+        # TO DO - only want the following lines for columns that should be bool ---------------
         # Replace missing values with 0 in the region columns:
         data = data.fillna(value=0)
+        # Did have dtype float/str from missing values, now want int:
         data = data.convert_dtypes()
+
+        # Drop the extra region columns.
+        for scenario_name in list(dfs_to_merge.keys())[1:]:
+            if isinstance(shared_col_name, str):
+                data = data.drop((scenario_name, shared_col_name), axis='columns')
+            else:
+                data = data.drop((scenario_name, *shared_col_name), axis='columns')
+
         return data
 
     def _merge_multiple_dataframes(self, file_to_merge, merge_col='LSOA11CD'):
