@@ -411,8 +411,10 @@ class Combine(object):
                             data_diff = data0[col] - data1[col]
                         elif col in ['std']:
                             # Propagate errors for std.
-                            data_diff = np.sqrt(np.sum(
-                                [data0[col]**2.0,  data1[col]**2.0]))
+                            # data_diff = np.sqrt(np.sum(
+                            #     [data0[col]**2.0,  data1[col]**2.0]))
+                            # TO DO - THIS DOESN@'t work for lpaceholder zero values - change to NaN
+                            data_diff = ['write this please'] * len(df)
                         else:
                             # Don't know what to do with the rest yet. ----------------------
                             # TO DO
