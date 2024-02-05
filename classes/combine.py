@@ -470,10 +470,13 @@ class Combine(object):
 
             if len(dfs_to_merge.items()) < 1:
                 shared_col_name = df.columns[0]
-                dfs_to_merge['any'] = df[shared_col_name]
+                # dfs_to_merge['any'] = df[shared_col_name]
 
             # Create a name for this scenario:
             scenario_name = os.path.split(dir_output)[-1]
+
+            # Set the index:
+            df = df.set_index(df.columns[0])
 
             dfs_to_merge[scenario_name] = df
 
@@ -489,11 +492,29 @@ class Combine(object):
             # # Merge this data onto the side:
             # data = pd.concat([data, df], axis='columns')
 
+        # Can't concat without index columns.
         data = pd.concat(
             dfs_to_merge.values(),
             axis='columns',
             keys=dfs_to_merge.keys()  # Names for extra index row
             )
+
+        # Copy index information to its own column with 'any' scenario:
+        if isinstance(shared_col_name, str):
+            any_col = ('any', shared_col_name)
+        else:
+            any_col = ('any', *shared_col_name)
+        data[any_col] = data.index
+        # data = data.reset_index()
+        # Move 'any' index to the far left:
+        cols = list(np.unique(data.columns.get_level_values(0).to_list()))
+        cols.remove('any')
+        cols = ['any'] + cols
+        data = data[cols]
+
+        # Sort rows by contents of 'any' column:
+        data = data.sort_values(any_col)
+
 
         # TO DO - only want the following lines for columns that should be bool ---------------
         # Replace missing values with 0 in the region columns:
@@ -501,12 +522,28 @@ class Combine(object):
         # Did have dtype float/str from missing values, now want int:
         data = data.convert_dtypes()
 
-        # Drop the extra region columns.
-        for scenario_name in list(dfs_to_merge.keys())[1:]:
-            if isinstance(shared_col_name, str):
-                data = data.drop((scenario_name, shared_col_name), axis='columns')
-            else:
-                data = data.drop((scenario_name, *shared_col_name), axis='columns')
+        # # Combine the index columns.
+        # for scenario_name in list(dfs_to_merge.keys())[1:]:
+        #     if isinstance(shared_col_name, str):
+        #         # data_before = data['any', shared_col_name]
+        #         data_here = data[scenario_name, shared_col_name]
+        #         d = data['any', shared_col_name].combine_first(data_here)
+        #         # d = pd.merge(data_before, data_here, left_on=data_before.name, right_on=data_here.name, how='outer')
+        #         data[('any', shared_col_name)] = d
+        #     else:
+        #         # data_before = data[('any', *shared_col_name)]
+        #         data_here = data[(scenario_name, *shared_col_name)]
+        #         d = data[('any', *shared_col_name)].combine_first(data_here)
+        #         # d = pd.merge(data_before, data_here, left_on=data_before.name, right_on=data_here.name, how='outer')
+        #         # print(pd.DataFrame([data[('any', *shared_col_name)], d]))
+        #         data[('any', *shared_col_name)] = d
+
+        # # Drop the extra region columns.
+        # for scenario_name in list(dfs_to_merge.keys())[1:]:
+        #     if isinstance(shared_col_name, str):
+        #         data = data.drop((scenario_name, shared_col_name), axis='columns')
+        #     else:
+        #         data = data.drop((scenario_name, *shared_col_name), axis='columns')
 
         return data
 
