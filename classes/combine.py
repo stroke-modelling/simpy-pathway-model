@@ -133,7 +133,7 @@ class Combine(object):
             output_dir = self.setup.dir_output_all_runs
             output_filename = self.setup.file_combined_selected_lsoas
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file, index=False)
+            df.to_csv(path_to_file)
 
     def combine_selected_regions(self, save_to_file=True):
         """

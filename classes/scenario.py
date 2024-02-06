@@ -438,8 +438,8 @@ class Scenario(object):
         # Only keep LSOA name, code, and coordinates:
         cols_to_keep = [
             'LSOA11NM', 'LSOA11CD',
-            'LSOA11BNG_N', 'LSOA11BNG_E',
-            'LSOA11LONG', 'LSOA11LAT',
+            # 'LSOA11BNG_N', 'LSOA11BNG_E',
+            # 'LSOA11LONG', 'LSOA11LAT',
             self.region_column_for_lsoa_selection
         ]
         df_regions = df_regions[cols_to_keep]

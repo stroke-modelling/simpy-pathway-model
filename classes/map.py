@@ -22,7 +22,33 @@ NOTES
 
 # Don't save a column named "geometry" or the load won't work.
 # ... so then what?
-"""    
+
+# TO MERGE MULTIINDEX, have to know number of levels to add to the gdf data
+# --> add levels then merge. Levels depends on whether using combo or single data.
+# Make sure that dropping upper levels would recreate the single data version.
+# TO DO.
+
+Limit LSOAs to those whose nearest stroke units are in the list.
+
+Example catchment areas:
+The two right-hand units are in the selected regions
+and the two units on the left are national units,
+not modelled directly.
+
+    ▓▓▓▓▓▓▓▓▓░░░░░░░░█████▒▒▒▒▒  <-- Drip-and-ship   +------------+
+    ▏   *        o     o   *  ▕                      | * MT unit  |
+    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒  <-- Mothership      | o IVT unit |
+                -->▏ ▕<--                             +------------+
+                Difference
+
+The catchment area boundaries are halfway between adjacent units.
+
+In the mothership model, the right-hand MT unit's catchment area
+covers the whole right half of the rectangle.
+In the drip-and-ship model, some of that area is instead assigned
+to the out-of-area IVT unit in the centre of the rectangle.
+"""
+# TO DO
 import numpy as np
 import pandas as pd
 import geopandas
@@ -64,106 +90,65 @@ class Map(object):
     # ##########################
     # ##### FILE SELECTION #####
     # ##########################
-    def load_combined_data(self):
+    def load_run_data(self, dir_data=None):
         """
-        Limit LSOAs to those whose nearest stroke units are in the list.
-
-        Example catchment areas:
-        The two right-hand units are in the selected regions
-        and the two units on the left are national units,
-        not modelled directly.
-
-            ▓▓▓▓▓▓▓▓▓░░░░░░░░█████▒▒▒▒▒  <-- Drip-and-ship   +------------+
-            ▏   *        o     o   *  ▕                      | * MT unit  |
-            ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒  <-- Mothership      | o IVT unit |
-                       -->▏ ▕<--                             +------------+
-                       Difference
-
-        The catchment area boundaries are halfway between adjacent units.
-
-        In the mothership model, the right-hand MT unit's catchment area
-        covers the whole right half of the rectangle.
-        In the drip-and-ship model, some of that area is instead assigned
-        to the out-of-area IVT unit in the centre of the rectangle.
+        Load in data specific to these runs.
         """
-        # TO DO
+        if dir_data is None:
+            # Use combined data files.
+            dir_data = self.setup.dir_output_all_runs
+            dicts_data = {
+                'df_units': {
+                    'file': self.setup.file_combined_selected_stroke_units,
+                    'header': [0, 1]
+                    },
+                'df_lsoa': {
+                    'file': self.setup.file_combined_selected_lsoas,
+                    'header': None
+                    },
+                'df_regions': {
+                    'file': self.setup.file_combined_selected_regions,
+                    'header': [0, 1]
+                    },
+                'df_results_by_unit': {
+                    'file': (
+                        self.setup.file_combined_results_summary_by_admitting_unit
+                        ),
+                    'header': [0, 1, 2]
+                    },
+                'df_results_by_lsoa': {
+                    'file': self.setup.file_combined_results_summary_by_lsoa,
+                    'header': [0, 1, 2]
+                    },
+            }
+        else:
+            # Use files for the selected scenario only.
+            dicts_data = {
+                'df_units': {
+                    'file': self.setup.file_selected_stroke_units,
+                    'header': None
+                    },
+                'df_lsoa': {
+                    'file': self.setup.file_selected_lsoas,
+                    'header': None
+                    },
+                'df_regions': {
+                    'file': self.setup.file_selected_regions,
+                    'header': None
+                    },
+                'df_results_by_unit': {
+                    'file': (
+                        self.setup.file_results_summary_by_admitting_unit
+                        ),
+                    'header': [0, 1]
+                    },
+                'df_results_by_lsoa': {
+                    'file': self.setup.file_results_summary_by_lsoa,
+                    'header': [0, 1]
+                    },
+            }
 
-        
-        pass
-
-    def load_run_data_combined(self):
-        """
-        Load in combo data specific to these runs.
-        """
-        dir_combo = self.setup.dir_output_all_runs
-
-        combo_data = {
-            'df_combo_units': {
-                'file': self.setup.file_combined_selected_stroke_units,
-                'header': [0, 1]
-                },
-            'df_combo_lsoa': {
-                'file': self.setup.file_combined_selected_lsoas,
-                'header': None
-                },
-            'df_combo_regions': {
-                'file': self.setup.file_combined_selected_regions,
-                'header': [0, 1]
-                },
-            'df_combo_results_by_unit': {
-                'file': (
-                    self.setup.file_combined_results_summary_by_admitting_unit
-                    ),
-                'header': [0, 1, 2]
-                },
-            'df_combo_results_by_lsoa': {
-                'file': self.setup.file_combined_results_summary_by_lsoa,
-                'header': [0, 1, 2]
-                },
-        }
-
-        for label, data_dict in combo_data.items():
-            # Make path to file:
-            path_to_file = os.join(dir_combo, data_dict['file'])
-            try:
-                # Specify header to import as a multiindex DataFrame.
-                df = pd.read_csv(path_to_file, header=data_dict['header'])
-                # Save to self:
-                setattr(self, label, df)
-            except FileNotFoundError:
-                # TO DO - proper error message
-                print(f'Cannot import {label} from {data_dict["file"]}')
-
-    def load_run_data_single(self, dir_data):
-        """
-        Load in combo data specific to these runs.
-        """
-        single_data = {
-            'df_units': {
-                'file': self.setup.file_selected_stroke_units,
-                'header': None
-                },
-            'df_lsoa': {
-                'file': self.setup.file_selected_lsoas,
-                'header': None
-                },
-            'df_regions': {
-                'file': self.setup.file_selected_regions,
-                'header': None
-                },
-            'df_results_by_unit': {
-                'file': (
-                    self.setup.file_results_summary_by_admitting_unit
-                    ),
-                'header': [0, 1]
-                },
-            'df_results_by_lsoa': {
-                'file': self.setup.file_results_summary_by_lsoa,
-                'header': [0, 1]
-                },
-        }
-
-        for label, data_dict in single_data.items():
+        for label, data_dict in dicts_data.items():
             # Make path to file:
             path_to_file = os.join(dir_data, data_dict['file'])
             try:
@@ -175,76 +160,181 @@ class Map(object):
                 # TO DO - proper error message
                 print(f'Cannot import {label} from {data_dict["file"]}')
 
-    def load_geometry(self):
+    def process_data(self):
+        self.load_geometry_lsoa()
+        self.load_geometry_regions()
+        self.load_geometry_stroke_units()
+
+    def load_geometry_lsoa(self):
         """
         Create GeoDataFrames of new geometry and existing DataFrames.
         """
         # Selected LSOA names, codes, coordinates.
         # ['LSOA11NM', 'LSOA11CD', 'LSOA11BNG_N', 'LSOA11BNG_E',
         #  'LSOA11LONG', 'LSOA11LAT']
-        df_lsoa 
-        # If it exists, merge in the results by LSOA:
-        # Then merge in the geometry (polygon):
+        df_lsoa = self.df_lsoa
+        # How many MultiIndex column levels are there?
+        n_levels = df_lsoa.columns.nlevels
+        
+        # If they exist, merge in the results by LSOA.
+        results_exist = False
+        try:
+            # If the file wasn't loaded, this gives AttributeError:
+            df_lsoa_results = self.df_lsoa_results
+            # How many MultiIndex column levels are there?
+            n_levels_results = df_lsoa_results.columns.nlevels
+            # Update condition:
+            results_exist = True
+        except AttributeError:
+            # Cannot merge in the results.
+            pass
 
+        if results_exist:
+            # If the column levels are different,
+            # add another column level to the shorter DataFrame.
+            if n_levels > n_levels_results:
+                df_lsoa_results = self.make_more_column_rows(
+                    df_lsoa_results,
+                    n_levels,
+                    top_row_str='any',
+                    mid_row_str=''
+                    )
+            elif n_levels < n_levels_results:
+                n_levels = n_levels_results
+                df_lsoa = self.make_more_column_rows(
+                    df_lsoa,
+                    n_levels,
+                    top_row_str='any',
+                    mid_row_str=''
+                    )
+            # Merge the DataFrames.
+            # Assume that the first column contains the same type
+            # of info in both DataFrames.
+            df_lsoa = pd.merge(
+                df_lsoa, df_lsoa_results,
+                left_on=df_lsoa.columns[0],
+                right_on=df_lsoa_results.columns[0],
+                how='left'
+            )
+            # TO DO - is there a better way to do this when the column names aren't known
+            # for setting an index? ------------------------------------------------------
+
+        # All LSOA shapes:
+        gdf_boundaries_lsoa = self.import_geojson('LSOA11NM')
+        n_levels_boundaries = gdf_boundaries_lsoa.columns.nlevels
+        # If the column levels are different,
+        # add another column level to the shorter DataFrame.
+        if n_levels > n_levels_boundaries:
+            gdf_boundaries_lsoa = self.make_more_column_rows(
+                gdf_boundaries_lsoa,
+                n_levels,
+                top_row_str='any',
+                mid_row_str=''
+                )
+        elif n_levels < n_levels_boundaries:
+            n_levels = n_levels_boundaries
+            df_lsoa = self.make_more_column_rows(
+                df_lsoa,
+                n_levels,
+                top_row_str='any',
+                mid_row_str=''
+                )
+
+        # Merge the geometry and LSOA data.
+        # Assume that the first column contains the same type
+        # of info in both DataFrames.
+        # Restrict to only the LSOAs selected.
+        gdf_boundaries_lsoa = pd.merge(
+            gdf_boundaries_lsoa, df_lsoa,
+            left_on=gdf_boundaries_lsoa.columns[0],
+            right_on=df_lsoa.columns[0],
+            how='right'
+        )
+        # TO DO - make column names consistent. -------------------------------------------
+
+        self.gdf_boundaries_lsoa = gdf_boundaries_lsoa
+
+    def load_geometry_regions(self):
+        """
+        Create GeoDataFrames of new geometry and existing DataFrames.
+        """
         # Selected regions names and usage.
         # ['{region type}', 'contains_selected_unit',
         #  'contains_selected_lsoa']
-        df_regions 
-        # Then merge in the geometry (polygon):
-        
+        df_regions = self.df_regions
+        n_levels = df_regions.columns.nlevels
+        # All region polygons:
+        gdf_boundaries_regions = self.import_geojson(self.region_type)
+        n_levels_boundaries = gdf_boundaries_regions.columns.nlevels
 
+        # If the column levels are different,
+        # add another column level to the shorter DataFrame.
+        if n_levels > n_levels_boundaries:
+            gdf_boundaries_regions = self.make_more_column_rows(
+                gdf_boundaries_regions,
+                n_levels,
+                top_row_str='any',
+                mid_row_str=''
+                )
+        elif n_levels < n_levels_boundaries:
+            n_levels = n_levels_boundaries
+            df_regions = self.make_more_column_rows(
+                df_regions,
+                n_levels,
+                top_row_str='any',
+                mid_row_str=''
+                )
+
+        # Then merge in the geometry (polygon):
+        # Restrict to selected regions:
+        # Merge in region types
+        # and limit the boundaries file to only selected regions.
+        gdf_boundaries_regions = pd.merge(
+            gdf_boundaries_regions,
+            df_regions,
+            left_on=self.region_type,
+            right_on=self.region_type,
+            how='right'
+            )
+        # TO DO - how to pick out that column?!
+
+        self.gdf_boundaries_regions = self.assign_colours_to_regions(
+            self.gdf_boundaries_regions, self.region_type)
+
+    def load_geometry_stroke_units(self):
+        """
+        Create GeoDataFrames of new geometry and existing DataFrames.
+        """
         # Selected stroke units names, coordinates, and services.
         df_units = self.df_units
         # Convert to geometry (point):
-        gdf_units = self.make_gdf_selected_stroke_unit_coords(df_units)
+        self.gdf_points_units = self.make_gdf_selected_stroke_unit_coords(df_units)
         # Convert to geometry (line):
-        gdf_transfer = self.make_gdf_lines_to_transfer_units(df_units)
-        
-    
-    def process_data(self):
-        # ----- Setup -----
+        self.gdf_lines_transfer = self.make_gdf_lines_to_transfer_units(df_units)
 
-        # Stroke unit setup
-        self.gdf_points_units = self.make_gdf_selected_stroke_unit_coords()
-        self.gdf_lines_transfer = self.make_gdf_lines_to_transfer_units()
-
-        # Background regions setup
-        self.gdf_boundaries_regions = self.import_geojson(self.region_type)
-        df_selected_regions = self.import_selected_regions()
-        # Merge in region types
-        # and limit the boundaries file to only selected regions.
-        self.gdf_boundaries_regions = self.copy_columns_from_dataframe(
-            self.gdf_boundaries_regions, df_selected_regions,
-            cols_to_copy=['contains_selected_unit', 'contains_selected_lsoa'],
-            left_col=self.region_type, right_col=self.region_type, how='right'
-            )
-
-        self.gdf_boundaries_regions = self.assign_colours_to_regions(self.gdf_boundaries_regions, self.region_type)
-
-        # LSOA setup
-        self.gdf_boundaries_lsoa = self.make_gdf_lsoa_boundaries()
-
-        # Outcomes setup
-        self.df_outcomes_by_lsoa = self.import_lsoa_outcomes()
-        # Merge into geographic data:
-        self.gdf_boundaries_lsoa = self.copy_columns_from_dataframe(
-            self.gdf_boundaries_lsoa, self.df_outcomes_by_lsoa,
-            cols_to_copy=[
-                'mRS shift_mean',
-                'utility_shift_mean',
-                'mRS 0-2_mean'
-                ],
-            cols_to_rename_dict={
-                'mRS shift_mean': 'mRS shift',
-                'utility_shift_mean': 'utility_shift',
-                'mRS 0-2_mean': 'mRS 0-2'
-            },
-            left_col='LSOA11NM', right_col='lsoa', how='left'
-            )
 
     # ##########################
     # ##### DATA WRANGLING #####
     # ##########################
+    def make_more_column_rows(
+            self, df, n_levels, top_row_str='any', mid_row_str=''):
+        """
+        Add extra column headers to match the other DataFrame.
+        """
+        cols = df.columns
+        new_headers = (
+            [np.array([top_row_str] * len(cols))] +
+            [np.array([mid_row_str] * len(cols))] * max(0, n_levels - 2) +
+            [np.array(cols)]
+            )
+        # Create new MultiIndex DataFrame from the original:
+        df = pd.DataFrame(
+            df.values,
+            index=df.index,
+            columns=new_headers
+        )
+        return df
+    
     def import_geojson(self, region_type: 'str'):
         """
         Import a geojson file as GeoDataFrame.
@@ -333,35 +423,6 @@ class Map(object):
         if crs != 'EPSG:27700':
             gdf_units = gdf_units.to_crs('EPSG:27700')
         return gdf_units
-
-    def import_lsoa_outcomes(self):
-        """
-        Import data on selected LSOAs.
-
-        Inputs
-        ------
-        setup - Setup() object. Contains attributes for paths to the
-                data directory and the geojson file names.
-
-        Returns
-        -------
-        df - pd.DataFrame. Names, codes, coordinates of selected LSOAs.
-            ['LSOA11NM', 'LSOA11CD', 'LSOA11BNG_N', 'LSOA11BNG_E',
-            'LSOA11LONG', 'LSOA11LAT']
-        """
-        dir_input = self.setup.dir_output
-        file_input = self.file_results_summary_by_lsoa
-        path_to_file = os.path.join(dir_input, file_input)
-        # Specify header to import as a multiindex DataFrame.
-        df = pd.read_csv(path_to_file, header=[0, 1])
-
-        first_column_name = df.columns[0][0]
-
-        # Convert to normal index:
-        df.columns = ["_".join(a) for a in df.columns.to_flat_index()]
-        # Rename the first column which didn't have multiindex levels:
-        df = df.rename(columns={df.columns[0]: first_column_name})
-        return df
 
     def keep_only_selected_units(self,
             df: 'pd.DataFrame', df_units: 'pd.DataFrame',
@@ -506,33 +567,6 @@ class Map(object):
         )
         # TO DO - implement CRS explicitly ---------------------------------------------
         return gdf
-
-    def make_gdf_lsoa_boundaries(self):
-        df_lsoa = self.import_selected_lsoa()
-
-        # Find LSOA boundaries:
-        gdf_boundaries_lsoa = self.import_geojson('LSOA11NM')
-        gdf_boundaries_lsoa = self.keep_only_selected_units(
-            gdf_boundaries_lsoa, df_lsoa,
-            left_col='LSOA11CD', right_col='LSOA11CD', how='right'
-            )
-
-        # Match LSOA with its chosen stroke unit.
-        df_lsoa_travel = self.import_lsoa_travel_data()
-        df_lsoa_travel = self.keep_only_selected_units(
-            df_lsoa_travel, df_lsoa,
-            left_col='LSOA11CD', right_col='LSOA11CD'
-            )
-        cols_to_keep = [
-            'LSOA11CD', 'postcode_nearest_IVT',
-            'postcode_nearest_MT', 'postcode_nearest_MSU'
-            ]
-        gdf_boundaries_lsoa = pd.merge(
-            gdf_boundaries_lsoa,
-            df_lsoa_travel[cols_to_keep],
-            left_on='LSOA11CD', right_on='LSOA11CD',
-        )
-        return gdf_boundaries_lsoa
 
     def assign_colours_to_regions(self, gdf, region_type):
 
