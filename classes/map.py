@@ -6,6 +6,23 @@ crs reference:
 + CRS:84     - same as EPSG:4326.
 + EPSG:27700 - British National Grid (BNG).
 """
+
+"""
+NOTES
+# Always load all data every time.
+# Only load it once.
+# Select different DataFrame columns for different plots.
+# Separate dataframes for geography?
+
+# for dir in output_dir_list:
+# load in these files,
+# combine into a single dataframe, 
+# if only one dir then no problem.
+# Same variables for everything, use dir name to mask data and plot different bits.
+
+# Don't save a column named "geometry" or the load won't work.
+# ... so then what?
+"""    
 import numpy as np
 import pandas as pd
 import geopandas
@@ -59,8 +76,8 @@ class Map(object):
             ▓▓▓▓▓▓▓▓▓░░░░░░░░█████▒▒▒▒▒  <-- Drip-and-ship   +------------+
             ▏   *        o     o   *  ▕                      | * MT unit  |
             ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒  <-- Mothership      | o IVT unit |
-                    -->▏ ▕<--                             +------------+
-                    Difference
+                       -->▏ ▕<--                             +------------+
+                       Difference
 
         The catchment area boundaries are halfway between adjacent units.
 
@@ -70,13 +87,120 @@ class Map(object):
         to the out-of-area IVT unit in the centre of the rectangle.
         """
         # TO DO
+
+        
         pass
 
-    def load_individual_data(self):
-        # TO DO
+    def load_run_data_combined(self):
+        """
+        Load in combo data specific to these runs.
+        """
+        dir_combo = self.setup.dir_output_all_runs
 
-        pass
+        combo_data = {
+            'df_combo_units': {
+                'file': self.setup.file_combined_selected_stroke_units,
+                'header': [0, 1]
+                },
+            'df_combo_lsoa': {
+                'file': self.setup.file_combined_selected_lsoas,
+                'header': None
+                },
+            'df_combo_regions': {
+                'file': self.setup.file_combined_selected_regions,
+                'header': [0, 1]
+                },
+            'df_combo_results_by_unit': {
+                'file': (
+                    self.setup.file_combined_results_summary_by_admitting_unit
+                    ),
+                'header': [0, 1, 2]
+                },
+            'df_combo_results_by_lsoa': {
+                'file': self.setup.file_combined_results_summary_by_lsoa,
+                'header': [0, 1, 2]
+                },
+        }
 
+        for label, data_dict in combo_data.items():
+            # Make path to file:
+            path_to_file = os.join(dir_combo, data_dict['file'])
+            try:
+                # Specify header to import as a multiindex DataFrame.
+                df = pd.read_csv(path_to_file, header=data_dict['header'])
+                # Save to self:
+                setattr(self, label, df)
+            except FileNotFoundError:
+                # TO DO - proper error message
+                print(f'Cannot import {label} from {data_dict["file"]}')
+
+    def load_run_data_single(self, dir_data):
+        """
+        Load in combo data specific to these runs.
+        """
+        single_data = {
+            'df_units': {
+                'file': self.setup.file_selected_stroke_units,
+                'header': None
+                },
+            'df_lsoa': {
+                'file': self.setup.file_selected_lsoas,
+                'header': None
+                },
+            'df_regions': {
+                'file': self.setup.file_selected_regions,
+                'header': None
+                },
+            'df_results_by_unit': {
+                'file': (
+                    self.setup.file_results_summary_by_admitting_unit
+                    ),
+                'header': [0, 1]
+                },
+            'df_results_by_lsoa': {
+                'file': self.setup.file_results_summary_by_lsoa,
+                'header': [0, 1]
+                },
+        }
+
+        for label, data_dict in single_data.items():
+            # Make path to file:
+            path_to_file = os.join(dir_data, data_dict['file'])
+            try:
+                # Specify header to import as a multiindex DataFrame.
+                df = pd.read_csv(path_to_file, header=data_dict['header'])
+                # Save to self:
+                setattr(self, label, df)
+            except FileNotFoundError:
+                # TO DO - proper error message
+                print(f'Cannot import {label} from {data_dict["file"]}')
+
+    def load_geometry(self):
+        """
+        Create GeoDataFrames of new geometry and existing DataFrames.
+        """
+        # Selected LSOA names, codes, coordinates.
+        # ['LSOA11NM', 'LSOA11CD', 'LSOA11BNG_N', 'LSOA11BNG_E',
+        #  'LSOA11LONG', 'LSOA11LAT']
+        df_lsoa 
+        # If it exists, merge in the results by LSOA:
+        # Then merge in the geometry (polygon):
+
+        # Selected regions names and usage.
+        # ['{region type}', 'contains_selected_unit',
+        #  'contains_selected_lsoa']
+        df_regions 
+        # Then merge in the geometry (polygon):
+        
+
+        # Selected stroke units names, coordinates, and services.
+        df_units = self.df_units
+        # Convert to geometry (point):
+        gdf_units = self.make_gdf_selected_stroke_unit_coords(df_units)
+        # Convert to geometry (line):
+        gdf_transfer = self.make_gdf_lines_to_transfer_units(df_units)
+        
+    
     def process_data(self):
         # ----- Setup -----
 
@@ -169,7 +293,7 @@ class Map(object):
             gdf_boundaries = gdf_boundaries.to_crs('EPSG:27700')
         return gdf_boundaries
 
-    def make_gdf_selected_stroke_unit_coords(self):
+    def make_gdf_selected_stroke_unit_coords(self, df_units):
         """
         Import GeoDataFrame of selected stroke unit data.
 
@@ -191,23 +315,15 @@ class Map(object):
         gdf_units - GeoDataFrame. One row per selected stroke unit in
                     the file. Columns include unit name and geometry.
         """
-        # Import selected stroke unit data:
-        dir_input = self.setup.dir_output
-        file_input = self.setup.file_selected_stroke_units
-        path_to_file = os.path.join(dir_input, file_input)
-        df_units = pd.read_csv(path_to_file)
 
         # Create coordinates:
         # Current setup means sometimes these columns have different names.
         # TO DO - fix that please! ---------------------------------------------------
         x = df_units['Easting']
         y = df_units['Northing']
-        xy = df_units[['Easting', 'Northing']]
         crs = 'EPSG:27700'
 
         df_units['geometry'] = geopandas.points_from_xy(x, y)
-        # Make a column of coordinates [x, y]:
-        df_units['coords'] = xy.values.tolist()
 
         # Convert to GeoDataFrame:
         gdf_units = geopandas.GeoDataFrame(
@@ -217,101 +333,6 @@ class Map(object):
         if crs != 'EPSG:27700':
             gdf_units = gdf_units.to_crs('EPSG:27700')
         return gdf_units
-
-    def make_series_regions_containing_selected_stroke_units(self,
-            gdf_units, region_type):
-        """# List of intended areas:"""
-        intended_regions = gdf_units[self.region_type].drop_duplicates().values
-        return intended_regions
-
-    def import_transfer_unit_data(self):
-        """
-        Import national transfer unit data.
-
-        The file read is the output from Units() after the
-        national stroke unit services have been updated.
-
-        Inputs
-        ------
-        setup - Setup() object. Contains attributes for paths to the
-                data directory and the geojson file names.
-
-        Returns
-        -------
-        df - pd.DataFrame. One row per national stroke unit in the file.
-            Columns are each stroke unit, its time to chosen MT unit,
-            and the name of its chosen MT unit:
-            ['from_postcode', 'time_nearest_MT', 'name_nearest_MT'].
-        """
-        dir_input = self.setup.dir_output
-        file_input = self.setup.file_national_transfer_units
-        path_to_file = os.path.join(dir_input, file_input)
-        df = pd.read_csv(path_to_file)
-        return df
-
-    def import_selected_lsoa(self):
-        """
-        Import data on selected LSOAs.
-
-        Inputs
-        ------
-        setup - Setup() object. Contains attributes for paths to the
-                data directory and the geojson file names.
-
-        Returns
-        -------
-        df - pd.DataFrame. Names, codes, coordinates of selected LSOAs.
-            ['LSOA11NM', 'LSOA11CD', 'LSOA11BNG_N', 'LSOA11BNG_E',
-            'LSOA11LONG', 'LSOA11LAT']
-        """
-        dir_input = self.setup.dir_output
-        file_input = self.setup.file_selected_lsoas
-        path_to_file = os.path.join(dir_input, file_input)
-        df = pd.read_csv(path_to_file)
-        return df
-
-    def import_selected_regions(self):
-        """
-        Import data on selected regions.
-
-        Inputs
-        ------
-        setup - Setup() object. Contains attributes for paths to the
-                data directory and the geojson file names.
-
-        Returns
-        -------
-        df - pd.DataFrame. Names and usage of selected regions.
-            ['{region type}', 'contains_selected_unit',
-            'contains_selected_lsoa']
-        """
-        dir_input = self.setup.dir_output
-        file_input = self.setup.file_selected_regions
-        path_to_file = os.path.join(dir_input, file_input)
-        df = pd.read_csv(path_to_file)
-        return df
-
-    def import_lsoa_travel_data(self):
-        """
-        Import each LSOA's chosen stroke units and travel times.
-
-        Inputs
-        ------
-        setup - Setup() object. Contains attributes for paths to the
-                data directory and the geojson file names.
-
-        Returns
-        -------
-        df - pd.DataFrame. Each LSOA's name, chosen IVT/MT/MSU units,
-            and travel times to those units. For X in IVT, MT, MSU:
-            ['LSOA11NM', 'LSOA11CD', 'time_nearest_X',
-            'postcode_nearest_X', 'ssnap_name_nearest_X']
-        """
-        dir_input = self.setup.dir_output
-        file_input = self.setup.file_national_lsoa_travel
-        path_to_file = os.path.join(dir_input, file_input)
-        df = pd.read_csv(path_to_file)
-        return df
 
     def import_lsoa_outcomes(self):
         """
@@ -329,7 +350,7 @@ class Map(object):
             'LSOA11LONG', 'LSOA11LAT']
         """
         dir_input = self.setup.dir_output
-        file_input = self.setup.file_results_summary_by_lsoa
+        file_input = self.file_results_summary_by_lsoa
         path_to_file = os.path.join(dir_input, file_input)
         # Specify header to import as a multiindex DataFrame.
         df = pd.read_csv(path_to_file, header=[0, 1])
@@ -428,30 +449,17 @@ class Map(object):
         df_left = df_left.rename(columns=cols_to_rename_dict)
         return df_left
 
-    def make_gdf_lines_to_transfer_units(self):
+    def make_gdf_lines_to_transfer_units(self, df_transfer):
         """
         WRITE ME
         """
-        gdf_units = self.make_gdf_selected_stroke_unit_coords()
+        # Make a column of coordinates [x, y]:
+        xy = df_transfer[['Easting', 'Northing']]
+        df_transfer['unit_coords'] = xy.values.tolist()
 
-        # Find MT transfer units for plotting lines between units:
-        df_transfer = self.import_transfer_unit_data()
-        df_transfer = self.keep_only_selected_units(
-            df_transfer, gdf_units,
-            left_col='from_postcode', right_col='Postcode')
-        # Copy over coordinates of each stroke unit...
-        df_transfer = self.copy_columns_from_dataframe(
-            df_transfer, gdf_units,
-            cols_to_copy=['coords'],
-            cols_to_rename_dict={'coords': 'unit_coords'},
-            left_col='from_postcode', right_col='Postcode', how='right'
-            )
-        # ... and its MT transfer unit:
-        df_transfer = self.copy_columns_from_dataframe(
-            df_transfer, gdf_units,
-            cols_to_copy=['coords'],
-            cols_to_rename_dict={'coords': 'transfer_coords'},
-            left_col='name_nearest_MT', right_col='Postcode', how='left')
+        xy = df_transfer[['Easting_mt', 'Northing_mt']]
+        df_transfer['transfer_coords'] = xy.values.tolist()
+
         gdf_transfer = self.create_lines_from_coords(
             df_transfer, ['unit_coords', 'transfer_coords'])
         return gdf_transfer
@@ -484,6 +492,9 @@ class Map(object):
         # Combine multiple columns of coordinates into a single column
         # with a list of lists of coordinates:
         df['line_coords'] = df[cols_with_coords].values.tolist()
+
+        # Drop any duplicates:
+        df = df.drop_duplicates('line_coords')
 
         # Convert line coords to LineString objects:
         df['line_geometry'] = [
@@ -703,616 +714,3 @@ class Map(object):
         # Record the number of neighbours:
         df['total_neighbours'] = df['neighbour_list'].str.len()
         return df
-
-    # ####################
-    # ##### PLOTTING #####
-    # ####################
-    # n.b. The following functions mostly just use plt.plot()
-    # but are given different wrappers anyway for the sake of
-    # applying some kwargs automatically.
-    def draw_boundaries_by_contents(self, ax, gdf_boundaries_regions):
-        # Regions containing neither LSOAs nor stroke units here:
-        mask = (
-            (gdf_boundaries_regions['contains_selected_unit'] == 0) &
-            (gdf_boundaries_regions['contains_selected_lsoa'] == 0)
-        )
-        gdf_boundaries_with_nowt = gdf_boundaries_regions.loc[mask]
-        if len(gdf_boundaries_with_nowt) > 0:
-            ax = self.draw_boundaries(
-                ax, gdf_boundaries_with_nowt,
-                facecolor='none', edgecolor='none'
-                )
-            # Make these invisible but draw them anyway to make sure the
-            # extent of the map is similar to other runs.
-        else:
-            pass
-
-        # Regions containing LSOAs but not stroke units:
-        mask = (
-            (gdf_boundaries_regions['contains_selected_unit'] == 0) &
-            (gdf_boundaries_regions['contains_selected_lsoa'] == 1)
-        )
-        gdf_boundaries_with_lsoa = gdf_boundaries_regions.loc[mask]
-        if len(gdf_boundaries_with_lsoa) > 0:
-            ax = self.draw_boundaries(
-                ax, gdf_boundaries_with_lsoa,
-                facecolor='none', edgecolor='silver', linewidth=0.5, linestyle='--'
-                )
-        else:
-            pass
-
-        # Regions containing stroke units:
-        mask = (gdf_boundaries_regions['contains_selected_unit'] == 1)
-        gdf_boundaries_with_units = gdf_boundaries_regions.loc[mask]
-        if len(gdf_boundaries_with_units) > 0:
-            ax = self.draw_boundaries(
-                ax, gdf_boundaries_with_units,
-                facecolor='none', edgecolor='k', linewidth=0.5
-                )
-        else:
-            pass
-        return ax
-
-    def draw_boundaries(self, ax, gdf, **kwargs):
-        """
-        Draw regions from a GeoDataFrame.
-
-        Inputs
-        ------
-        ax     - pyplot axis. Where to draw the regions.
-        gdf    - GeoDataFrame. Stores geometry to be plotted.
-        kwargs - dict. Keyword arguments to pass to plt.plot().
-
-        Returns
-        -------
-        ax - pyplot axis. Same as input but with regions drawn on.
-        """
-        # Draw the main map with colours (choropleth):
-        gdf.plot(
-            ax=ax,              # Set which axes to use for plot (only one here)
-            antialiased=False,  # Avoids artifact boundry lines
-            **kwargs
-            )
-        return ax
-
-    def scatter_ivt_units(self, ax, gdf):
-        """
-        Draw scatter markers for IVT stroke units.
-
-        Inputs
-        ------
-        ax     - pyplot axis. Where to draw the scatter markers.
-        gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
-
-        Returns
-        -------
-        ax - pyplot axis. Same as input but with scatter markers.
-        """
-        # Scatter marker for each hospital:
-        gdf.plot(
-            ax=ax,
-            edgecolor='k',
-            facecolor='w',
-            markersize=50,
-            marker='o',
-            zorder=2
-            )
-        return ax
-
-    def scatter_mt_units(self, ax, gdf):
-        """
-        Draw scatter markers for MT stroke units.
-
-        Inputs
-        ------
-        ax     - pyplot axis. Where to draw the scatter markers.
-        gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
-
-        Returns
-        -------
-        ax - pyplot axis. Same as input but with scatter markers.
-        """
-        # Scatter marker star for MT units:
-        mask = gdf['Use_MT'] == 1
-        MT = gdf[mask]
-        MT.plot(
-            ax=ax,
-            edgecolor='k',
-            facecolor='y',
-            markersize=300,
-            marker='*',
-            zorder=2
-            )
-        return ax
-
-    def scatter_msu_units(self, ax, gdf):
-        """
-        Draw scatter markers for MSU stroke units.
-
-        Inputs
-        ------
-        ax     - pyplot axis. Where to draw the scatter markers.
-        gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
-
-        Returns
-        -------
-        ax - pyplot axis. Same as input but with scatter markers.
-        """
-        # Scatter marker star for MT/MSU units:
-        mask = gdf['Use_MSU'] == 1
-        MSU = gdf[mask]
-        MSU.plot(
-            ax=ax,
-            edgecolor='k',
-            facecolor='orange',
-            markersize=50,
-            marker='s',
-            zorder=2
-            )
-        return ax
-
-    def plot_lines_between_units(self, ax, gdf):
-        """
-        Draw lines from stroke units to their MT transfer units.
-
-        Inputs
-        ------
-        ax     - pyplot axis. Where to draw the scatter markers.
-        gdf    - GeoDataFrame. Stores LineString objects that connect
-                each stroke unit to its MT transfer unit.
-
-        Returns
-        -------
-        ax - pyplot axis. Same as input but with scatter markers.
-        """
-        # Draw a line connecting each unit to its MT unit.
-        gdf.plot(
-            ax=ax,
-            edgecolor='k',
-            linestyle='-',
-            linewidth=3,
-            zorder=1  # Place it beneath the scatter markers.
-        )
-        return ax
-
-    def annotate_unit_labels(self, ax, gdf):
-        """
-        Draw label for each stroke unit.
-
-        Inputs
-        ------
-        ax     - pyplot axis. Where to draw the scatter markers.
-        gdf    - GeoDataFrame. Stores coordinates and name of each
-                stroke unit.
-
-        Returns
-        -------
-        ax - pyplot axis. Same as input but with scatter markers.
-        """
-        try:
-            mask = gdf['labels_mask']
-            gdf_labels = gdf[mask]
-        except KeyError:
-            # No mask column was given.
-            gdf_labels = gdf
-
-        # Define "z" to shorten following "for" line:
-        z = zip(
-            gdf_labels.geometry.x,
-            gdf_labels.geometry.y,
-            gdf_labels.Hospital_name
-            )
-        for x, y, label in z:
-            # Edit the label to put a space in the postcode when displayed:
-            label = f'{label[:-3]} {label[-3:]}'
-            # Place the label slightly offset from the
-            # exact hospital coordinates (x, y).
-            ax.annotate(
-                label, xy=(x, y), xytext=(8, 8),
-                textcoords="offset points",
-                bbox=dict(facecolor='w', edgecolor='k'),
-                fontsize=8
-                )
-        return ax
-
-    # ######################
-    # ##### MAIN PLOTS #####
-    # ######################
-    def plot_map_selected_units(self, region_type='ICB22NM'):
-        """
-        Make map of the selected units and the regions containing them.
-
-        Properties of this map:
-        + Each stroke unit is shown with a scatter marker.
-        + Non-MT units are shown as circles and MT units as stars.
-        + Lines are drawn between each non-MT unit and its chosen MT unit.
-        + Each stroke unit is labelled in an offset text box.
-        + The regions that contain the selected units are drawn in
-        the background with each region given a different colour from
-        its neighbours. These regions have an outline.
-
-        Required data files:
-        + geojson file of choice.
-        Must contain:
-        + coordinates of each feature / region boundary shape.
-        + selected stroke unit file
-        Output from Scenario.
-        Must contain:
-        + Postcode
-            - for unit name matching.
-            - for labels on the map.
-        + Use_MT
-            - for scatter marker choice.
-        + [region]
-            - region names to match the geojson file, for limiting the
-            plotted areas to just those containing the stroke units.
-        + Easting, Northing
-            - for placement of the scatter markers.
-        + national transfer unit file
-        Output from Units.
-        + from_postcode
-            - for unit name matching.
-        + name_nearest_MT
-            - for setting up lines drawn between each stroke unit and
-            its nearest MT unit.
-
-        Result is saved as the name given in self.setup.file_selected_units_map.
-        """
-        # ----- Plotting -----
-        # Plot the map.
-        # Make max dimensions XxY inch:
-        fig, ax = plt.subplots(figsize=(10, 10))
-
-        ax = self.draw_boundaries(
-            ax, self.gdf_boundaries_regions,
-            color=self.gdf_boundaries_regions['colour'],
-            edgecolor='k')
-        ax = self.scatter_ivt_units(ax, self.gdf_points_units)
-        ax = self.scatter_mt_units(ax, self.gdf_points_units)
-        ax = self.scatter_msu_units(ax, self.gdf_points_units)
-        ax = self.plot_lines_between_units(ax, self.gdf_lines_transfer)
-        ax = self.annotate_unit_labels(ax, self.gdf_points_units)
-
-        ax.set_axis_off()  # Turn off axis line and numbers
-
-        # Save output to output folder.
-        dir_output = self.setup.dir_output
-        file_name = self.setup.file_selected_units_map
-        path_to_file = os.path.join(dir_output, file_name)
-        plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
-        plt.close()
-
-    def plot_map_catchment(self, region_type='ICB22NM'):
-        """
-        Map the selected units, containing regions, and catchment areas.
-
-        Creates three maps.
-        + "Drip & Ship" - catchment area of each IVT unit.
-        + "Mothership" - catchment area of each MT unit, no IVT units.
-        + "MSU" - catchment area of each MSU unit.
-
-        Properties of all maps:
-        + Each stroke unit is shown with a scatter marker.
-        + Non-MT units are shown as circles and MT units as stars.
-        + Lines are drawn between each non-MT unit and its chosen MT unit.
-        + Each stroke unit is labelled in an offset text box.
-        + The regions that contain the selected units are drawn in
-        the background with each region given a different colour from
-        its neighbours. These regions have an outline.
-
-        Required data files:
-        + geojson file of choice.
-        Must contain:
-        + coordinates of each feature / region boundary shape.
-        + selected stroke unit file
-        Output from Scenario.
-        Must contain:
-        + Postcode
-            - for unit name matching.
-            - for labels on the map.
-        + Use_MT
-            - for scatter marker choice.
-        + [region]
-            - region names to match the geojson file, for limiting the
-            plotted areas to just those containing the stroke units.
-        + Easting, Northing
-            - for placement of the scatter markers.
-        + national transfer unit file
-        Output from Units.
-        + from_postcode
-            - for unit name matching.
-        + name_nearest_MT
-            - for setting up lines drawn between each stroke unit and
-            its nearest MT unit.
-        + geojson file of LSOA boundaries.
-        Must contain:
-        + coordinates of each LSOA boundary.
-        + selected LSOA name file.
-        Must contain:
-        + column LSOA11CD, one row per selected LSOA.
-        + national LSOA travel data.
-        Must contain:
-        + column LSOA11CD for name matching.
-        + postcode_nearest_IVT
-        + postcode_nearest_MT
-        + postcode_nearest_MSU
-
-        Result is saved as the name given in setup class:
-        + file_drip_ship_map
-        + file_mothership_map
-        + file_msu_map
-        """
-
-        # ----- Plotting setup -----
-        data_dicts = {
-            'Drip & Ship': {
-                'file': self.setup.file_drip_ship_map,
-                'boundary_kwargs': {
-                    'column': 'postcode_nearest_IVT',
-                    'cmap': 'Blues',
-                    'edgecolor': 'face'
-                    },
-                'scatter_ivt': True,
-                'scatter_mt': True,
-                'scatter_msu': False,
-                },
-            'Mothership': {
-                'file': self.setup.file_mothership_map,
-                'boundary_kwargs': {
-                    'column': 'postcode_nearest_MT',
-                    'cmap': 'Blues',
-                    'edgecolor': 'face'
-                    },
-                'scatter_ivt': False,
-                'scatter_mt': True,
-                'scatter_msu': False,
-                },
-            'MSU': {
-                'file': self.setup.file_msu_map,
-                'boundary_kwargs': {
-                    'column': 'postcode_nearest_MSU',
-                    'cmap': 'Blues',
-                    'edgecolor': 'face'
-                    },
-                'scatter_ivt': False,
-                'scatter_mt': False,
-                'scatter_msu': True,
-                },
-        }
-
-        # TO DO - only plot the one catchment type that matches the one used --------------------
-        # Which data dict should be used?
-        # destination_type = self.
-        # destination_str = # convert int to string
-        # data_dict = data_dicts[destination_type]
-
-        # ----- Actual plotting -----
-        for model_type, data_dict in zip(data_dicts.keys(), data_dicts.values()):
-            # Plot the map.
-            # Make max dimensions XxY inch:
-            fig, ax = plt.subplots(figsize=(10, 10))
-            ax.set_title(model_type)
-
-            # LSOAs:
-            ax = self.draw_boundaries(
-                ax, self.gdf_boundaries_lsoa,
-                **data_dict['boundary_kwargs']
-                )
-
-            # Background regions:
-            ax = self.draw_boundaries_by_contents(ax, self.gdf_boundaries_regions)
-
-            # Stroke unit markers.
-            # Keep track of which units to label in here:
-            self.gdf_points_units['labels_mask'] = False
-            if data_dict['scatter_ivt']:
-                ax = self.scatter_ivt_units(ax, self.gdf_points_units)
-                self.gdf_points_units.loc[
-                    self.gdf_points_units['Use_IVT'] == 1, 'labels_mask'] = True
-            if data_dict['scatter_mt']:
-                ax = self.scatter_mt_units(ax, self.gdf_points_units)
-                self.gdf_points_units.loc[
-                    self.gdf_points_units['Use_MT'] == 1, 'labels_mask'] = True
-            if data_dict['scatter_msu']:
-                ax = self.scatter_msu_units(ax, self.gdf_points_units)
-                self.gdf_points_units.loc[
-                    self.gdf_points_units['Use_MSU'] == 1, 'labels_mask'] = True
-
-            # Transfer unit lines.
-            # Check whether they need to be drawn:
-            draw_lines_bool = (
-                (data_dict['scatter_ivt'] & data_dict['scatter_mt']) |
-                (data_dict['scatter_ivt'] & data_dict['scatter_msu'])
-            )
-            if draw_lines_bool:
-                ax = self.plot_lines_between_units(ax, self.gdf_lines_transfer)
-
-            # Stroke unit labels.
-            ax = self.annotate_unit_labels(ax, self.gdf_points_units)
-
-            ax.set_axis_off()  # Turn off axis line and numbers
-
-            # Save output to output folder.
-            dir_output = self.setup.dir_output
-            file_name = data_dict['file']
-            path_to_file = os.path.join(dir_output, file_name)
-            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
-            plt.close()
-
-    def plot_map_outcome(self, region_type='ICB22NM', outcome='mrs_shift', destination_type=0):
-        """
-        Map the selected units, containing regions, and catchment areas.
-
-        UPDATE ME
-
-        Creates three maps.
-        + "Drip & Ship" - catchment area of each IVT unit.
-        + "Mothership" - catchment area of each MT unit, no IVT units.
-        + "MSU" - catchment area of each MSU unit.
-
-        Properties of all maps:
-        + Each stroke unit is shown with a scatter marker.
-        + Non-MT units are shown as circles and MT units as stars.
-        + Lines are drawn between each non-MT unit and its chosen MT unit.
-        + Each stroke unit is labelled in an offset text box.
-        + The regions that contain the selected units are drawn in
-        the background with each region given a different colour from
-        its neighbours. These regions have an outline.
-
-        Required data files:
-        + geojson file of choice.
-        Must contain:
-        + coordinates of each feature / region boundary shape.
-        + selected stroke unit file
-        Output from Scenario.
-        Must contain:
-        + Postcode
-            - for unit name matching.
-            - for labels on the map.
-        + Use_MT
-            - for scatter marker choice.
-        + [region]
-            - region names to match the geojson file, for limiting the
-            plotted areas to just those containing the stroke units.
-        + Easting, Northing
-            - for placement of the scatter markers.
-        + national transfer unit file
-        Output from Units.
-        + from_postcode
-            - for unit name matching.
-        + name_nearest_MT
-            - for setting up lines drawn between each stroke unit and
-            its nearest MT unit.
-        + geojson file of LSOA boundaries.
-        Must contain:
-        + coordinates of each LSOA boundary.
-        + selected LSOA name file.
-        Must contain:
-        + column LSOA11CD, one row per selected LSOA.
-        + national LSOA travel data.
-        Must contain:
-        + column LSOA11CD for name matching.
-        + postcode_nearest_IVT
-        + postcode_nearest_MT
-        + postcode_nearest_MSU
-
-        Result is saved as the name given in setup class:
-        + file_drip_ship_map
-        + file_mothership_map
-        + file_msu_map
-        """
-        # ----- Plotting setup -----
-
-        data_dicts = {
-            'mrs_shift': {
-                'title': 'mRS shift',
-                'file': self.setup.file_outcome_map_mrs_shift,
-                'boundary_kwargs': {
-                    'column': 'mRS shift',
-                    'cmap': 'plasma',
-                    'edgecolor': 'face',
-                    # Adjust size of colourmap key, and add label
-                    'legend_kwds': {
-                        'shrink': 0.5,
-                        'label': 'mRS shift'
-                        },
-                    # Set to display legend
-                    'legend': True
-                    }
-                },
-            'utility_shift': {
-                'title': 'Utility shift',
-                'file': self.setup.file_outcome_map_utility_shift,
-                'boundary_kwargs': {
-                    'column': 'utility_shift',
-                    'cmap': 'plasma',
-                    'edgecolor': 'face',
-                    # Adjust size of colourmap key, and add label
-                    'legend_kwds': {
-                        'shrink': 0.5,
-                        'label': 'Utility shift'
-                        },
-                    # Set to display legend
-                    'legend': True,
-                    },
-                },
-            'mrs_02': {
-                'title': 'mRS 0-2',
-                'file': self.setup.file_outcome_map_mrs_02,
-                'boundary_kwargs': {
-                    'column': 'mRS 0-2',
-                    'cmap': 'plasma',
-                    'edgecolor': 'face',
-                    # Adjust size of colourmap key, and add label
-                    'legend_kwds': {
-                        'shrink': 0.5,
-                        'label': 'mRS 0-2'
-                        },
-                    # Set to display legend
-                    'legend': True,
-                    }
-                },
-        }
-
-        if destination_type == 0:
-            unit_dict = {
-                'scatter_ivt': True,
-                'scatter_mt': True,
-                'scatter_msu': False,
-            }
-        elif destination_type == 1:
-            unit_dict = {
-                'scatter_ivt': False,
-                'scatter_mt': True,
-                'scatter_msu': False,
-                }
-        else:
-            unit_dict = {
-                'scatter_ivt': False,
-                'scatter_mt': False,
-                'scatter_msu': True,
-                }
-
-        # ----- Actual plotting -----
-        for outcome, data_dict in zip(data_dicts.keys(), data_dicts.values()):
-            # Plot the map.
-            # Make max dimensions XxY inch:
-            fig, ax = plt.subplots(figsize=(10, 10))
-            ax.set_title(data_dict['title'])
-
-            # LSOAs:
-            ax = self.draw_boundaries(
-                ax, self.gdf_boundaries_lsoa,
-                **data_dict['boundary_kwargs']
-                )
-
-            # Background regions:
-            ax = self.draw_boundaries_by_contents(ax, self.gdf_boundaries_regions)
-
-            # Stroke unit markers.
-            # Keep track of which units to label in here:
-            self.gdf_points_units['labels_mask'] = False
-            if unit_dict['scatter_ivt']:
-                ax = self.scatter_ivt_units(ax, self.gdf_points_units)
-                self.gdf_points_units.loc[
-                    self.gdf_points_units['Use_IVT'] == 1, 'labels_mask'] = True
-            if unit_dict['scatter_mt']:
-                ax = self.scatter_mt_units(ax, self.gdf_points_units)
-                self.gdf_points_units.loc[
-                    self.gdf_points_units['Use_MT'] == 1, 'labels_mask'] = True
-            if unit_dict['scatter_msu']:
-                ax = self.scatter_msu_units(ax, self.gdf_points_units)
-                self.gdf_points_units.loc[
-                    self.gdf_points_units['Use_MSU'] == 1, 'labels_mask'] = True
-
-            # # Stroke unit labels.
-            # ax = annotate_unit_labels(ax, gdf_points_units)
-
-            ax.set_axis_off()  # Turn off axis line and numbers
-
-            # Save output to output folder.
-            dir_output = self.setup.dir_output
-            file_name = data_dict['file']
-            path_to_file = os.path.join(dir_output, file_name)
-            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
-            plt.close()
