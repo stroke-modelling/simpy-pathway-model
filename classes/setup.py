@@ -62,6 +62,8 @@ class Setup(object):
         self.file_results_summary_by_lsoa = (
             'results_summary_by_lsoa.csv')
         # Combined:
+        self.file_combined_selected_stroke_units = (
+            'combined_selected_stroke_units.csv')
         self.file_combined_selected_lsoas = 'combined_selected_lsoas.csv'
         self.file_combined_selected_regions = 'combined_selected_regions.csv'
         self.file_combined_results_summary_by_admitting_unit = (
@@ -86,6 +88,9 @@ class Setup(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
+        # TO DO - move the following to the create_output_dir for a subdir
+        # as currently it's annoying when loading in a setup from yml,
+        # a new top dir gets created unnecessarily --------------------------------
         # Check if this top output directory exists,
         # rename if necessary, then create the dictionary:
         self.dir_output_all_runs = self.create_output_dir(

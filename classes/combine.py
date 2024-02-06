@@ -39,6 +39,7 @@ class Combine(object):
             self.setup = Setup()
 
     def combine_files(self):
+        self.combine_selected_units()
         self.combine_selected_lsoa()
         self.combine_selected_regions()
         self.combine_results_summary_by_lsoa()
@@ -47,6 +48,52 @@ class Combine(object):
     # ##########################
     # ##### SPECIFIC FILES #####
     # ##########################
+
+    def combine_selected_units(self, save_to_file=True):
+        """
+        Combine selected units.
+
+        Each file input:
+        +------+-----+---------------+-----------------+
+        | Unit | ... | transfer_unit | transfer_coords |
+        +------+-----+---------------+-----------------+
+        |    1 | ... |             2 |  -x.xx, yy.yy   |
+        |    2 | ... |             2 |  -x.xx, yy.yy   |
+        |    3 | ... |             2 |  -x.xx, yy.yy   |
+        |  ... | ... |           ... |       ...       |
+        |    n | ... |             4 |  -x.xx, yy.yy   |
+        +------+-----+---------------+-----------------+
+
+        Resulting DataFrame:
+                     +---------------------+---------------------+
+                     |     scenario_1      |     scenario_2      |
+        +------+-----+-----+---------------+-----+---------------+
+        | Unit | ... | Use | transfer unit | Use | transfer unit |
+        +------+-----+-----+---------------+-----+---------------+
+        |    1 | ... |   1 |             2 |   0 |               |
+        |    2 | ... |   1 |             2 |   0 |               |
+        |    3 | ... |   1 |             2 |   1 |             4 |
+        |  ... | ... | ... |           ... | ... |           ... |
+        |    n | ... |   0 |               |   1 |             4 |
+        +------+-----+-----+---------------+-----+---------------+
+        """
+        file_to_merge = self.setup.file_selected_stroke_units
+
+        try:
+            df = self._hstack_multiple_dataframes(file_to_merge)
+        except FileNotFoundError:
+            # TO DO - set up proper error message ----------------------------------
+            pass
+
+        # Columns shared between all scenarios:
+        # Postcode	Hospital_name	SSNAP name	ICB22NM	Easting	Northing	long	lat
+        # TO DO - change these to "any" Index. --------------------------------------------
+
+        if save_to_file:
+            output_dir = self.setup.dir_output_all_runs
+            output_filename = self.setup.file_combined_selected_stroke_units
+            path_to_file = os.path.join(output_dir, output_filename)
+            df.to_csv(path_to_file, index=False)
 
     def combine_selected_lsoa(self, save_to_file=True):
         """
@@ -279,8 +326,13 @@ class Combine(object):
                             data_diff = data0[col] - data1[col]
                         elif col in ['std']:
                             # Propagate errors for std.
-                            data_diff = np.sqrt(np.nansum(
-                                [data0[col]**2.0,  data1[col]**2.0]))
+                            # Convert pandas NA to numpy NaN.
+                            d0 = data0[col].copy().pow(2.0)
+                            d1 = data1[col].copy().pow(2.0)
+                            d2 = d0.add(d1, fill_value=0)
+                            data_diff = d2.pow(0.5)
+                            # data_diff = np.sqrt(np.nansum(
+                            #     [data0[col]**2.0,  data1[col]**2.0]))
                         else:
                             # Don't know what to do with the rest yet. ----------------------
                             # TO DO
@@ -290,6 +342,7 @@ class Combine(object):
                     # No more nested column index levels.
                     data_diff = data0 - data1
                     df[diff_col_name, c] = data_diff
+                    # TO DO - what about std herE? ---------------------------------
         return df
 
     def _hstack_multiple_dataframes(self, file_to_merge, csv_header=None):
