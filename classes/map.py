@@ -263,26 +263,30 @@ class Map(object):
         #  'contains_selected_lsoa']
         df_regions = self.df_regions
         n_levels = df_regions.columns.nlevels
+        match_col_regions = self.region_type
         # All region polygons:
         gdf_boundaries_regions = self.import_geojson(self.region_type)
         n_levels_boundaries = gdf_boundaries_regions.columns.nlevels
+        match_col_boundaries = self.region_type
 
         # If the column levels are different,
         # add another column level to the shorter DataFrame.
         if n_levels > n_levels_boundaries:
-            gdf_boundaries_regions = self.make_more_column_rows(
+            gdf_boundaries_regions, match_col_boundaries = self.make_more_column_rows(
                 gdf_boundaries_regions,
                 n_levels,
                 top_row_str='any',
-                mid_row_str=''
+                mid_row_str='',
+                ref_col=match_col_boundaries
                 )
         elif n_levels < n_levels_boundaries:
             n_levels = n_levels_boundaries
-            df_regions = self.make_more_column_rows(
+            df_regions, match_col_regions = self.make_more_column_rows(
                 df_regions,
                 n_levels,
                 top_row_str='any',
-                mid_row_str=''
+                mid_row_str='',
+                ref_col=match_col_regions
                 )
 
         # Then merge in the geometry (polygon):
@@ -292,11 +296,13 @@ class Map(object):
         gdf_boundaries_regions = pd.merge(
             gdf_boundaries_regions,
             df_regions,
-            left_on=self.region_type,
-            right_on=self.region_type,
+            left_on=match_col_boundaries,
+            right_on=match_col_regions,
             how='right'
             )
         # TO DO - how to pick out that column?!
+        # IndexSlice? df.loc[:, pd.IndexSlice[:, :, bottom_row]]
+        # Know column name before adding extra rows, so find it after.
 
         self.gdf_boundaries_regions = self.assign_colours_to_regions(
             self.gdf_boundaries_regions, self.region_type)
@@ -317,14 +323,15 @@ class Map(object):
     # ##### DATA WRANGLING #####
     # ##########################
     def make_more_column_rows(
-            self, df, n_levels, top_row_str='any', mid_row_str=''):
+            self, df, n_levels, top_row_str='any', mid_row_str='', ref_col=None):
         """
         Add extra column headers to match the other DataFrame.
         """
         cols = df.columns
+        n_mid = max(0, n_levels - 2)
         new_headers = (
             [np.array([top_row_str] * len(cols))] +
-            [np.array([mid_row_str] * len(cols))] * max(0, n_levels - 2) +
+            [np.array([mid_row_str] * len(cols))] * n_mid +
             [np.array(cols)]
             )
         # Create new MultiIndex DataFrame from the original:
@@ -333,7 +340,16 @@ class Map(object):
             index=df.index,
             columns=new_headers
         )
-        return df
+        if ref_col is None:
+            return df
+        else:
+            # New name of a reference column:
+            if isinstance(ref_col, tuple):
+                n_mid = max(0, n_mid + 1 - len(ref_col))
+                ref_col = (top_row_str, *[mid_row_str]*n_mid, *ref_col)
+            else:
+                ref_col = (top_row_str, *[mid_row_str]*n_mid, ref_col)
+            return df, ref_col
     
     def import_geojson(self, region_type: 'str'):
         """
