@@ -264,8 +264,8 @@ class Map(object):
                 df_lsoa = self.make_more_column_rows(
                     df_lsoa,
                     n_levels,
-                    top_row_str='any',
-                    mid_row_str=''
+                    mid_row_str='',
+                    bottom_row_str=''
                     )
                 print(df_lsoa)
                 # Find the renamed column to match by:
@@ -405,7 +405,8 @@ class Map(object):
     # ##### HELPER FUNCTIONS #####
     # ############################
     def make_more_column_rows(
-            self, df, n_levels, top_row_str='any', mid_row_str=''):
+            self, df, n_levels,
+            top_row_str=None, mid_row_str='', bottom_row_str=None):
         """
         Add extra column headers to match the other DataFrame.
         """

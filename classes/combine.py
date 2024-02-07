@@ -55,7 +55,7 @@ class Combine(object):
 
         Each file input:
         +------+-----+---------------+-----------------+
-        | Unit | ... | transfer_unit | transfer_coords |
+        | Unit | ... | transfer_unit | transfer_coords |    property
         +------+-----+---------------+-----------------+
         |    1 | ... |             2 |  -x.xx, yy.yy   |
         |    2 | ... |             2 |  -x.xx, yy.yy   |
@@ -66,9 +66,9 @@ class Combine(object):
 
         Resulting DataFrame:
                      +---------------------+---------------------+
-                     |     scenario_1      |     scenario_2      |
+                     |     scenario_1      |     scenario_2      |    scenario
         +------+-----+-----+---------------+-----+---------------+
-        | Unit | ... | Use | transfer unit | Use | transfer unit |
+        | Unit | ... | Use | transfer unit | Use | transfer unit |    property
         +------+-----+-----+---------------+-----+---------------+
         |    1 | ... |   1 |             2 |   0 |               |
         |    2 | ... |   1 |             2 |   0 |               |
@@ -99,16 +99,14 @@ class Combine(object):
             # TO DO - set up proper error message ----------------------------------
             pass
 
-        # Columns shared between all scenarios:
-        # Postcode	Hospital_name	SSNAP name	ICB22NM	Easting	Northing	long	lat
-        # TO DO - change these to "any" Index. --------------------------------------------
-        # then geometry later can also sit in "any" index.
+        # Rename the MultiIndex column names:
+        df.columns = df.columns.set_names(['scenario', 'property'])
 
         if save_to_file:
             output_dir = self.setup.dir_output_all_runs
             output_filename = self.setup.file_combined_selected_stroke_units
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file, index=False)
+            df.to_csv(path_to_file)#, index=False)
 
     def combine_selected_lsoa(self, save_to_file=True):
         """
@@ -116,7 +114,7 @@ class Combine(object):
 
         Each file input:
         +------+-----+
-        | LSOA | ... |
+        | LSOA | ... |    property
         +------+-----+
         |    1 | ... |
         |    2 | ... |
@@ -127,9 +125,9 @@ class Combine(object):
 
         Resulting DataFrame:
                +--------------------+--------------------+
-               |     scenario_1     |     scenario_2     |
+               |     scenario_1     |     scenario_2     |    scenario
         +------+-----+--------------+-----+--------------+
-        | LSOA | Use | nearest_unit | Use | nearest_unit |
+        | LSOA | Use | nearest_unit | Use | nearest_unit |    property
         +------+-----+--------------+-----+--------------+
         |    1 |   1 |            2 |   1 |            2 |
         |    2 |   1 |            2 |   0 |              |
@@ -147,11 +145,14 @@ class Combine(object):
             # TO DO - set up proper error message ----------------------------------
             pass
 
+        # Rename the MultiIndex column names:
+        df.columns = df.columns.set_names(['scenario', 'property'])
+
         if save_to_file:
             output_dir = self.setup.dir_output_all_runs
             output_filename = self.setup.file_combined_selected_lsoas
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file, index=False)
+            df.to_csv(path_to_file)#, index=False)
 
     def combine_selected_regions(self, save_to_file=True):
         """
@@ -159,7 +160,7 @@ class Combine(object):
 
         Each file input:
         +--------+-----------+----------+
-        | Region | has_units | has_lsoa |
+        | Region | has_units | has_lsoa |    property
         +--------+-----------+----------+
         |      1 |      True |     True |
         |      2 |      True |     True |
@@ -170,9 +171,9 @@ class Combine(object):
 
         Resulting DataFrame:
                  +----------------------+----------------------+
-                 |      scenario_1      |      scenario_2      |
+                 |      scenario_1      |      scenario_2      |    scenario
         +--------+-----------+----------+-----------+----------+
-        | Region | has_units | has_lsoa | has_units | has_lsoa |
+        | Region | has_units | has_lsoa | has_units | has_lsoa |    property
         +--------+-----------+----------+-----------+----------+
         |      1 |      True |     True |      True |     True |
         |      2 |      True |     True |     False |     True |
@@ -192,11 +193,14 @@ class Combine(object):
             # TO DO - set up proper error message ----------------------------------
             pass
 
+        # Rename the MultiIndex column names:
+        df.columns = df.columns.set_names(['scenario', 'property'])
+
         if save_to_file:
             output_dir = self.setup.dir_output_all_runs
             output_filename = self.setup.file_combined_selected_regions
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file, index=False)
+            df.to_csv(path_to_file)#, index=False)
 
     def combine_results_summary_by_lsoa(self, save_to_file=True):
         """
@@ -204,9 +208,9 @@ class Combine(object):
 
         Each file input:
         +------+-------------+-------------+
-        |      |   time_1    |    shift_1  |
+        |      |   time_1    |    shift_1  |    property
         +------+------+------+------+------+
-        | LSOA | mean |  std | mean |  std |
+        | LSOA | mean |  std | mean |  std |    subtype
         +------+------+------+------+------+
         |    1 | x.xx | x.xx | y.yy | y.yy |
         |    2 | x.xx | x.xx | y.yy | y.yy |
@@ -217,11 +221,11 @@ class Combine(object):
 
         Resulting DataFrame:
         +------+------+------+------+------+------+------+
-        |      |  scenario_1 |  scenario_2 |    diff     |
+        |      |  scenario_1 |  scenario_2 |    diff     |    scenario
         +------+------+------+------+------+------+------+
-        |      |    shift    |    shift    |    shift    |
+        |      |    shift    |    shift    |    shift    |    property
         +------+------+------+------+------+------+------+
-        | LSOA | mean |  std | mean |  std | mean |  std |
+        | LSOA | mean |  std | mean |  std | mean |  std |    subtype
         +------+------+------+------+------+------+------+
         |    1 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
         |    2 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
@@ -249,11 +253,14 @@ class Combine(object):
         # Create new columns of this diff that:
         df = self._diff_data(data, cols_to_keep)
 
+        # Rename the MultiIndex column names:
+        df.columns = df.columns.set_names(['scenario', 'property', 'subtype'])
+
         if save_to_file:
             output_dir = self.setup.dir_output_all_runs
             output_filename = self.setup.file_combined_results_summary_by_lsoa
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file, index=False)
+            df.to_csv(path_to_file)#, index=False)
 
     def combine_results_summary_by_admitting_unit(self, save_to_file=True):
         """
@@ -261,9 +268,9 @@ class Combine(object):
 
         Each file input:
         +------+-------------+-------------+
-        |      |   time_1    |    shift_1  |
+        |      |   time_1    |    shift_1  |    property
         +------+------+------+------+------+
-        | Unit | mean |  std | mean |  std |
+        | Unit | mean |  std | mean |  std |    subtype
         +------+------+------+------+------+
         |    1 | x.xx | x.xx | y.yy | y.yy |
         |    2 | x.xx | x.xx | y.yy | y.yy |
@@ -274,11 +281,11 @@ class Combine(object):
 
         Resulting DataFrame:
         +------+------+------+------+------+------+------+
-        |  any |  scenario_1 |  scenario_2 |    diff     |
+        |  any |  scenario_1 |  scenario_2 |    diff     |    scenario
         +------+------+------+------+------+------+------+
-        |      |    shift    |    shift    |    shift    |
+        |      |    shift    |    shift    |    shift    |    property
         +------+------+------+------+------+------+------+
-        | Unit | mean |  std | mean |  std | mean |  std |
+        | Unit | mean |  std | mean |  std | mean |  std |    subtype
         +------+------+------+------+------+------+------+
         |    1 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
         |    2 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
@@ -306,12 +313,15 @@ class Combine(object):
         # Create new columns of this diff that:
         df = self._diff_data(data, cols_to_keep)
 
+        # Rename the MultiIndex column names:
+        df.columns = df.columns.set_names(['scenario', 'property', 'subtype'])
+
         if save_to_file:
             output_dir = self.setup.dir_output_all_runs
             output_filename = (
                 self.setup.file_combined_results_summary_by_admitting_unit)
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file, index=False)
+            df.to_csv(path_to_file)#, index=False)
 
     # ############################
     # ##### HELPER FUNCTIONS #####
