@@ -80,7 +80,21 @@ class Combine(object):
         file_to_merge = self.setup.file_selected_stroke_units
 
         try:
-            df = self._hstack_multiple_dataframes(file_to_merge)
+            df = self._hstack_multiple_dataframes(
+                file_to_merge,
+                cols_for_scenario=[
+                    'Use_IVT',
+                    'Use_MT',
+                    'Use_MSU',
+                    'Use',
+                    # 'from_postcode',
+                    'name_nearest_MT',
+                    'Postcode_mt',
+                    'Easting_mt',
+                    'Northing_mt',
+                    'long_mt',
+                    'lat_mt'
+                ])
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
             pass
@@ -112,20 +126,23 @@ class Combine(object):
         +------+-----+
 
         Resulting DataFrame:
-        +------+-----+------------+------------+
-        | LSOA | ... | scenario_1 | scenario_2 |
-        +------+-----+------------+------------+
-        |    1 | ... |       True |      False |
-        |    2 | ... |       True |      False |
-        |    3 | ... |       True |       True |
-        |  ... | ... |        ... |        ... |
-        |    n | ... |      False |       True |
-        +------+-----+------------+------------+
+               +--------------------+--------------------+
+               |     scenario_1     |     scenario_2     |
+        +------+-----+--------------+-----+--------------+
+        | LSOA | Use | nearest_unit | Use | nearest_unit |
+        +------+-----+--------------+-----+--------------+
+        |    1 |   1 |            2 |   1 |            2 |
+        |    2 |   1 |            2 |   0 |              |
+        |    3 |   0 |            2 |   1 |            2 |
+        |  ... | ... |          ... | ... |          ... |
+        |    n |   0 |            9 |   0 |              |
+        +------+-----+--------------+-----+--------------+
         """
         file_to_merge = self.setup.file_selected_lsoas
 
         try:
-            df = self._merge_multiple_dataframes(file_to_merge)
+            df = self._hstack_multiple_dataframes(
+                file_to_merge, add_use_column=True, cols_for_scenario=['postcode_nearest'])
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
             pass
@@ -167,7 +184,10 @@ class Combine(object):
         file_to_merge = self.setup.file_selected_regions
 
         try:
-            df = self._hstack_multiple_dataframes(file_to_merge)
+            df = self._hstack_multiple_dataframes(
+                file_to_merge,
+                cols_for_scenario=[
+                    'contains_selected_unit', 'contains_selected_lsoa'])
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
             pass
@@ -346,7 +366,9 @@ class Combine(object):
                     # TO DO - what about std herE? ---------------------------------
         return df
 
-    def _hstack_multiple_dataframes(self, file_to_merge, csv_header=None):
+    def _hstack_multiple_dataframes(
+            self, file_to_merge, csv_header=None, add_use_column=False,
+            cols_for_scenario=[]):
         """
         # Combine multiple DataFrames from different scenarios into here.
         # Stacks all DataFrames one on top of the other with no other
@@ -400,6 +422,34 @@ class Combine(object):
             # Set the index:
             df = df.set_index(df.columns[0])
 
+            split_for_any = True if ((len(cols_for_scenario) > 0) & (len(cols_for_scenario) != (len(df.columns) - 1))) else False
+            if split_for_any:
+                # Find the names of these columns in this df.
+                # (so can specify one level of multiindex only).
+
+                scenario_cols = [self.find_multiindex_col(
+                    df.columns, col) for col in cols_for_scenario]
+
+                if d == 0:
+                    # Remove these columns from this scenario.
+                    df_any = df.copy().drop(cols_for_scenario, axis='columns')
+                    dfs_to_merge['any'] = df_any
+                else:
+                    pass
+
+                # Remove columns for "any" scenario:
+                df = df[scenario_cols]
+
+            if add_use_column:
+                shared_col_is_list = ((type(shared_col_name) == list) | 
+                                      (type(shared_col_name) == tuple))
+                # TO DO ^ make this more generic.
+                if shared_col_is_list:
+                    use_col = tuple([b for b in shared_col_name[:-1]] + ['Use'])
+                else:
+                    use_col = 'Use'
+                df[use_col] = 1
+
             dfs_to_merge[scenario_name] = df
 
         # Can't concat without index columns.
@@ -409,18 +459,23 @@ class Combine(object):
             keys=dfs_to_merge.keys()  # Names for extra index row
             )
 
+        # data = data.reset_index()
+        try:
+            # Move 'any' index to the far left:
+            cols = list(np.unique(data.columns.get_level_values(0).to_list()))
+            cols.remove('any')
+            cols = ['any'] + cols
+            data = data[cols]
+        except ValueError:
+            # No 'any' columns yet.
+            pass
+        # TO DO - more stuff to "any" -----------------------------------------------------
         # Copy index information to its own column with 'any' scenario:
         if isinstance(shared_col_name, str):
             any_col = ('any', shared_col_name)
         else:
             any_col = ('any', *shared_col_name)
-        data[any_col] = data.index
-        # data = data.reset_index()
-        # Move 'any' index to the far left:
-        cols = list(np.unique(data.columns.get_level_values(0).to_list()))
-        cols.remove('any')
-        cols = ['any'] + cols
-        data = data[cols]
+        data.insert(0, any_col, data.index)
 
         # Sort rows by contents of 'any' column:
         data = data.sort_values(any_col)
@@ -475,3 +530,26 @@ class Combine(object):
         # Sort rows:
         data = data.sort_values(merge_col)
         return data
+
+
+    def find_multiindex_col(self, columns, target):
+        """
+        MOVE ME - currently copied directly from Map()
+        """
+        if (type(columns[0]) == list) | (type(columns[0]) == tuple):
+            # Convert all columns tuples into an ndarray:
+            all_cols = np.array([[n for n in c] for c in columns])
+        else:
+            # No MultiIndex.
+            all_cols = columns.values
+        # Find where the grid matches the target string:
+        inds = np.where(all_cols == target)
+        # If more than one column, select the first.
+        ind = inds[0][0]
+        # Components of column containing the target:
+        bits = all_cols[ind]
+        bits_is_list = (type(columns[0]) == list) | (type(columns[0]) == tuple)
+        # TO DO - make this generic arraylike ^
+        # Convert to tuple for MultiIndex or str for single level.
+        final_col = list((tuple(bits), )) if bits_is_list else bits
+        return final_col
