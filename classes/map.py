@@ -104,7 +104,7 @@ class Map(object):
                     },
                 'df_lsoa': {
                     'file': self.setup.file_combined_selected_lsoas,
-                    'header': [0]
+                    'header': [0, 1]
                     },
                 'df_regions': {
                     'file': self.setup.file_combined_selected_regions,
@@ -259,12 +259,15 @@ class Map(object):
                     df_lsoa_results.columns, 'lsoa')
             elif n_levels < n_levels_results:
                 n_levels = n_levels_results
+                
+                print(df_lsoa)
                 df_lsoa = self.make_more_column_rows(
                     df_lsoa,
                     n_levels,
                     top_row_str='any',
                     mid_row_str=''
                     )
+                print(df_lsoa)
                 # Find the renamed column to match by:
                 match_col_lsoa = self.find_multiindex_col(
                     df_lsoa.columns, 'LSOA11NM')
@@ -277,8 +280,9 @@ class Map(object):
                 right_on=match_col_results,
                 how='left'
             )
-            # TO DO - is there a better way to do this when the column names aren't known
-            # for setting an index? ------------------------------------------------------
+            print('\nMerged results')
+            for c in df_lsoa.columns:
+                print(c)
 
         # All LSOA shapes:
         gdf_boundaries_lsoa = self.import_geojson('LSOA11NM')
@@ -319,6 +323,9 @@ class Map(object):
             right_on=match_col_lsoa,
             how='right'
         )
+        print('\nMerged geometry')
+        for c in gdf_boundaries_lsoa.columns:
+            print(c)
         # TO DO - make column names consistent. -------------------------------------------
 
         self.gdf_boundaries_lsoa = gdf_boundaries_lsoa
@@ -394,9 +401,6 @@ class Map(object):
         # Convert to geometry (line):
         self.gdf_lines_transfer = self.make_gdf_lines_to_transfer_units(df_units)
 
-        # TO DO - make the above work for multiindexing.
-
-
     # ############################
     # ##### HELPER FUNCTIONS #####
     # ############################
@@ -406,12 +410,23 @@ class Map(object):
         Add extra column headers to match the other DataFrame.
         """
         cols = df.columns
-        n_mid = max(0, n_levels - 2)
+        n_levels_already = cols.nlevels
+
+        if (type(cols[0]) == list) | (type(cols[0]) == tuple):
+            # Convert all columns tuples into an ndarray:
+            all_cols = np.array([[n for n in c] for c in cols]).T
+        else:
+            # No MultiIndex.
+            all_cols = [cols.values]
+
+        n_mid = max(0, n_levels - (1 + n_levels_already))
         new_headers = (
             [np.array([top_row_str] * len(cols))] +
-            [np.array([mid_row_str] * len(cols))] * n_mid +
-            [np.array(cols)]
+            [np.array([mid_row_str] * len(cols))] * n_mid
             )
+        for c in all_cols:
+            new_headers += [np.array(c)]
+
         # Create new MultiIndex DataFrame from the original:
         df = pd.DataFrame(
             df.values,
