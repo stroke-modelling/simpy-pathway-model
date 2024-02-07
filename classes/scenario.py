@@ -542,7 +542,7 @@ class Scenario(object):
         dir_output = self.setup.dir_output
         file_name = self.setup.file_selected_lsoas
         path_to_file = os.path.join(dir_output, file_name)
-        df_regions.to_csv(path_to_file, index=False)
+        df_regions.to_csv(path_to_file)#, index=False)
 
     def _find_lsoa_catchment_mask(self, df_travel, col):
         # Which LSOAs are in the catchment areas for these units?

@@ -88,6 +88,7 @@ class Combine(object):
         # Columns shared between all scenarios:
         # Postcode	Hospital_name	SSNAP name	ICB22NM	Easting	Northing	long	lat
         # TO DO - change these to "any" Index. --------------------------------------------
+        # then geometry later can also sit in "any" index.
 
         if save_to_file:
             output_dir = self.setup.dir_output_all_runs
@@ -133,7 +134,7 @@ class Combine(object):
             output_dir = self.setup.dir_output_all_runs
             output_filename = self.setup.file_combined_selected_lsoas
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)
+            df.to_csv(path_to_file, index=False)
 
     def combine_selected_regions(self, save_to_file=True):
         """

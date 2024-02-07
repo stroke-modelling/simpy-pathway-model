@@ -104,7 +104,7 @@ class Map(object):
                     },
                 'df_lsoa': {
                     'file': self.setup.file_combined_selected_lsoas,
-                    'header': None
+                    'header': [0]
                     },
                 'df_regions': {
                     'file': self.setup.file_combined_selected_regions,
@@ -126,15 +126,15 @@ class Map(object):
             dicts_data = {
                 'df_units': {
                     'file': self.setup.file_selected_stroke_units,
-                    'header': None
+                    'header': [0]
                     },
                 'df_lsoa': {
                     'file': self.setup.file_selected_lsoas,
-                    'header': None
+                    'header': [0]
                     },
                 'df_regions': {
                     'file': self.setup.file_selected_regions,
-                    'header': None
+                    'header': [0]
                     },
                 'df_results_by_unit': {
                     'file': (
@@ -150,7 +150,7 @@ class Map(object):
 
         for label, data_dict in dicts_data.items():
             # Make path to file:
-            path_to_file = os.join(dir_data, data_dict['file'])
+            path_to_file = os.path.join(dir_data, data_dict['file'])
             try:
                 # Specify header to import as a multiindex DataFrame.
                 df = pd.read_csv(path_to_file, header=data_dict['header'])
@@ -160,197 +160,6 @@ class Map(object):
                 # TO DO - proper error message
                 print(f'Cannot import {label} from {data_dict["file"]}')
 
-    def process_data(self):
-        self.load_geometry_lsoa()
-        self.load_geometry_regions()
-        self.load_geometry_stroke_units()
-
-    def load_geometry_lsoa(self):
-        """
-        Create GeoDataFrames of new geometry and existing DataFrames.
-        """
-        # Selected LSOA names, codes, coordinates.
-        # ['LSOA11NM', 'LSOA11CD', 'LSOA11BNG_N', 'LSOA11BNG_E',
-        #  'LSOA11LONG', 'LSOA11LAT']
-        df_lsoa = self.df_lsoa
-        # How many MultiIndex column levels are there?
-        n_levels = df_lsoa.columns.nlevels
-        
-        # If they exist, merge in the results by LSOA.
-        results_exist = False
-        try:
-            # If the file wasn't loaded, this gives AttributeError:
-            df_lsoa_results = self.df_lsoa_results
-            # How many MultiIndex column levels are there?
-            n_levels_results = df_lsoa_results.columns.nlevels
-            # Update condition:
-            results_exist = True
-        except AttributeError:
-            # Cannot merge in the results.
-            pass
-
-        if results_exist:
-            # If the column levels are different,
-            # add another column level to the shorter DataFrame.
-            if n_levels > n_levels_results:
-                df_lsoa_results = self.make_more_column_rows(
-                    df_lsoa_results,
-                    n_levels,
-                    top_row_str='any',
-                    mid_row_str=''
-                    )
-            elif n_levels < n_levels_results:
-                n_levels = n_levels_results
-                df_lsoa = self.make_more_column_rows(
-                    df_lsoa,
-                    n_levels,
-                    top_row_str='any',
-                    mid_row_str=''
-                    )
-            # Merge the DataFrames.
-            # Assume that the first column contains the same type
-            # of info in both DataFrames.
-            df_lsoa = pd.merge(
-                df_lsoa, df_lsoa_results,
-                left_on=df_lsoa.columns[0],
-                right_on=df_lsoa_results.columns[0],
-                how='left'
-            )
-            # TO DO - is there a better way to do this when the column names aren't known
-            # for setting an index? ------------------------------------------------------
-
-        # All LSOA shapes:
-        gdf_boundaries_lsoa = self.import_geojson('LSOA11NM')
-        n_levels_boundaries = gdf_boundaries_lsoa.columns.nlevels
-        # If the column levels are different,
-        # add another column level to the shorter DataFrame.
-        if n_levels > n_levels_boundaries:
-            gdf_boundaries_lsoa = self.make_more_column_rows(
-                gdf_boundaries_lsoa,
-                n_levels,
-                top_row_str='any',
-                mid_row_str=''
-                )
-        elif n_levels < n_levels_boundaries:
-            n_levels = n_levels_boundaries
-            df_lsoa = self.make_more_column_rows(
-                df_lsoa,
-                n_levels,
-                top_row_str='any',
-                mid_row_str=''
-                )
-
-        # Merge the geometry and LSOA data.
-        # Assume that the first column contains the same type
-        # of info in both DataFrames.
-        # Restrict to only the LSOAs selected.
-        gdf_boundaries_lsoa = pd.merge(
-            gdf_boundaries_lsoa, df_lsoa,
-            left_on=gdf_boundaries_lsoa.columns[0],
-            right_on=df_lsoa.columns[0],
-            how='right'
-        )
-        # TO DO - make column names consistent. -------------------------------------------
-
-        self.gdf_boundaries_lsoa = gdf_boundaries_lsoa
-
-    def load_geometry_regions(self):
-        """
-        Create GeoDataFrames of new geometry and existing DataFrames.
-        """
-        # Selected regions names and usage.
-        # ['{region type}', 'contains_selected_unit',
-        #  'contains_selected_lsoa']
-        df_regions = self.df_regions
-        n_levels = df_regions.columns.nlevels
-        match_col_regions = self.region_type
-        # All region polygons:
-        gdf_boundaries_regions = self.import_geojson(self.region_type)
-        n_levels_boundaries = gdf_boundaries_regions.columns.nlevels
-        match_col_boundaries = self.region_type
-
-        # If the column levels are different,
-        # add another column level to the shorter DataFrame.
-        if n_levels > n_levels_boundaries:
-            gdf_boundaries_regions, match_col_boundaries = self.make_more_column_rows(
-                gdf_boundaries_regions,
-                n_levels,
-                top_row_str='any',
-                mid_row_str='',
-                ref_col=match_col_boundaries
-                )
-        elif n_levels < n_levels_boundaries:
-            n_levels = n_levels_boundaries
-            df_regions, match_col_regions = self.make_more_column_rows(
-                df_regions,
-                n_levels,
-                top_row_str='any',
-                mid_row_str='',
-                ref_col=match_col_regions
-                )
-
-        # Then merge in the geometry (polygon):
-        # Restrict to selected regions:
-        # Merge in region types
-        # and limit the boundaries file to only selected regions.
-        gdf_boundaries_regions = pd.merge(
-            gdf_boundaries_regions,
-            df_regions,
-            left_on=match_col_boundaries,
-            right_on=match_col_regions,
-            how='right'
-            )
-        # TO DO - how to pick out that column?!
-        # IndexSlice? df.loc[:, pd.IndexSlice[:, :, bottom_row]]
-        # Know column name before adding extra rows, so find it after.
-
-        self.gdf_boundaries_regions = self.assign_colours_to_regions(
-            self.gdf_boundaries_regions, self.region_type)
-
-    def load_geometry_stroke_units(self):
-        """
-        Create GeoDataFrames of new geometry and existing DataFrames.
-        """
-        # Selected stroke units names, coordinates, and services.
-        df_units = self.df_units
-        # Convert to geometry (point):
-        self.gdf_points_units = self.make_gdf_selected_stroke_unit_coords(df_units)
-        # Convert to geometry (line):
-        self.gdf_lines_transfer = self.make_gdf_lines_to_transfer_units(df_units)
-
-
-    # ##########################
-    # ##### DATA WRANGLING #####
-    # ##########################
-    def make_more_column_rows(
-            self, df, n_levels, top_row_str='any', mid_row_str='', ref_col=None):
-        """
-        Add extra column headers to match the other DataFrame.
-        """
-        cols = df.columns
-        n_mid = max(0, n_levels - 2)
-        new_headers = (
-            [np.array([top_row_str] * len(cols))] +
-            [np.array([mid_row_str] * len(cols))] * n_mid +
-            [np.array(cols)]
-            )
-        # Create new MultiIndex DataFrame from the original:
-        df = pd.DataFrame(
-            df.values,
-            index=df.index,
-            columns=new_headers
-        )
-        if ref_col is None:
-            return df
-        else:
-            # New name of a reference column:
-            if isinstance(ref_col, tuple):
-                n_mid = max(0, n_mid + 1 - len(ref_col))
-                ref_col = (top_row_str, *[mid_row_str]*n_mid, *ref_col)
-            else:
-                ref_col = (top_row_str, *[mid_row_str]*n_mid, ref_col)
-            return df, ref_col
-    
     def import_geojson(self, region_type: 'str'):
         """
         Import a geojson file as GeoDataFrame.
@@ -390,7 +199,7 @@ class Map(object):
 
         # Import region file:
         dir_input = self.setup.dir_data_geojson
-        file_input = geojson_file_dict[self.region_type]
+        file_input = geojson_file_dict[region_type]
         path_to_file = os.path.join(dir_input, file_input)
         gdf_boundaries = geopandas.read_file(path_to_file)
         # If crs is given in the file, geopandas automatically
@@ -398,6 +207,237 @@ class Map(object):
         if gdf_boundaries.crs != 'EPSG:27700':
             gdf_boundaries = gdf_boundaries.to_crs('EPSG:27700')
         return gdf_boundaries
+
+    # ##########################
+    # ##### DATA WRANGLING #####
+    # ##########################
+    def process_data(self):
+        self.load_geometry_lsoa()
+        self.load_geometry_regions()
+        self.load_geometry_stroke_units()
+
+    def load_geometry_lsoa(self):
+        """
+        Create GeoDataFrames of new geometry and existing DataFrames.
+        """
+        # Selected LSOA names, codes, coordinates.
+        # ['LSOA11NM', 'LSOA11CD', 'LSOA11BNG_N', 'LSOA11BNG_E',
+        #  'LSOA11LONG', 'LSOA11LAT']
+        df_lsoa = self.df_lsoa
+        # How many MultiIndex column levels are there?
+        n_levels = df_lsoa.columns.nlevels
+        match_col_lsoa = self.find_multiindex_col(
+            df_lsoa.columns, 'LSOA11NM')
+        
+        # If they exist, merge in the results by LSOA.
+        results_exist = False
+        try:
+            # If the file wasn't loaded, this gives AttributeError:
+            df_lsoa_results = self.df_lsoa_results
+            # How many MultiIndex column levels are there?
+            n_levels_results = df_lsoa_results.columns.nlevels
+            match_col_results = self.find_multiindex_col(
+                df_lsoa_results.columns, 'LSOA11NM')
+            # Update condition:
+            results_exist = True
+        except AttributeError:
+            # Cannot merge in the results.
+            pass
+
+        if results_exist:
+            # If the column levels are different,
+            # add another column level to the shorter DataFrame.
+            if n_levels > n_levels_results:
+                df_lsoa_results = self.make_more_column_rows(
+                    df_lsoa_results,
+                    n_levels,
+                    top_row_str='any',
+                    mid_row_str=''
+                    )
+                # Find the renamed column to match by:
+                match_col_results = self.find_multiindex_col(
+                    df_lsoa_results.columns, 'LSOA11NM')
+            elif n_levels < n_levels_results:
+                n_levels = n_levels_results
+                df_lsoa = self.make_more_column_rows(
+                    df_lsoa,
+                    n_levels,
+                    top_row_str='any',
+                    mid_row_str=''
+                    )
+                # Find the renamed column to match by:
+                match_col_lsoa = self.find_multiindex_col(
+                    df_lsoa.columns, 'LSOA11NM')
+            # Merge the DataFrames.
+            # Assume that the first column contains the same type
+            # of info in both DataFrames.
+            df_lsoa = pd.merge(
+                df_lsoa, df_lsoa_results,
+                left_on=match_col_lsoa,
+                right_on=match_col_results,
+                how='left'
+            )
+            # TO DO - is there a better way to do this when the column names aren't known
+            # for setting an index? ------------------------------------------------------
+
+        # All LSOA shapes:
+        gdf_boundaries_lsoa = self.import_geojson('LSOA11NM')
+        n_levels_boundaries = gdf_boundaries_lsoa.columns.nlevels
+        match_col_boundaries = self.find_multiindex_col(
+            gdf_boundaries_lsoa.columns, 'LSOA11NM')
+        # If the column levels are different,
+        # add another column level to the shorter DataFrame.
+        if n_levels > n_levels_boundaries:
+            gdf_boundaries_lsoa = self.make_more_column_rows(
+                gdf_boundaries_lsoa,
+                n_levels,
+                top_row_str='any',
+                mid_row_str=''
+                )
+            # Find the renamed column to match by:
+            match_col_boundaries = self.find_multiindex_col(
+                gdf_boundaries_lsoa.columns, 'LSOA11NM')
+        elif n_levels < n_levels_boundaries:
+            n_levels = n_levels_boundaries
+            df_lsoa = self.make_more_column_rows(
+                df_lsoa,
+                n_levels,
+                top_row_str='any',
+                mid_row_str=''
+                )
+            # Find the renamed column to match by:
+            match_col_lsoa = self.find_multiindex_col(
+                df_lsoa.columns, 'LSOA11NM')
+
+        # Merge the geometry and LSOA data.
+        # Assume that the first column contains the same type
+        # of info in both DataFrames.
+        # Restrict to only the LSOAs selected.
+        gdf_boundaries_lsoa = pd.merge(
+            gdf_boundaries_lsoa, df_lsoa,
+            left_on=match_col_boundaries,
+            right_on=match_col_lsoa,
+            how='right'
+        )
+        # TO DO - make column names consistent. -------------------------------------------
+
+        self.gdf_boundaries_lsoa = gdf_boundaries_lsoa
+
+    def load_geometry_regions(self):
+        """
+        Create GeoDataFrames of new geometry and existing DataFrames.
+        """
+        # Selected regions names and usage.
+        # ['{region type}', 'contains_selected_unit',
+        #  'contains_selected_lsoa']
+        df_regions = self.df_regions
+        n_levels = df_regions.columns.nlevels
+        match_col_regions = self.find_multiindex_col(
+            df_regions.columns, self.region_type)
+
+        # All region polygons:
+        gdf_boundaries_regions = self.import_geojson(self.region_type)
+        n_levels_boundaries = gdf_boundaries_regions.columns.nlevels
+        match_col_boundaries = self.find_multiindex_col(
+            gdf_boundaries_regions.columns, self.region_type)
+
+        # If the column levels are different,
+        # add another column level to the shorter DataFrame.
+        if n_levels > n_levels_boundaries:
+            gdf_boundaries_regions = self.make_more_column_rows(
+                gdf_boundaries_regions,
+                n_levels,
+                top_row_str='any',
+                mid_row_str=''
+                )
+            # Find the renamed column to match by:
+            match_col_boundaries = self.find_multiindex_col(
+                gdf_boundaries_regions.columns, self.region_type)
+        elif n_levels < n_levels_boundaries:
+            n_levels = n_levels_boundaries
+            df_regions = self.make_more_column_rows(
+                df_regions,
+                n_levels,
+                top_row_str='any',
+                mid_row_str=''
+                )
+            # Find the renamed column to match by:
+            match_col_regions = self.find_multiindex_col(
+                df_regions.columns, self.region_type)
+
+        # Then merge in the geometry (polygon):
+        # Restrict to selected regions:
+        # Merge in region types
+        # and limit the boundaries file to only selected regions.
+        gdf_boundaries_regions = pd.merge(
+            gdf_boundaries_regions,
+            df_regions,
+            left_on=match_col_boundaries,
+            right_on=match_col_regions,
+            how='right'
+            )
+        # TO DO - how to pick out that column?!
+        # IndexSlice? df.loc[:, pd.IndexSlice[:, :, bottom_row]]
+        # Know column name before adding extra rows, so find it after.
+
+        self.gdf_boundaries_regions = self.assign_colours_to_regions(
+            gdf_boundaries_regions, self.region_type)
+
+    def load_geometry_stroke_units(self):
+        """
+        Create GeoDataFrames of new geometry and existing DataFrames.
+        """
+        # Selected stroke units names, coordinates, and services.
+        df_units = self.df_units
+        # Convert to geometry (point):
+        self.gdf_points_units = self.make_gdf_selected_stroke_unit_coords(df_units)
+        # Convert to geometry (line):
+        self.gdf_lines_transfer = self.make_gdf_lines_to_transfer_units(df_units)
+
+        # TO DO - make the above work for multiindexing.
+
+
+    # ############################
+    # ##### HELPER FUNCTIONS #####
+    # ############################
+    def make_more_column_rows(
+            self, df, n_levels, top_row_str='any', mid_row_str=''):
+        """
+        Add extra column headers to match the other DataFrame.
+        """
+        cols = df.columns
+        n_mid = max(0, n_levels - 2)
+        new_headers = (
+            [np.array([top_row_str] * len(cols))] +
+            [np.array([mid_row_str] * len(cols))] * n_mid +
+            [np.array(cols)]
+            )
+        # Create new MultiIndex DataFrame from the original:
+        df = pd.DataFrame(
+            df.values,
+            index=df.index,
+            columns=new_headers
+        )
+        return df
+
+    def find_multiindex_col(self, columns, target):
+        if (type(columns[0]) == list) | (type(columns[0]) == tuple):
+            # Convert all columns tuples into an ndarray:
+            all_cols = np.array([[n for n in c] for c in columns])
+        else:
+            # No MultiIndex.
+            all_cols = columns.values
+        # Find where the grid matches the target string:
+        inds = np.where(all_cols == target)
+        # If more than one column, select the first.
+        ind = inds[0][0]
+        # Components of column containing the target:
+        bits = all_cols[ind]
+        bits_is_list = (type(columns[0]) == list) | (type(columns[0]) == tuple)
+        # TO DO - make this generic arraylike ^
+        # Convert to tuple for MultiIndex or str for single level.
+        final_col = list((tuple(bits), )) if bits_is_list else bits
+        return final_col
 
     def make_gdf_selected_stroke_unit_coords(self, df_units):
         """
@@ -422,123 +462,65 @@ class Map(object):
                     the file. Columns include unit name and geometry.
         """
 
+        match_col_east = self.find_multiindex_col(
+            df_units.columns, 'Easting')
+        match_col_north = self.find_multiindex_col(
+            df_units.columns, 'Northing')
+        
         # Create coordinates:
         # Current setup means sometimes these columns have different names.
         # TO DO - fix that please! ---------------------------------------------------
-        x = df_units['Easting']
-        y = df_units['Northing']
-        crs = 'EPSG:27700'
+        x = df_units[match_col_east].values.reshape(len(df_units))
+        y = df_units[match_col_north].values.reshape(len(df_units))
+        crs = 'EPSG:27700'  # by definition for easting/northing.
 
-        df_units['geometry'] = geopandas.points_from_xy(x, y)
+        # Make a new column name like Easting and Northing:
+        col_geo = tuple([b for b in match_col_east[0][:-1]] + ['geometry'])
+        df_units[col_geo] = geopandas.points_from_xy(x, y)
 
         # Convert to GeoDataFrame:
         gdf_units = geopandas.GeoDataFrame(
-            df_units, geometry=df_units['geometry'], crs=crs
+            df_units, geometry=df_units[col_geo], crs=crs
         )
         # Convert to British National Grid coordinates if necessary:
         if crs != 'EPSG:27700':
             gdf_units = gdf_units.to_crs('EPSG:27700')
         return gdf_units
 
-    def keep_only_selected_units(self,
-            df: 'pd.DataFrame', df_units: 'pd.DataFrame',
-            left_col: 'str', right_col: 'str', how: 'str' = 'right'
-            ):
-        """
-        Wrapper for pd.merge() for limiting one df to rows in another.
-
-        This function exists just so that the effect of it is clear
-        from the function name without needing comments.
-
-        Inputs
-        ------
-        df        - pd.DataFrame. Contains rows for many things we're
-                    not interested in.
-        df_units  - pd.DataFrame. Contains only rows of things we're
-                    interested in.
-        left_col  - str. Name of the column of "df" to match.
-        right_col - str. Name of the column of "df_units" to match,
-                    and the only column whose data will be kept in
-                    the resulting DataFrame.
-        how       - str. How to merge the DataFrames. Normally want
-                    'right' to keep only the rows of df_units and
-                    remove any row in df that is not in df_units.
-
-        Returns
-        -------
-        df - pd.DataFrame. Reduced DataFrame.
-        """
-        if isinstance(df_units, pd.Series):
-            df_to_merge = df_units
-        elif isinstance(df_units, (pd.DataFrame, geopandas.GeoDataFrame)):
-            df_to_merge = df_units[right_col]
-        else:
-            # This shouldn't happen!
-            df_to_merge = df_units[right_col]
-            # TO DO - some sort of error message, or more checks for what works here? -----------------
-        df = pd.merge(
-            df, df_to_merge,
-            left_on=left_col, right_on=right_col,
-            how=how
-        )
-        return df
-
-    def copy_columns_from_dataframe(self,
-            df_left: 'pd.DataFrame',
-            df_right: 'pd.DataFrame',
-            cols_to_copy: list,
-            left_col: 'str', right_col: 'str', how: 'str' = 'right',
-            cols_to_rename_dict: dict = {},
-            ):
-        """
-        Copy data from one DataFrame into another. Wrapper for pd.merge().
-
-        This function exists just so that the effect of it is clear
-        from the function name without needing comments.
-
-        Inputs
-        ------
-        df_left             - pd.DataFrame. Contains rows for many things
-                            we're not interested in.
-        df_right            - pd.DataFrame. Contains only rows of things
-                            we're interested in.
-        cols_to_copy        - list. Names of the columns from df_right
-                            to copy over.
-        left_col            - str. Name of the column of df_left to match.
-        right_col           - str. Name of the column of df_right to match.
-        how                 - str. How to merge the DataFrames.
-        cols_to_rename_dict - dict. Rename the columns in df_left that
-                            have been copied over from df_right.
-
-        Returns
-        -------
-        df_left - pd.DataFrame. Same as the input df_left with the addition
-                of copied columns from df_right.
-        """
-        # Copy data from df_right to df_left:
-        df_left = pd.merge(
-            df_left,
-            df_right[[right_col] + cols_to_copy],
-            left_on=left_col, right_on=right_col,
-            how=how
-        )
-        # Rename columns in df_left:
-        df_left = df_left.rename(columns=cols_to_rename_dict)
-        return df_left
-
     def make_gdf_lines_to_transfer_units(self, df_transfer):
         """
         WRITE ME
         """
+        match_col_east = self.find_multiindex_col(
+            df_transfer.columns, 'Easting')
+        match_col_north = self.find_multiindex_col(
+            df_transfer.columns, 'Northing')
+        
+        match_col_east_mt = self.find_multiindex_col(
+            df_transfer.columns, 'Easting_mt')
+        match_col_north_mt = self.find_multiindex_col(
+            df_transfer.columns, 'Northing_mt')
+
+        # Make a new column name like Easting and Northing:
+        col_unit = tuple([b for b in match_col_east[0][:-1]] + ['unit_coords'])
+        col_tran = tuple([b for b in match_col_east[0][:-1]] + ['transfer_coords'])
+        
         # Make a column of coordinates [x, y]:
-        xy = df_transfer[['Easting', 'Northing']]
-        df_transfer['unit_coords'] = xy.values.tolist()
+        cols = [c if type(c) != list else c[0] for c in [match_col_east, match_col_north]]
+        print(cols)
+        xy = df_transfer[cols]
+        df_transfer[col_unit] = xy.values.tolist()
 
-        xy = df_transfer[['Easting_mt', 'Northing_mt']]
-        df_transfer['transfer_coords'] = xy.values.tolist()
+        cols = [c if type(c) != list else c[0] for c in [match_col_east_mt, match_col_north_mt]]
+        print(cols)
+        xy = df_transfer[cols]
+        df_transfer[col_tran] = xy.values.tolist()
 
+
+        cols = [c if type(c) != list else c[0] for c in [col_unit, col_tran]]
+        print(cols)
         gdf_transfer = self.create_lines_from_coords(
-            df_transfer, ['unit_coords', 'transfer_coords'])
+            df_transfer, cols)
         return gdf_transfer
 
     def create_lines_from_coords(self, df, cols_with_coords):
@@ -566,20 +548,24 @@ class Map(object):
         gdf - GeoDataFrame. The input df with the new Line
             geometry objects and converted to a GeoDataFrame.
         """
+        # Make a new column name like Easting and Northing:
+        col_coord = tuple([b for b in cols_with_coords[0][:-1]] + ['line_coords'])
+        col_geom = tuple([b for b in cols_with_coords[0][:-1]] + ['line_geometry'])
+    
         # Combine multiple columns of coordinates into a single column
         # with a list of lists of coordinates:
-        df['line_coords'] = df[cols_with_coords].values.tolist()
+        df[col_coord] = df[cols_with_coords].values.tolist()
 
         # Drop any duplicates:
-        df = df.drop_duplicates('line_coords')
+        df = df.drop_duplicates(col_coord)
 
         # Convert line coords to LineString objects:
-        df['line_geometry'] = [
-            LineString(coords) for coords in df['line_coords']]
+        df[col_geom] = [
+            LineString(coords) for coords in df[col_coord]]
 
         # Convert to GeoDataFrame:
         gdf = geopandas.GeoDataFrame(
-            df, geometry=df['line_geometry']#, crs="EPSG:4326"
+            df, geometry=df[col_geom]#, crs="EPSG:4326"
         )
         # TO DO - implement CRS explicitly ---------------------------------------------
         return gdf
@@ -592,8 +578,11 @@ class Map(object):
         np.random.seed(42)
         colour_arr = np.random.choice(colours, size=len(gdf))
 
+        # Make a new column name like Easting and Northing:
+        col_col = tuple([b for b in gdf.columns[0][:-1]] + ['colour'])
+
         # Add to the DataFrame:
-        gdf['colour'] = colour_arr
+        gdf[col_col] = colour_arr
 
         return gdf
 
@@ -710,7 +699,7 @@ class Map(object):
             )
             return df_new
 
-        def find_neighbours(df_new, self.region_type):
+        def find_neighbours(df_new, region_type):
             df = df_new.copy()
             df['my_neighbors'] = [[]] * len(df)
 
