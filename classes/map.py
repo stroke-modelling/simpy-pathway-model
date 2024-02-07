@@ -228,16 +228,16 @@ class Map(object):
         n_levels = df_lsoa.columns.nlevels
         match_col_lsoa = self.find_multiindex_col(
             df_lsoa.columns, 'LSOA11NM')
-        
+
         # If they exist, merge in the results by LSOA.
         results_exist = False
         try:
             # If the file wasn't loaded, this gives AttributeError:
-            df_lsoa_results = self.df_lsoa_results
+            df_lsoa_results = self.df_results_by_lsoa
             # How many MultiIndex column levels are there?
             n_levels_results = df_lsoa_results.columns.nlevels
             match_col_results = self.find_multiindex_col(
-                df_lsoa_results.columns, 'LSOA11NM')
+                df_lsoa_results.columns, 'lsoa')
             # Update condition:
             results_exist = True
         except AttributeError:
@@ -256,7 +256,7 @@ class Map(object):
                     )
                 # Find the renamed column to match by:
                 match_col_results = self.find_multiindex_col(
-                    df_lsoa_results.columns, 'LSOA11NM')
+                    df_lsoa_results.columns, 'lsoa')
             elif n_levels < n_levels_results:
                 n_levels = n_levels_results
                 df_lsoa = self.make_more_column_rows(
