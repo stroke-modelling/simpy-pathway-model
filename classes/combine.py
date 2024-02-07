@@ -335,8 +335,13 @@ class Combine(object):
         # Change to select top level of multiindex:
         scenario_name_list = sorted(list(set(
             df.columns.get_level_values(0).to_list())))
-        # Drop 'any' scenario:
-        scenario_name_list.remove('any')
+        try:
+            # Drop 'any' scenario:
+            scenario_name_list.remove('any')
+        except ValueError:
+            # no 'any' scenario here.
+            pass
+
         # For scenarios [A, B, C], get a list of pairs
         # [[A, B], [A, C], [B, C]].
         scenario_name_pairs = list(combinations(scenario_name_list, 2))
@@ -417,20 +422,17 @@ class Combine(object):
             path_to_file = os.path.join(dir_output, file_input)
 
             if csv_header is None:
-                df = pd.read_csv(path_to_file)
+                df = pd.read_csv(path_to_file, index_col=0)
             else:
                 # Specify header to import as a multiindex DataFrame.
-                df = pd.read_csv(path_to_file, header=csv_header)
+                df = pd.read_csv(path_to_file, header=csv_header, index_col=0)
 
             if len(dfs_to_merge.items()) < 1:
-                shared_col_name = df.columns[0]
+                shared_col_name = df.index.name#columns[0]
                 # dfs_to_merge['any'] = df[shared_col_name]
 
             # Create a name for this scenario:
             scenario_name = os.path.split(dir_output)[-1]
-
-            # Set the index:
-            df = df.set_index(df.columns[0])
 
             split_for_any = True if ((len(cols_for_scenario) > 0) & (len(cols_for_scenario) != (len(df.columns) - 1))) else False
             if split_for_any:
@@ -462,6 +464,7 @@ class Combine(object):
 
             dfs_to_merge[scenario_name] = df
 
+        # print(dfs_to_merge)
         # Can't concat without index columns.
         data = pd.concat(
             dfs_to_merge.values(),
@@ -479,16 +482,18 @@ class Combine(object):
         except ValueError:
             # No 'any' columns yet.
             pass
-        # TO DO - more stuff to "any" -----------------------------------------------------
-        # Copy index information to its own column with 'any' scenario:
-        if isinstance(shared_col_name, str):
-            any_col = ('any', shared_col_name)
-        else:
-            any_col = ('any', *shared_col_name)
-        data.insert(0, any_col, data.index)
+        # # TO DO - more stuff to "any" -----------------------------------------------------
+        # # Copy index information to its own column with 'any' scenario:
+        # if isinstance(shared_col_name, str):
+        #     any_col = ('any', shared_col_name)
+        # else:
+        #     any_col = ('any', *shared_col_name)
+        # data.insert(0, any_col, data.index)
 
-        # Sort rows by contents of 'any' column:
-        data = data.sort_values(any_col)
+        # # Sort rows by contents of 'any' column:
+        # data = data.sort_values(any_col)
+        # Sort rows by contents of index:
+        data = data.sort_index()
 
         # # TO DO - only want the following lines for columns that should be bool ---------------
         # # Replace missing values with 0 in the region columns:
