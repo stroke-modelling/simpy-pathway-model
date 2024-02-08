@@ -65,6 +65,8 @@ from shapely import LineString  # For creating line geometry.
 
 from classes.setup import Setup
 
+import classes.map_functions as maps  # for plotting.
+
 
 class Map(object):
     """
@@ -348,10 +350,10 @@ class Map(object):
             # Convert to GeoDataFrame:
             gdf_boundaries_lsoa = geopandas.GeoDataFrame(
                 gdf_boundaries_lsoa,
-                geometry=gdf_boundaries_lsoa[('any', 'geometry', '')]
+                geometry=('any', 'geometry', '')
                 )
-            gdf_boundaries_lsoa = gdf_boundaries_lsoa.drop(
-                ('any', 'geometry', ''), axis='columns')
+            # gdf_boundaries_lsoa = gdf_boundaries_lsoa.drop(
+            #     ('any', 'geometry', ''), axis='columns')
         else:
             # Similar process but without the scenario row.
             # Drop columns that are duplicated across DataFrames.
@@ -399,7 +401,7 @@ class Map(object):
             # Convert to GeoDataFrame:
             gdf_boundaries_lsoa = geopandas.GeoDataFrame(
                 gdf_boundaries_lsoa,
-                geometry=gdf_boundaries_lsoa[('geometry', '')]
+                geometry=('geometry', '')
                 )
             # gdf_boundaries_lsoa = gdf_boundaries_lsoa.drop(
             #     ('geometry', ''), axis='columns')
@@ -461,10 +463,10 @@ class Map(object):
             # Convert to GeoDataFrame:
             gdf_boundaries_regions = geopandas.GeoDataFrame(
                 gdf_boundaries_regions,
-                geometry=gdf_boundaries_regions[('any', 'geometry')]
+                geometry=('any', 'geometry')
                 )
-            gdf_boundaries_regions = gdf_boundaries_regions.drop(
-                ('any', 'geometry'), axis='columns')
+            # gdf_boundaries_regions = gdf_boundaries_regions.drop(
+            #     ('any', 'geometry'), axis='columns')
 
             # Assign colours:
             gdf_boundaries_regions = self.assign_colours_to_regions(
@@ -485,7 +487,7 @@ class Map(object):
             # Convert to GeoDataFrame:
             gdf_boundaries_regions = geopandas.GeoDataFrame(
                 gdf_boundaries_regions,
-                geometry=gdf_boundaries_regions['geometry']
+                geometry='geometry'
                 )
             # gdf_boundaries_lsoa = gdf_boundaries_lsoa.drop(
             #     ('geometry', ''), axis='columns')
@@ -549,7 +551,7 @@ class Map(object):
 
         # Convert to GeoDataFrame:
         gdf_units = geopandas.GeoDataFrame(
-            df_units, geometry=df_units[coords_col], crs=crs
+            df_units, geometry=coords_col, crs=crs
         )
         # # Convert to British National Grid coordinates if necessary:
         # if crs != 'EPSG:27700':
@@ -578,7 +580,7 @@ class Map(object):
             col_unit = ('any', 'unit_coords')
             col_tran = ('any', 'transfer_coords')
             col_line_coords = ('any', 'line_coords')
-            col_line_geometry = ('any', 'line_geometry')
+            col_line_geometry = ('any', 'geometry')
         else:
             x_col = 'Easting'
             y_col = 'Northing'
@@ -587,7 +589,7 @@ class Map(object):
             col_unit = 'unit_coords'
             col_tran = 'transfer_coords'
             col_line_coords = 'line_coords'
-            col_line_geometry = 'line_geometry'
+            col_line_geometry = 'geometry'
 
         # Convert to geometry (line):
 
@@ -610,57 +612,6 @@ class Map(object):
     # ############################
     # ##### HELPER FUNCTIONS #####
     # ############################
-    def make_more_column_rows(
-            self, df, n_levels,
-            top_row_str=None, mid_row_str='', bottom_row_str=None):
-        """
-        Add extra column headers to match the other DataFrame.
-        """
-        cols = df.columns
-        n_levels_already = cols.nlevels
-
-        if (type(cols[0]) == list) | (type(cols[0]) == tuple):
-            # Convert all columns tuples into an ndarray:
-            all_cols = np.array([[n for n in c] for c in cols]).T
-        else:
-            # No MultiIndex.
-            all_cols = [cols.values]
-
-        n_mid = max(0, n_levels - (1 + n_levels_already))
-        new_headers = (
-            [np.array([top_row_str] * len(cols))] +
-            [np.array([mid_row_str] * len(cols))] * n_mid
-            )
-        for c in all_cols:
-            new_headers += [np.array(c)]
-
-        # Create new MultiIndex DataFrame from the original:
-        df = pd.DataFrame(
-            df.values,
-            index=df.index,
-            columns=new_headers
-        )
-        return df
-
-    def find_multiindex_col(self, columns, target):
-        if (type(columns[0]) == list) | (type(columns[0]) == tuple):
-            # Convert all columns tuples into an ndarray:
-            all_cols = np.array([[n for n in c] for c in columns])
-        else:
-            # No MultiIndex.
-            all_cols = columns.values
-        # Find where the grid matches the target string:
-        inds = np.where(all_cols == target)
-        # If more than one column, select the first.
-        ind = inds[0][0]
-        # Components of column containing the target:
-        bits = all_cols[ind]
-        bits_is_list = (type(columns[0]) == list) | (type(columns[0]) == tuple)
-        # TO DO - make this generic arraylike ^
-        # Convert to tuple for MultiIndex or str for single level.
-        final_col = list((tuple(bits), )) if bits_is_list else bits
-        return final_col
-
     def create_lines_from_coords(self, df, cols_with_coords, col_coord, col_geom):
         """
         Convert DataFrame with coords to GeoDataFrame with LineString.
@@ -699,8 +650,10 @@ class Map(object):
 
         # Convert to GeoDataFrame:
         gdf = geopandas.GeoDataFrame(
-            df, geometry=df[col_geom]#, crs="EPSG:4326"
+            df, geometry=col_geom  #, crs="EPSG:4326"
         )
+        # if isinstance(col_geom, tuple):
+        #     gdf['geometry'] 
         # TO DO - implement CRS explicitly ---------------------------------------------
         return gdf
 
@@ -884,3 +837,158 @@ class Map(object):
         # Record the number of neighbours:
         df['total_neighbours'] = df['neighbour_list'].str.len()
         return df
+
+    # ####################
+    # ##### PLOTTING #####
+    # ####################
+    def plot_map_selected_units(self, scenario='', save=True):
+        """
+
+        """
+        if self.data_type == 'combined':
+            # Remove excess scenario data:
+            try:
+                gdf_boundaries_regions = self.gdf_boundaries_regions[['any', scenario]]
+                gdf_points_units = self.gdf_points_units[['any', scenario]]
+                gdf_lines_transfer = self.gdf_lines_transfer[['any', scenario]]
+            except KeyError:
+                # The scenario isn't in the Data.
+                # TO DO - proper error message here
+                print('oh no')
+                raise KeyError('Scenario is missing.') from None
+
+            # Remove the excess column heading:
+            gdf_boundaries_regions = gdf_boundaries_regions.droplevel(0, axis='columns')
+            gdf_points_units = gdf_points_units.droplevel(0, axis='columns')
+            gdf_lines_transfer = gdf_lines_transfer.droplevel(0, axis='columns')
+            # The geometry column is still defined with the excess
+            # heading, so update which column is geometry:
+            gdf_boundaries_regions = gdf_boundaries_regions.set_geometry('geometry')
+            gdf_points_units = gdf_points_units.set_geometry('geometry')
+            gdf_lines_transfer = gdf_lines_transfer.set_geometry('geometry')
+        else:
+            gdf_boundaries_regions = self.gdf_boundaries_regions
+            gdf_points_units = self.gdf_points_units
+            gdf_lines_transfer = self.gdf_lines_transfer
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+
+        ax = maps.plot_map_selected_units(
+            gdf_boundaries_regions,
+            gdf_points_units,
+            gdf_lines_transfer,
+            ax=ax
+        )
+
+        if save:
+            dir_output = ''
+            try:
+                for d in self.setup.list_dir_output:
+                    end = os.path.split(d)[-1]
+                    if end == scenario:
+                        dir_output = d
+            except AttributeError:
+                # Setup is not defined.
+                pass
+
+            try:
+                file_name = self.setup.file_selected_units_map
+            except AttributeError:
+                # Setup is not defined.
+                file_name = f'map_selected_units_{scenario}.jpg'
+
+            path_to_file = os.path.join(dir_output, file_name)
+            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
+            plt.close()
+        else:
+            plt.show()
+
+    def plot_map_catchment(self, scenario='', boundary_kwargs={}, save=True):
+        """
+
+        """
+        if self.data_type == 'combined':
+            # Remove excess scenario data:
+            try:
+                gdf_boundaries_lsoa = self.gdf_boundaries_lsoa[['any', scenario]]
+                gdf_boundaries_regions = self.gdf_boundaries_regions[['any', scenario]]
+                gdf_points_units = self.gdf_points_units[['any', scenario]]
+                gdf_lines_transfer = self.gdf_lines_transfer[['any', scenario]]
+            except KeyError:
+                # The scenario isn't in the Data.
+                # TO DO - proper error message here
+                print('oh no')
+                raise KeyError('Scenario is missing.') from None
+
+            # Remove the excess column headings:
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.droplevel(
+                0, axis='columns')
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.droplevel(
+                1, axis='columns')
+            gdf_boundaries_regions = gdf_boundaries_regions.droplevel(
+                0, axis='columns')
+            gdf_points_units = gdf_points_units.droplevel(
+                0, axis='columns')
+            gdf_lines_transfer = gdf_lines_transfer.droplevel(
+                0, axis='columns')
+            
+            # TO DO - FUCNTION THIS PLEASE
+            # The geometry column is still defined with the excess
+            # heading, so update which column is geometry:
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_geometry('geometry')
+            gdf_boundaries_regions = gdf_boundaries_regions.set_geometry('geometry')
+            gdf_points_units = gdf_points_units.set_geometry('geometry')
+            gdf_lines_transfer = gdf_lines_transfer.set_geometry('geometry')
+
+        else:
+            gdf_boundaries_lsoa = self.gdf_boundaries_lsoa
+            gdf_boundaries_regions = self.gdf_boundaries_regions
+            gdf_points_units = self.gdf_points_units
+            gdf_lines_transfer = self.gdf_lines_transfer
+
+            # Remove the excess column headings:
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.droplevel(
+                1, axis='columns')
+
+        lsoa_boundary_kwargs = {
+            'column': 'postcode_nearest',
+            'cmap': 'Blues',
+            'edgecolor': 'face'
+        }
+        # Update this with anything from the input dict:
+        lsoa_boundary_kwargs = lsoa_boundary_kwargs | boundary_kwargs
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.set_title(scenario)
+
+        ax = maps.plot_map_catchment(
+            gdf_boundaries_lsoa,
+            gdf_boundaries_regions,
+            gdf_points_units,
+            gdf_lines_transfer,
+            ax=ax,
+            boundary_kwargs=lsoa_boundary_kwargs
+        )
+
+        if save:
+            dir_output = ''
+            try:
+                for d in self.setup.list_dir_output:
+                    end = os.path.split(d)[-1]
+                    if end == scenario:
+                        dir_output = d
+            except AttributeError:
+                # Setup is not defined.
+                pass
+
+            try:
+                file_name = self.setup.file_catchment_map
+            except AttributeError:
+                # Setup is not defined.
+                file_name = f'map_catchment_{scenario}.jpg'
+
+            path_to_file = os.path.join(dir_output, file_name)
+            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
+            plt.close()
+        else:
+            plt.show()
