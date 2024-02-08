@@ -168,9 +168,11 @@ class Map(object):
             # Use combined data files.
             dir_data = self.setup.dir_output_all_runs
             dicts_data = dicts_combo
+            self.data_type = 'combined'
         else:
             # Use files for the selected scenario only.
             dicts_data = dicts_single
+            self.data_type = 'single'
 
         for label, data_dict in dicts_data.items():
             # Make path to file:
@@ -249,117 +251,108 @@ class Map(object):
         """
         Create GeoDataFrames of new geometry and existing DataFrames.
         """
+        # ----- Gather data -----
         # Selected LSOA names, codes, coordinates.
         # ['LSOA11NM', 'LSOA11CD', '']
         df_lsoa = self.df_lsoa
         # Index column: LSOA11NM.
-        # Expected column MultiIndex levels: 
+        # Expected column MultiIndex levels:
         #   - combined: ['scenario', 'property']
         #   - separate: ['{unnamed level}']
-        # How many MultiIndex column levels are there?
-        n_levels = df_lsoa.columns.nlevels
-        match_col_lsoa = self.find_multiindex_col(
-            df_lsoa.columns, 'LSOA11NM')
-
-        # If they exist, merge in the results by LSOA.
-        results_exist = False
-        try:
-            # If the file wasn't loaded, this gives AttributeError:
-            df_lsoa_results = self.df_results_by_lsoa
-            # How many MultiIndex column levels are there?
-            n_levels_results = df_lsoa_results.columns.nlevels
-            match_col_results = self.find_multiindex_col(
-                df_lsoa_results.columns, 'lsoa')
-            # Update condition:
-            results_exist = True
-        except AttributeError:
-            # Cannot merge in the results.
-            pass
-
-        if results_exist:
-            # If the column levels are different,
-            # add another column level to the shorter DataFrame.
-            if n_levels > n_levels_results:
-                df_lsoa_results = self.make_more_column_rows(
-                    df_lsoa_results,
-                    n_levels,
-                    top_row_str='any',
-                    mid_row_str=''
-                    )
-                # Find the renamed column to match by:
-                match_col_results = self.find_multiindex_col(
-                    df_lsoa_results.columns, 'lsoa')
-            elif n_levels < n_levels_results:
-                n_levels = n_levels_results
-
-                print(df_lsoa)
-                df_lsoa = self.make_more_column_rows(
-                    df_lsoa,
-                    n_levels,
-                    mid_row_str='',
-                    bottom_row_str=''
-                    )
-                print(df_lsoa)
-                # Find the renamed column to match by:
-                match_col_lsoa = self.find_multiindex_col(
-                    df_lsoa.columns, 'LSOA11NM')
-            # Merge the DataFrames.
-            # Assume that the first column contains the same type
-            # of info in both DataFrames.
-            df_lsoa = pd.merge(
-                df_lsoa, df_lsoa_results,
-                left_on=match_col_lsoa,
-                right_on=match_col_results,
-                how='left'
-            )
-            print('\nMerged results')
-            for c in df_lsoa.columns:
-                print(c)
 
         # All LSOA shapes:
         gdf_boundaries_lsoa = self.import_geojson('LSOA11NM')
         # Index column: LSOA11NM.
-        n_levels_boundaries = gdf_boundaries_lsoa.columns.nlevels
-        match_col_boundaries = self.find_multiindex_col(
-            gdf_boundaries_lsoa.columns, 'LSOA11NM')
-        # If the column levels are different,
-        # add another column level to the shorter DataFrame.
-        if n_levels > n_levels_boundaries:
-            gdf_boundaries_lsoa = self.make_more_column_rows(
-                gdf_boundaries_lsoa,
-                n_levels,
-                top_row_str='any',
-                mid_row_str=''
-                )
-            # Find the renamed column to match by:
-            match_col_boundaries = self.find_multiindex_col(
-                gdf_boundaries_lsoa.columns, 'LSOA11NM')
-        elif n_levels < n_levels_boundaries:
-            n_levels = n_levels_boundaries
-            df_lsoa = self.make_more_column_rows(
-                df_lsoa,
-                n_levels,
-                top_row_str='any',
-                mid_row_str=''
-                )
-            # Find the renamed column to match by:
-            match_col_lsoa = self.find_multiindex_col(
-                df_lsoa.columns, 'LSOA11NM')
+        # Always has only one unnamed column index level.
 
-        # Merge the geometry and LSOA data.
-        # Assume that the first column contains the same type
-        # of info in both DataFrames.
-        # Restrict to only the LSOAs selected.
-        gdf_boundaries_lsoa = pd.merge(
-            gdf_boundaries_lsoa, df_lsoa,
-            left_on=match_col_boundaries,
-            right_on=match_col_lsoa,
-            how='right'
-        )
-        print('\nMerged geometry')
-        for c in gdf_boundaries_lsoa.columns:
-            print(c)
-        # TO DO - make column names consistent. -------------------------------------------
+        # Results by LSOA.
+        results_exist = False
+        try:
+            # If the file wasn't loaded, this gives AttributeError:
+            df_lsoa_results = self.df_results_by_lsoa
+            # Index column: lsoa.
+            # Expected column MultiIndex levels:
+            #   - combined: ['scenario', 'property', 'subtype']
+            #   - separate: ['property', 'subtype]
+            results_exist = True
+        except AttributeError:
+            pass
+
+        if self.data_type == 'combined':
+            # Combine the "any" scenario levels of the above data.
+            # Only keep the main "property" row of the column index.
+            # Take only the "any" parts and then
+            # remove the level containing "any":
+            df_lsoa_any = df_lsoa['any'].droplevel('any', axis='columns')
+            if results_exist:
+                try:
+                    df_lsoa_results_any = (
+                        df_lsoa_results['any'].droplevel(
+                            ['any', 'subtype'], axis='columns'))
+                except KeyError:
+                    # No level called 'any'.
+                    pass
+            # Combine the DataFrames.
+            # Use how='right' to keep geometry data for only the
+            # LSOAs that were considered in the model.
+            df_any = pd.merge(
+                gdf_boundaries_lsoa, df_lsoa_any,
+                left_index=True, right_index=True, how='right'
+            )
+            try:
+                df_any = pd.merge(
+                    df_any, df_lsoa_results_any,
+                    left_index=True, right_index=True, how='left'
+                )
+            except NameError:
+                # No 'any' results to combine.
+                pass
+            # Make all data to be combined have the same column levels.
+            # TO DO - is there a more pandas way to do this?
+
+            # "any" scenario from aboove:
+            # Add in the "any" and "subtype" scenario labels.
+            # df_any = pd.concat([df_any], axis='columns', keys=['any'])
+            df_any = pd.DataFrame(
+                df_any.values,
+                index=df_any.index,
+                columns=[
+                    ['any'] * len(df_any.columns),    # scenario
+                    df_any.columns,                   # property
+                    [''] * len(df_any.columns),       # subtype
+                ]
+            )
+            # LSOA names:
+            df_lsoa_column_arr = np.array(
+                [[n for n in c] for c in df_lsoa_column_arr.columns])
+            df_lsoa = pd.DataFrame(
+                df_lsoa.values,
+                index=df_lsoa.index,
+                columns=[
+                    df_lsoa_column_arr[:, 0],       # scenario
+                    df_lsoa_column_arr[:, 1],       # property
+                    [''] * len(df_lsoa.columns),    # subtype
+                ]
+            )
+            # Geometry:
+            gdf_boundaries_lsoa = pd.DataFrame(
+                gdf_boundaries_lsoa.values,
+                index=gdf_boundaries_lsoa.index,
+                columns=[
+                    ['any'] * len(gdf_boundaries_lsoa.columns),    # scenario
+                    gdf_boundaries_lsoa.columns,                   # property
+                    [''] * len(gdf_boundaries_lsoa.columns),       # subtype
+                ]
+            )
+            # Then merge in the other scenario types.
+            gdf_boundaries_lsoa = pd.merge(
+                gdf_boundaries_lsoa, df_lsoa,
+                left_index=True, right_index=True, how='left'
+            )
+            gdf_boundaries_lsoa = pd.merge(
+                gdf_boundaries_lsoa, df_any,
+                left_index=True, right_index=True, how='left'
+            )
 
         self.gdf_boundaries_lsoa = gdf_boundaries_lsoa
 
