@@ -523,16 +523,18 @@ class Scenario(object):
             )
         df_travel = df_travel.set_index('LSOA11NM')
 
+        # Separate out the columns and store in self:
+        self.lsoa_ivt_travel_time = dict(df_travel['time_nearest_IVT'])
+        self.lsoa_ivt_unit = dict(df_travel['postcode_nearest_IVT'])
+        self.lsoa_mt_travel_time = dict(df_travel['time_nearest_MT'])
+        self.lsoa_mt_unit = dict(df_travel['postcode_nearest_MT'])
+        self.lsoa_msu_travel_time = dict(df_travel['time_nearest_MSU'])
+        self.lsoa_msu_unit = dict(df_travel['postcode_nearest_MSU'])
 
         # Limit to just the LSOAs for the selected model type.
         s = ('IVT' if self.destination_decision_type == 0
              else 'MT' if self.destination_decision_type == 1
              else 'MSU')
-
-        # Separate out the columns and store in self:
-        self.lsoa_travel_time = dict(df_travel[f'time_nearest_{s}'])
-        self.lsoa_unit = dict(df_travel[f'postcode_nearest_{s}'])
-
         cols_to_drop = []
         for d in ['IVT', 'MT', 'MSU']:
             cols = [
