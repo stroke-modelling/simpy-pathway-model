@@ -120,20 +120,16 @@ class Patient():
         self.stroke_type = self.generate_stroke_type()
 
         # Find unit details for this LSOA.
-        self.closest_ivt_unit = scenario.lsoa_ivt_unit[self.lsoa]
-        self.closest_ivt_travel_duration = (
-            scenario.lsoa_ivt_travel_time[self.lsoa])
-
-        self.closest_mt_unit = scenario.lsoa_mt_unit[self.lsoa]
-        self.closest_mt_travel_duration = (
-            scenario.lsoa_mt_travel_time[self.lsoa])
+        self.unit = scenario.lsoa_unit[self.lsoa]
+        self.travel_duration = (
+            scenario.lsoa_travel_time[self.lsoa])
 
         self.mt_transfer_unit = (
-            scenario.national_dict['mt_transfer_unit'][self.closest_ivt_unit])
+            scenario.national_dict['mt_transfer_unit'][self.unit])
         self.mt_transfer_travel_duration = (
-            scenario.national_dict['mt_transfer_time'][self.closest_ivt_unit])
+            scenario.national_dict['mt_transfer_time'][self.unit])
         self.mt_transfer_required = (
-            self.closest_ivt_unit != self.closest_mt_unit)
+            self.unit != self.mt_transfer_unit)
 
         # These will be selected later:
         self.admitting_unit = ''

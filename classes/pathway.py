@@ -244,28 +244,13 @@ class Pathway(object):
         patient.admitting_unit_travel_duration:
             float. Time to travel to the admitting unit.
         """
-        if self.scenario.destination_decision_type == 0:
-            # Drip and ship model.
-            ivt_unit_chosen = True
-        else:
-            # TO DO - implement mothership or other ways to pick
-            # and choose in some known ratio.
-            # PLACEHOLDER selection:
-            c = 0.25  # Chance of the MT unit being picked
-            ivt_unit_chosen = (np.random.binomial(1, c) == 0)
+        # TO DO - Removed choice 8th Feb 2024.
+        # Moving towards separate models for different unit choices.
+        # So remove or rename this function.
 
-        # Pick out the chosen unit info:
-        if ivt_unit_chosen:
-            # Use IVT unit details.
-            unit = patient.closest_ivt_unit
-            time_to_unit = patient.closest_ivt_travel_duration
-        else:
-            # Use MT unit details.
-            unit = patient.closest_mt_unit
-            time_to_unit = patient.closest_mt_travel_duration
         # Store with this patient's details:
-        patient.admitting_unit = unit
-        patient.admitting_unit_travel_duration = time_to_unit
+        patient.admitting_unit = patient.unit
+        patient.admitting_unit_travel_duration = patient.travel_duration
 
     def go_to_admitting_unit(self, patient: type[Patient]):
         """
