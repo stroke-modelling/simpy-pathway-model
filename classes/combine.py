@@ -87,14 +87,7 @@ class Combine(object):
                     'Use_IVT',
                     'Use_MT',
                     'Use_MSU',
-                    'Use',
-                    # 'from_postcode',
-                    'name_nearest_MT',
-                    'Postcode_mt',
-                    'Easting_mt',
-                    'Northing_mt',
-                    'long_mt',
-                    'lat_mt'
+                    'Use'
                 ])
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
@@ -291,7 +284,10 @@ class Combine(object):
 
         try:
             data = self._hstack_multiple_dataframes(
-                file_to_merge, csv_header=[0, 1])
+                file_to_merge,
+                csv_header=[0, 1],
+                cols_for_scenario=':'
+                )
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
             pass
@@ -351,7 +347,10 @@ class Combine(object):
 
         try:
             data = self._hstack_multiple_dataframes(
-                file_to_merge, csv_header=[0, 1])
+                file_to_merge,
+                csv_header=[0, 1],
+                cols_for_scenario=':'
+                )
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
             pass
@@ -497,23 +496,27 @@ class Combine(object):
             # Create a name for this scenario:
             scenario_name = os.path.split(dir_output)[-1]
 
-            split_for_any = True if ((len(cols_for_scenario) != (len(df.columns) - 1))) else False
-            if split_for_any:
-                # Find the names of these columns in this df.
-                # (so can specify one level of multiindex only).
+            if isinstance(cols_for_scenario, str):
+                # Use all columns.
+                pass
+            else:
+                split_for_any = True if ((len(cols_for_scenario) != (len(df.columns)))) else False
+                if split_for_any:
+                    # Find the names of these columns in this df.
+                    # (so can specify one level of multiindex only).
 
-                scenario_cols = [self.find_multiindex_col(
-                    df.columns, col) for col in cols_for_scenario]
+                    scenario_cols = [self.find_multiindex_col(
+                        df.columns, col) for col in cols_for_scenario]
 
-                if d == 0:
-                    # Remove these columns from this scenario.
-                    df_any = df.copy().drop(cols_for_scenario, axis='columns')
-                    dfs_to_merge['any'] = df_any
-                else:
-                    pass
+                    if d == 0:
+                        # Remove these columns from this scenario.
+                        df_any = df.copy().drop(cols_for_scenario, axis='columns')
+                        dfs_to_merge['any'] = df_any
+                    else:
+                        pass
 
-                # Remove columns for "any" scenario:
-                df = df[scenario_cols]
+                    # Remove columns for "any" scenario:
+                    df = df[scenario_cols]
 
             if add_use_column:
                 shared_col_is_list = ((type(shared_col_name) == list) | 
