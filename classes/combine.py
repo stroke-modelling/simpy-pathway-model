@@ -40,6 +40,7 @@ class Combine(object):
 
     def combine_files(self):
         self.combine_selected_units()
+        self.combine_selected_transfer()
         self.combine_selected_lsoa()
         self.combine_selected_regions()
         self.combine_results_summary_by_lsoa()
@@ -54,28 +55,28 @@ class Combine(object):
         Combine selected units.
 
         Each file input:
-        +------+-----+---------------+-----------------+
-        | Unit | ... | transfer_unit | transfer_coords |    property
-        +------+-----+---------------+-----------------+
-        |    1 | ... |             2 |  -x.xx, yy.yy   |
-        |    2 | ... |             2 |  -x.xx, yy.yy   |
-        |    3 | ... |             2 |  -x.xx, yy.yy   |
-        |  ... | ... |           ... |       ...       |
-        |    n | ... |             4 |  -x.xx, yy.yy   |
-        +------+-----+---------------+-----------------+
+        +------+-----+---------+--------------+
+        | Unit | ... | Use_IVT |    coords    |   property
+        +------+-----+---------+--------------+
+        |    1 | ... |       1 | -x.xx, yy.yy |
+        |    2 | ... |       1 | -x.xx, yy.yy |
+        |    3 | ... |       1 | -x.xx, yy.yy |
+        |  ... | ... |     ... |      ...     |
+        |    n | ... |       0 | -x.xx, yy.yy |
+        +------+-----+---------+--------------+
 
         Resulting DataFrame:
-                     +---------------------+---------------------+
-                     |     scenario_1      |     scenario_2      |    scenario
-        +------+-----+-----+---------------+-----+---------------+
-        | Unit | ... | Use | transfer unit | Use | transfer unit |    property
-        +------+-----+-----+---------------+-----+---------------+
-        |    1 | ... |   1 |             2 |   0 |               |
-        |    2 | ... |   1 |             2 |   0 |               |
-        |    3 | ... |   1 |             2 |   1 |             4 |
-        |  ... | ... | ... |           ... | ... |           ... |
-        |    n | ... |   0 |               |   1 |             4 |
-        +------+-----+-----+---------------+-----+---------------+
+                                    +------------+------------+
+                                    | scenario_1 | scenario_2 |    scenario
+        +------+-----+--------------+------------+------------+
+        | Unit | ... |    coords    |   Use_IVT  |   Use_IVT  |    property
+        +------+-----+--------------+------------+------------+
+        |    1 | ... | -x.xx, yy.yy |          1 |          0 |
+        |    2 | ... | -x.xx, yy.yy |          1 |          0 |
+        |    3 | ... | -x.xx, yy.yy |          1 |          1 |
+        |  ... | ... |      ...     |        ... |        ... |
+        |    n | ... | -x.xx, yy.yy |            |          1 |
+        +------+-----+--------------+------------+------------+
         """
         file_to_merge = self.setup.file_selected_stroke_units
 
@@ -105,6 +106,56 @@ class Combine(object):
         if save_to_file:
             output_dir = self.setup.dir_output_all_runs
             output_filename = self.setup.file_combined_selected_stroke_units
+            path_to_file = os.path.join(output_dir, output_filename)
+            df.to_csv(path_to_file)#, index=False)
+
+    def combine_selected_transfer(self, save_to_file=True):
+        """
+        Combine selected units.
+
+        Each file input:
+        +------+-----+---------------+-----------------+
+        | Unit | ... | transfer_unit | transfer_coords |    property
+        +------+-----+---------------+-----------------+
+        |    1 | ... |             2 |  -x.xx, yy.yy   |
+        |    2 | ... |             2 |  -x.xx, yy.yy   |
+        |    3 | ... |             2 |  -x.xx, yy.yy   |
+        |  ... | ... |           ... |       ...       |
+        |    n | ... |             4 |  -x.xx, yy.yy   |
+        +------+-----+---------------+-----------------+
+
+        Resulting DataFrame:
+                               +------------+------------+
+                               | scenario_1 | scenario_2 |    scenario
+        +------+---------------+------------+------------+
+        | Unit | transfer_unit |        Use |        Use |    property
+        +------+---------------+------------+------------+
+        |    1 |             1 |          1 |          0 |
+        |    2 |             1 |          1 |          0 |
+        |    3 |             1 |          1 |          1 |
+        |  ... |           ... |        ... |        ... |
+        |    1 |             9 |          0 |          1 |
+        +------+---------------+------------+------------+
+        """
+        file_to_merge = self.setup.file_selected_transfer_units
+
+        try:
+            # Merge the separate files based on combo of unit and
+            # transfer unit, two indexes.
+            df = self._hstack_multiple_dataframes(
+                file_to_merge,
+                add_use_column=True,
+                extra_cols_for_index=['name_nearest_MT'])
+        except FileNotFoundError:
+            # TO DO - set up proper error message ----------------------------------
+            pass
+
+        # Rename the MultiIndex column names:
+        df.columns = df.columns.set_names(['scenario', 'property'])
+
+        if save_to_file:
+            output_dir = self.setup.dir_output_all_runs
+            output_filename = self.setup.file_combined_selected_transfer_units
             path_to_file = os.path.join(output_dir, output_filename)
             df.to_csv(path_to_file)#, index=False)
 
@@ -195,6 +246,8 @@ class Combine(object):
 
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
+        # Replace missing values with 0:
+        df = df.fillna(value=0)
 
         if save_to_file:
             output_dir = self.setup.dir_output_all_runs
@@ -382,8 +435,13 @@ class Combine(object):
         return df
 
     def _hstack_multiple_dataframes(
-            self, file_to_merge, csv_header=None, add_use_column=False,
-            cols_for_scenario=[]):
+            self,
+            file_to_merge,
+            csv_header=None,
+            add_use_column=False,
+            cols_for_scenario=[],
+            extra_cols_for_index=[]
+            ):
         """
         # Combine multiple DataFrames from different scenarios into here.
         # Stacks all DataFrames one on top of the other with no other
@@ -427,6 +485,11 @@ class Combine(object):
                 # Specify header to import as a multiindex DataFrame.
                 df = pd.read_csv(path_to_file, header=csv_header, index_col=0)
 
+            if len(extra_cols_for_index) > 0:
+                index_col = df.index.name
+                df = df.reset_index()
+                df = df.set_index([index_col] + extra_cols_for_index)
+
             if len(dfs_to_merge.items()) < 1:
                 shared_col_name = df.index.name#columns[0]
                 # dfs_to_merge['any'] = df[shared_col_name]
@@ -434,7 +497,7 @@ class Combine(object):
             # Create a name for this scenario:
             scenario_name = os.path.split(dir_output)[-1]
 
-            split_for_any = True if ((len(cols_for_scenario) > 0) & (len(cols_for_scenario) != (len(df.columns) - 1))) else False
+            split_for_any = True if ((len(cols_for_scenario) != (len(df.columns) - 1))) else False
             if split_for_any:
                 # Find the names of these columns in this df.
                 # (so can specify one level of multiindex only).
@@ -464,7 +527,6 @@ class Combine(object):
 
             dfs_to_merge[scenario_name] = df
 
-        # print(dfs_to_merge)
         # Can't concat without index columns.
         data = pd.concat(
             dfs_to_merge.values(),
@@ -482,22 +544,9 @@ class Combine(object):
         except ValueError:
             # No 'any' columns yet.
             pass
-        # # TO DO - more stuff to "any" -----------------------------------------------------
-        # # Copy index information to its own column with 'any' scenario:
-        # if isinstance(shared_col_name, str):
-        #     any_col = ('any', shared_col_name)
-        # else:
-        #     any_col = ('any', *shared_col_name)
-        # data.insert(0, any_col, data.index)
 
-        # # Sort rows by contents of 'any' column:
-        # data = data.sort_values(any_col)
         # Sort rows by contents of index:
         data = data.sort_index()
-
-        # # TO DO - only want the following lines for columns that should be bool ---------------
-        # # Replace missing values with 0 in the region columns:
-        # data = data.fillna(value=0)
 
         # Did have dtype float/str from missing values, now want int:
         data = data.convert_dtypes()

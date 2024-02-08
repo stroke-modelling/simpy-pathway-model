@@ -52,6 +52,7 @@ class Setup(object):
         self.file_national_transfer_units = 'national_transfer_units.csv'
         # Scenario():
         self.file_selected_stroke_units = 'selected_stroke_units.csv'
+        self.file_selected_transfer_units = 'selected_transfer_units.csv'
         self.file_selected_lsoas = 'selected_lsoas.csv'
         self.file_selected_regions = 'selected_regions.csv'
         # Model():
@@ -64,6 +65,8 @@ class Setup(object):
         # Combined:
         self.file_combined_selected_stroke_units = (
             'combined_selected_stroke_units.csv')
+        self.file_combined_selected_transfer_units = (
+            'combined_selected_transfer_units.csv')
         self.file_combined_selected_lsoas = 'combined_selected_lsoas.csv'
         self.file_combined_selected_regions = 'combined_selected_regions.csv'
         self.file_combined_results_summary_by_admitting_unit = (

@@ -146,9 +146,11 @@ class Model(object):
         # then take only their means and standard deviations.
         self.results_summary_by_admitting_unit = self.results_all.copy().groupby(
             by='closest_ivt_unit')[aggregate_cols].agg(['mean', 'std'])
-        self.results_summary_by_admitting_unit = self.results_summary_by_admitting_unit.reset_index()
+        # self.results_summary_by_admitting_unit = self.results_summary_by_admitting_unit.reset_index()
         # Rename the MultiIndex column names:
         self.results_summary_by_admitting_unit.columns = self.results_summary_by_admitting_unit.columns.set_names(['property', 'subtype'])
+        # Set LSOA as index:
+        # self.results_summary_by_admitting_unit.set_index(self.results_summary_by_admitting_unit.columns[0], inplace=True)
 
         # Save output to output folder.
         dir_output = self.setup.dir_output
@@ -161,9 +163,11 @@ class Model(object):
         # then take only their means and standard deviations.
         self.results_summary_by_lsoa = self.results_all.copy().groupby(
             by='lsoa')[aggregate_cols].agg(['mean', 'std'])
-        self.results_summary_by_lsoa = self.results_summary_by_lsoa.reset_index()
+        # self.results_summary_by_lsoa = self.results_summary_by_lsoa.reset_index()
         # Rename the MultiIndex column names:
         self.results_summary_by_lsoa.columns = self.results_summary_by_lsoa.columns.set_names(['property', 'subtype'])
+        # Set LSOA as index:
+        # self.results_summary_by_lsoa.set_index(self.results_summary_by_lsoa.columns[0], inplace=True)
 
         # Save output to output folder.
         dir_output = self.setup.dir_output

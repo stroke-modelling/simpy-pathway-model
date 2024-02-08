@@ -246,6 +246,8 @@ class Scenario(object):
         # Stores:
         # + self.hospitals
         #   --> saves to: file_selected_stroke_units
+        self._load_transfer_units()
+        # WRITE ME TO DO
 
         # Find which LSOAs are in these stroke teams' catchment areas:
         self._load_lsoa_names()
@@ -375,30 +377,6 @@ class Scenario(object):
             # Use the full "hospitals" data.
             pass
 
-        # Merge in transfer unit names.
-        # Load and parse hospital transfer data
-        dir_input = self.setup.dir_output
-        file_input = self.setup.file_national_transfer_units
-        path_to_file = os.path.join(dir_input, file_input)
-        transfer = pd.read_csv(path_to_file)
-
-        transfer = transfer.drop(['time_nearest_MT'], axis='columns')
-        # Merge in the transfer unit coordinates:
-        transfer = pd.merge(
-            transfer, hospital_coords,
-            left_on='name_nearest_MT', right_on='Postcode',
-            how='left', suffixes=('_mt', None)
-            )
-
-        hospitals = pd.merge(
-            hospitals,
-            transfer,
-            left_on='Postcode',
-            right_on='from_postcode',
-            how='left', suffixes=(None, '_mt')
-        )
-        # TO DO - tidy up the excess columns in hospitals ---------------------------
-
         hospitals = hospitals.set_index('Postcode')
         self.hospitals = hospitals
 
@@ -407,6 +385,46 @@ class Scenario(object):
         file_name = self.setup.file_selected_stroke_units
         path_to_file = os.path.join(dir_output, file_name)
         hospitals.to_csv(path_to_file)
+
+    def _load_transfer_units(self):
+
+        # Merge in transfer unit names.
+        # Load and parse hospital transfer data
+        dir_input = self.setup.dir_output
+        file_input = self.setup.file_national_transfer_units
+        path_to_file = os.path.join(dir_input, file_input)
+        transfer = pd.read_csv(path_to_file, index_col=0)
+
+        # Keep a copy of the coordinates:
+        hospital_coords = self.hospitals.copy()
+        hospital_coords = hospital_coords[[
+            'Easting', 'Northing', 'long', 'lat']]
+
+        transfer = transfer.drop(['time_nearest_MT'], axis='columns')
+        # Merge in the transfer unit coordinates:
+        transfer = pd.merge(
+            transfer, hospital_coords,
+            left_on='name_nearest_MT', right_index=True,
+            how='left', suffixes=('_mt', None)
+            )
+
+        transfer_hospitals = pd.merge(
+            hospital_coords,
+            transfer,
+            left_index=True,
+            right_index=True,
+            how='left', suffixes=(None, '_mt')
+        )
+        # TO DO - tidy up the excess columns in hospitals ---------------------------
+
+        # transfer_hospitals = transfer_hospitals.set_index('Postcode')
+        self.transfer_hospitals = transfer_hospitals
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_selected_transfer_units
+        path_to_file = os.path.join(dir_output, file_name)
+        transfer_hospitals.to_csv(path_to_file)
 
     def _load_lsoa_names(self):
         """
@@ -495,7 +513,7 @@ class Scenario(object):
         # + time_nearest_MSU
         # + postcode_nearest_MSU
         # + ssnap_name_nearest_MSU
-    
+
         # Limit the big DataFrame to just the LSOAs wanted:
         df_travel = pd.merge(
             df_regions,
