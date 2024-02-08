@@ -94,66 +94,84 @@ class Map(object):
         """
         Load in data specific to these runs.
         """
+        # Setup for combined files:
+        dicts_combo = {
+            'df_units': {
+                'file': self.setup.file_combined_selected_stroke_units,
+                'header': [0, 1],
+                'index_col': 0,
+                },
+            'df_lsoa': {
+                'file': self.setup.file_combined_selected_lsoas,
+                'header': [0, 1],
+                'index_col': 0,
+                },
+            'df_regions': {
+                'file': self.setup.file_combined_selected_regions,
+                'header': [0, 1],
+                'index_col': 0,
+                },
+            'df_results_by_unit': {
+                'file': (
+                    self.setup.file_combined_results_summary_by_admitting_unit
+                    ),
+                'header': [0, 1, 2],
+                'index_col': 0,
+                },
+            'df_results_by_lsoa': {
+                'file': self.setup.file_combined_results_summary_by_lsoa,
+                'header': [0, 1, 2],
+                'index_col': 0,
+                },
+        }
+        # Setup for individual run's files:
+        dicts_single = {
+            'df_units': {
+                'file': self.setup.file_selected_stroke_units,
+                'header': [0],
+                'index_col': 0,
+                },
+            'df_lsoa': {
+                'file': self.setup.file_selected_lsoas,
+                'header': [0],
+                'index_col': 0,
+                },
+            'df_regions': {
+                'file': self.setup.file_selected_regions,
+                'header': [0],
+                'index_col': 0,
+                },
+            'df_results_by_unit': {
+                'file': (
+                    self.setup.file_results_summary_by_admitting_unit
+                    ),
+                'header': [0, 1],
+                'index_col': 0,
+                },
+            'df_results_by_lsoa': {
+                'file': self.setup.file_results_summary_by_lsoa,
+                'header': [0, 1],
+                'index_col': 0,
+                },
+        }
         if dir_data is None:
             # Use combined data files.
             dir_data = self.setup.dir_output_all_runs
-            dicts_data = {
-                'df_units': {
-                    'file': self.setup.file_combined_selected_stroke_units,
-                    'header': [0, 1]
-                    },
-                'df_lsoa': {
-                    'file': self.setup.file_combined_selected_lsoas,
-                    'header': [0, 1]
-                    },
-                'df_regions': {
-                    'file': self.setup.file_combined_selected_regions,
-                    'header': [0, 1]
-                    },
-                'df_results_by_unit': {
-                    'file': (
-                        self.setup.file_combined_results_summary_by_admitting_unit
-                        ),
-                    'header': [0, 1, 2]
-                    },
-                'df_results_by_lsoa': {
-                    'file': self.setup.file_combined_results_summary_by_lsoa,
-                    'header': [0, 1, 2]
-                    },
-            }
+            dicts_data = dicts_combo
         else:
             # Use files for the selected scenario only.
-            dicts_data = {
-                'df_units': {
-                    'file': self.setup.file_selected_stroke_units,
-                    'header': [0]
-                    },
-                'df_lsoa': {
-                    'file': self.setup.file_selected_lsoas,
-                    'header': [0]
-                    },
-                'df_regions': {
-                    'file': self.setup.file_selected_regions,
-                    'header': [0]
-                    },
-                'df_results_by_unit': {
-                    'file': (
-                        self.setup.file_results_summary_by_admitting_unit
-                        ),
-                    'header': [0, 1]
-                    },
-                'df_results_by_lsoa': {
-                    'file': self.setup.file_results_summary_by_lsoa,
-                    'header': [0, 1]
-                    },
-            }
+            dicts_data = dicts_single
 
         for label, data_dict in dicts_data.items():
             # Make path to file:
             path_to_file = os.path.join(dir_data, data_dict['file'])
             try:
                 # Specify header to import as a multiindex DataFrame.
-                df = pd.read_csv(path_to_file, header=data_dict['header'])
+                df = pd.read_csv(
+                    path_to_file,
+                    header=data_dict['header'],
+                    index_col=data_dict['index_col']
+                    )
                 # Save to self:
                 setattr(self, label, df)
             except FileNotFoundError:
@@ -201,7 +219,8 @@ class Map(object):
         dir_input = self.setup.dir_data_geojson
         file_input = geojson_file_dict[region_type]
         path_to_file = os.path.join(dir_input, file_input)
-        gdf_boundaries = geopandas.read_file(path_to_file)
+        gdf_boundaries = geopandas.read_file(
+            path_to_file, index_col=region_type)
         # If crs is given in the file, geopandas automatically
         # pulls it through. Convert to National Grid coordinates:
         if gdf_boundaries.crs != 'EPSG:27700':
@@ -221,9 +240,12 @@ class Map(object):
         Create GeoDataFrames of new geometry and existing DataFrames.
         """
         # Selected LSOA names, codes, coordinates.
-        # ['LSOA11NM', 'LSOA11CD', 'LSOA11BNG_N', 'LSOA11BNG_E',
-        #  'LSOA11LONG', 'LSOA11LAT']
+        # ['LSOA11NM', 'LSOA11CD', '']
         df_lsoa = self.df_lsoa
+        # Index column: LSOA11NM.
+        # Expected column MultiIndex levels: 
+        #   - combined: ['scenario', 'property']
+        #   - separate: ['{unnamed level}']
         # How many MultiIndex column levels are there?
         n_levels = df_lsoa.columns.nlevels
         match_col_lsoa = self.find_multiindex_col(
@@ -259,7 +281,7 @@ class Map(object):
                     df_lsoa_results.columns, 'lsoa')
             elif n_levels < n_levels_results:
                 n_levels = n_levels_results
-                
+
                 print(df_lsoa)
                 df_lsoa = self.make_more_column_rows(
                     df_lsoa,
@@ -286,6 +308,7 @@ class Map(object):
 
         # All LSOA shapes:
         gdf_boundaries_lsoa = self.import_geojson('LSOA11NM')
+        # Index column: LSOA11NM.
         n_levels_boundaries = gdf_boundaries_lsoa.columns.nlevels
         match_col_boundaries = self.find_multiindex_col(
             gdf_boundaries_lsoa.columns, 'LSOA11NM')
@@ -482,7 +505,7 @@ class Map(object):
             df_units.columns, 'Easting')
         match_col_north = self.find_multiindex_col(
             df_units.columns, 'Northing')
-        
+
         # Create coordinates:
         # Current setup means sometimes these columns have different names.
         # TO DO - fix that please! ---------------------------------------------------
