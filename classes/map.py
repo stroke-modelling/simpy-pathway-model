@@ -101,6 +101,11 @@ class Map(object):
                 'header': [0, 1],
                 'index_col': 0,
                 },
+            'df_transfer': {
+                'file': self.setup.file_combined_selected_transfer_units,
+                'header': [0, 1],
+                'index_col': [0, 1],
+                },
             'df_lsoa': {
                 'file': self.setup.file_combined_selected_lsoas,
                 'header': [0, 1],
@@ -130,6 +135,11 @@ class Map(object):
                 'file': self.setup.file_selected_stroke_units,
                 'header': [0],
                 'index_col': 0,
+                },
+            'df_transfer': {
+                'file': self.setup.file_selected_transfer_units,
+                'header': [0],
+                'index_col': [0, 'name_nearest_MT'],
                 },
             'df_lsoa': {
                 'file': self.setup.file_selected_lsoas,
@@ -421,8 +431,15 @@ class Map(object):
         df_units = self.df_units
         # Convert to geometry (point):
         self.gdf_points_units = self.make_gdf_selected_stroke_unit_coords(df_units)
+
+    def load_geometry_transfer_units(self):
+        """
+        Create GeoDataFrames of new geometry and existing DataFrames.
+        """
+        # Selected stroke units names, coordinates, and services.
+        df_transfer = self.df_transfer
         # Convert to geometry (line):
-        self.gdf_lines_transfer = self.make_gdf_lines_to_transfer_units(df_units)
+        self.gdf_lines_transfer = self.make_gdf_lines_to_transfer_units(df_transfer)
 
     # ############################
     # ##### HELPER FUNCTIONS #####
