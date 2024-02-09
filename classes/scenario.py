@@ -238,7 +238,8 @@ class Scenario(object):
         # ##### NATIONAL UNITS #####
         units = Units({
             'services_updates': self.services_updates,
-            'setup': self.setup
+            'setup': self.setup,
+            'destination_decision_type': self.destination_decision_type
             })
         self.national_dict = units.load_data()
 

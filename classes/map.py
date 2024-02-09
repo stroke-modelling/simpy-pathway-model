@@ -1012,9 +1012,39 @@ class Map(object):
 
         """
         if self.data_type == 'combined':
+            try:
+                gdf_boundaries_lsoa = self.gdf_boundaries_lsoa
+            except KeyError:
+                # The scenario isn't in the Data.
+                # TO DO - proper error message here
+                print('oh no')
+                raise KeyError('Scenario is missing.') from None
+
+            # Find shared outcome limits.
+            # Take only scenarios containing 'diff':
+            mask = (
+                (gdf_boundaries_lsoa.columns.get_level_values(0).str.contains('diff'))
+            )
+            if 'diff' in outcome:
+                pass
+            else:
+                # Take the opposite condition, take only scenarios
+                # not containing 'diff'.
+                mask = ~mask
+
+            mask = (
+                mask &
+                (gdf_boundaries_lsoa.columns.get_level_values(2) == 'mean') &
+                (gdf_boundaries_lsoa.columns.get_level_values(1) == outcome)
+            )
+            all_mean_vals = gdf_boundaries_lsoa.iloc[:, mask]
+            vlim_abs = all_mean_vals.abs().max().values[0]
+            vmax = all_mean_vals.max().values[0]
+            vmin = all_mean_vals.min().values[0]
+
             # Remove excess scenario data:
             try:
-                gdf_boundaries_lsoa = self.gdf_boundaries_lsoa[['any', scenario]]
+                gdf_boundaries_lsoa = gdf_boundaries_lsoa[['any', scenario]]
                 gdf_boundaries_regions = self.gdf_boundaries_regions[['any', scenario]]
                 gdf_points_units = self.gdf_points_units[['any', scenario]]
                 gdf_lines_transfer = self.gdf_lines_transfer[['any', scenario]]
@@ -1027,15 +1057,6 @@ class Map(object):
                 print('oh no')
                 raise KeyError('Scenario is missing.') from None
 
-            # Find shared outcome limits:
-            mask = (
-                (gdf_boundaries_lsoa.columns.get_level_values(2) == 'mean') &
-                (gdf_boundaries_lsoa.columns.get_level_values(1) == outcome)
-            )
-            all_mean_vals = gdf_boundaries_lsoa.iloc[:, mask]
-            vlim_abs = all_mean_vals.abs().max().values[0]
-            vmax = all_mean_vals.max().values[0]
-            vmin = all_mean_vals.min().values[0]
 
             # Remove the "std" columns.
             gdf_boundaries_lsoa = gdf_boundaries_lsoa.drop(

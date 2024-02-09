@@ -91,7 +91,9 @@ def scatter_ivt_units(ax, gdf):
     ax - pyplot axis. Same as input but with scatter markers.
     """
     # Scatter marker for each hospital:
-    gdf.plot(
+    mask = gdf['Use_IVT'] == 1
+    IVT = gdf[mask]
+    IVT.plot(
         ax=ax,
         edgecolor='k',
         facecolor='w',
@@ -171,7 +173,9 @@ def plot_lines_between_units(ax, gdf):
     ax - pyplot axis. Same as input but with scatter markers.
     """
     # Draw a line connecting each unit to its MT unit.
-    gdf.plot(
+    mask = gdf['Use'] == 1
+    lines = gdf[mask]
+    lines.plot(
         ax=ax,
         edgecolor='k',
         linestyle='-',
@@ -284,6 +288,11 @@ def plot_map_selected_units(
     ax = scatter_mt_units(ax, gdf_points_units)
     ax = scatter_msu_units(ax, gdf_points_units)
     ax = plot_lines_between_units(ax, gdf_lines_transfer)
+
+    # Keep track of which units to label in here:
+    gdf_points_units['labels_mask'] = False
+    gdf_points_units.loc[
+        gdf_points_units['Use'] == 1, 'labels_mask'] = True
     ax = annotate_unit_labels(ax, gdf_points_units)
 
     ax.set_axis_off()  # Turn off axis line and numbers
@@ -378,11 +387,7 @@ def plot_map_catchment(
     # Keep track of which units to label in here:
     gdf_points_units['labels_mask'] = False
     gdf_points_units.loc[
-        gdf_points_units['Use_IVT'] == 1, 'labels_mask'] = True
-    gdf_points_units.loc[
-        gdf_points_units['Use_MT'] == 1, 'labels_mask'] = True
-    gdf_points_units.loc[
-        gdf_points_units['Use_MSU'] == 1, 'labels_mask'] = True
+        gdf_points_units['Use'] == 1, 'labels_mask'] = True
 
     # Transfer unit lines.
     ax = plot_lines_between_units(ax, gdf_lines_transfer)
@@ -483,11 +488,7 @@ def plot_map_outcome(
     # Keep track of which units to label in here:
     gdf_points_units['labels_mask'] = False
     gdf_points_units.loc[
-        gdf_points_units['Use_IVT'] == 1, 'labels_mask'] = True
-    gdf_points_units.loc[
-        gdf_points_units['Use_MT'] == 1, 'labels_mask'] = True
-    gdf_points_units.loc[
-        gdf_points_units['Use_MSU'] == 1, 'labels_mask'] = True
+        gdf_points_units['Use'] == 1, 'labels_mask'] = True
 
     # # Stroke unit labels.
     # ax = annotate_unit_labels(ax, gdf_points_units)
