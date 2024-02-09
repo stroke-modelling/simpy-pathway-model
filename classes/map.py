@@ -174,7 +174,7 @@ class Map(object):
         }
         if dir_data is None:
             # Use combined data files.
-            dir_data = self.setup.dir_output_all_runs
+            dir_data = self.setup.dir_output_combined
             dicts_data = dicts_combo
             self.data_type = 'combined'
         else:
@@ -841,7 +841,11 @@ class Map(object):
     # ####################
     # ##### PLOTTING #####
     # ####################
-    def plot_map_selected_units(self, scenario='', save=True):
+    def plot_map_selected_units(
+            self,
+            scenario: str,
+            save=True
+            ):
         """
 
         """
@@ -882,20 +886,19 @@ class Map(object):
 
         if save:
             dir_output = ''
-            try:
-                for d in self.setup.list_dir_output:
-                    end = os.path.split(d)[-1]
-                    if end == scenario:
-                        dir_output = d
-            except AttributeError:
-                # Setup is not defined.
-                pass
+            if self.data_type == 'combined':
+                dir_output = self.setup.dir_output_combined
+            else:
+                try:
+                    for d in self.setup.list_dir_output:
+                        end = os.path.split(d)[-1]
+                        if end == scenario:
+                            dir_output = d
+                except AttributeError:
+                    # Setup is not defined.
+                    pass
 
-            try:
-                file_name = self.setup.file_selected_units_map
-            except AttributeError:
-                # Setup is not defined.
-                file_name = f'map_selected_units_{scenario}.jpg'
+            file_name = f'map_selected_units_{scenario}.jpg'
 
             path_to_file = os.path.join(dir_output, file_name)
             plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
@@ -903,7 +906,12 @@ class Map(object):
         else:
             plt.show()
 
-    def plot_map_catchment(self, scenario='', boundary_kwargs={}, save=True):
+    def plot_map_catchment(
+            self,
+            scenario: str,
+            boundary_kwargs={},
+            save=True
+            ):
         """
 
         """
@@ -931,7 +939,7 @@ class Map(object):
                 0, axis='columns')
             gdf_lines_transfer = gdf_lines_transfer.droplevel(
                 0, axis='columns')
-            
+
             # TO DO - FUCNTION THIS PLEASE
             # The geometry column is still defined with the excess
             # heading, so update which column is geometry:
@@ -972,20 +980,173 @@ class Map(object):
 
         if save:
             dir_output = ''
-            try:
-                for d in self.setup.list_dir_output:
-                    end = os.path.split(d)[-1]
-                    if end == scenario:
-                        dir_output = d
-            except AttributeError:
-                # Setup is not defined.
-                pass
+            if self.data_type == 'combined':
+                dir_output = self.setup.dir_output_combined
+            else:
+                try:
+                    for d in self.setup.list_dir_output:
+                        end = os.path.split(d)[-1]
+                        if end == scenario:
+                            dir_output = d
+                except AttributeError:
+                    # Setup is not defined.
+                    pass
 
+            file_name = f'map_catchment_{scenario}.jpg'
+
+            path_to_file = os.path.join(dir_output, file_name)
+            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
+            plt.close()
+        else:
+            plt.show()
+
+    def plot_map_outcome(
+            self,
+            scenario: str,
+            outcome: str,
+            boundary_kwargs={},
+            save=True,
+            cbar_diff=False
+            ):
+        """
+
+        """
+        if self.data_type == 'combined':
+            # Remove excess scenario data:
             try:
-                file_name = self.setup.file_catchment_map
-            except AttributeError:
-                # Setup is not defined.
-                file_name = f'map_catchment_{scenario}.jpg'
+                gdf_boundaries_lsoa = self.gdf_boundaries_lsoa[['any', scenario]]
+                gdf_boundaries_regions = self.gdf_boundaries_regions[['any', scenario]]
+                gdf_points_units = self.gdf_points_units[['any', scenario]]
+                gdf_lines_transfer = self.gdf_lines_transfer[['any', scenario]]
+
+                # Could do with a "Use" column in the other dfs. TO DO ----------------
+                # Or a "diff this minus that" column for use. ------------------------
+            except KeyError:
+                # The scenario isn't in the Data.
+                # TO DO - proper error message here
+                print('oh no')
+                raise KeyError('Scenario is missing.') from None
+
+            # Find shared outcome limits:
+            mask = (
+                (gdf_boundaries_lsoa.columns.get_level_values(2) == 'mean') &
+                (gdf_boundaries_lsoa.columns.get_level_values(1) == outcome)
+            )
+            all_mean_vals = gdf_boundaries_lsoa.iloc[:, mask]
+            vlim_abs = all_mean_vals.abs().max().values[0]
+            vmax = all_mean_vals.max().values[0]
+            vmin = all_mean_vals.min().values[0]
+
+            # Remove the "std" columns.
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.drop(
+                gdf_boundaries_lsoa.iloc[:, (gdf_boundaries_lsoa.columns.get_level_values(2) == 'std')].columns,
+                axis='columns'
+            )
+
+            # Remove the excess column headings:
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.droplevel(
+                0, axis='columns')
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.droplevel(
+                1, axis='columns')
+            gdf_boundaries_regions = gdf_boundaries_regions.droplevel(
+                0, axis='columns')
+            gdf_points_units = gdf_points_units.droplevel(
+                0, axis='columns')
+            gdf_lines_transfer = gdf_lines_transfer.droplevel(
+                0, axis='columns')
+
+            # TO DO - FUCNTION THIS PLEASE
+            # The geometry column is still defined with the excess
+            # heading, so update which column is geometry:
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_geometry('geometry')
+            gdf_boundaries_regions = gdf_boundaries_regions.set_geometry('geometry')
+            gdf_points_units = gdf_points_units.set_geometry('geometry')
+            gdf_lines_transfer = gdf_lines_transfer.set_geometry('geometry')
+
+        else:
+            gdf_boundaries_lsoa = self.gdf_boundaries_lsoa
+            gdf_boundaries_regions = self.gdf_boundaries_regions
+            gdf_points_units = self.gdf_points_units
+            gdf_lines_transfer = self.gdf_lines_transfer
+
+            # Find the colour limits.
+            mask = (
+                (gdf_boundaries_lsoa.columns.get_level_values(1) == 'mean') &
+                (gdf_boundaries_lsoa.columns.get_level_values(0) == outcome)
+            )
+            mean_vals = gdf_boundaries_lsoa.iloc[:, mask]
+            vlim_abs = mean_vals.abs().max().values[0]
+            vmax = mean_vals.max().values[0]
+            vmin = mean_vals.min().values[0]
+
+            # Remove the "std" columns.
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.drop(
+                gdf_boundaries_lsoa.iloc[:, (gdf_boundaries_lsoa.columns.get_level_values(1) == 'std')].columns,
+                axis='columns'
+            )
+
+            # Remove the excess column headings:
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.droplevel(
+                1, axis='columns')
+
+            # The geometry column is still defined with the excess
+            # heading, so update which column is geometry:
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_geometry('geometry')
+
+        lsoa_boundary_kwargs = {
+            'column': outcome,
+            'edgecolor': 'face',
+            # Adjust size of colourmap key, and add label
+            'legend_kwds': {
+                'shrink': 0.5,
+                'label': outcome
+                },
+            # Set to display legend
+            'legend': True,
+            }
+
+        if cbar_diff:
+            lsoa_boundary_kwargs['cmap'] = 'seismic'
+            lsoa_boundary_kwargs['vmin'] = -vlim_abs
+            lsoa_boundary_kwargs['vmax'] = vlim_abs
+        else:
+            cmap = 'plasma'
+            if outcome == 'mRS shift':
+                # Reverse the colourmap because lower values
+                # are better for this outcome.
+                cmap += '_r'
+            lsoa_boundary_kwargs['cmap'] = cmap
+            lsoa_boundary_kwargs['vmin'] = vmin
+            lsoa_boundary_kwargs['vmax'] = vmax
+        # Update this with anything from the input dict:
+        lsoa_boundary_kwargs = lsoa_boundary_kwargs | boundary_kwargs
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.set_title(f'{scenario}: {outcome}')
+
+        ax = maps.plot_map_outcome(
+            gdf_boundaries_lsoa,
+            gdf_boundaries_regions,
+            gdf_points_units,
+            ax=ax,
+            boundary_kwargs=lsoa_boundary_kwargs
+        )
+
+        if save:
+            dir_output = ''
+            if self.data_type == 'combined':
+                dir_output = self.setup.dir_output_combined
+            else:
+                try:
+                    for d in self.setup.list_dir_output:
+                        end = os.path.split(d)[-1]
+                        if end == scenario:
+                            dir_output = d
+                except AttributeError:
+                    # Setup is not defined.
+                    pass
+
+            file_name = f'map_{outcome}_{scenario}.jpg'
 
             path_to_file = os.path.join(dir_output, file_name)
             plt.savefig(path_to_file, dpi=300, bbox_inches='tight')

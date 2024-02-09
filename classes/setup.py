@@ -19,10 +19,11 @@ class Setup(object):
         # Directories:
         # (don't include slashes please)
         self.dir_data = 'data'
-        self.dir_output_this_setup = 'output'
-        self.dir_output_all_runs = 'output'
-        self.dir_output = 'run'
         self.dir_data_geojson = 'data_geojson'
+        self.dir_output_this_setup = 'output'
+        self.dir_output_all_runs = 'output_group'
+        self.dir_output_combined = 'combined'
+        self.dir_output = 'run'
         # Keep a list of output directories, e.g. one directory for
         # each scenario:
         self.list_dir_output = []
@@ -73,14 +74,6 @@ class Setup(object):
             'combined_results_summary_by_admitting_unit.csv')
         self.file_combined_results_summary_by_lsoa = (
             'combined_results_summary_by_lsoa.csv')
-        # Map():
-        self.file_selected_units_map = 'map_selected_units.jpg'
-        self.file_drip_ship_map = 'map_catchment_dripship.jpg'
-        self.file_mothership_map = 'map_catchment_mothership.jpg'
-        self.file_msu_map = 'map_catchment_msu.jpg'
-        self.file_outcome_map_mrs_shift = 'map_outcome_mrs_shift.jpg'
-        self.file_outcome_map_utility_shift = 'map_outcome_utility_shift.jpg'
-        self.file_outcome_map_mrs_02 = 'map_outcome_mrs_02.jpg'
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
@@ -91,15 +84,23 @@ class Setup(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-        # TO DO - move the following to the create_output_dir for a subdir
-        # as currently it's annoying when loading in a setup from yml,
-        # a new top dir gets created unnecessarily --------------------------------
-        # Check if this top output directory exists,
-        # rename if necessary, then create the dictionary:
-        self.dir_output_all_runs = self.create_output_dir(
-            self.dir_output_all_runs, path_to_dir=self.dir_output_this_setup)
+        # Add a path to the top dir for this setup:
+        self.dir_output_all_runs = os.path.join(
+            self.dir_output_this_setup, self.dir_output_all_runs
+        )
+        self.create_new_top_dir = False
+        # Does this dir already exist?
+        if os.path.exists(self.dir_output_all_runs):
+            # Flag to create a new top dir.
+            self.create_new_top_dir = True
+        else:
+            # Don't need to change the name.
+            pass
 
-    def create_output_dir(self, dir_output, delim='!', path_to_dir=None):
+    def create_output_dir(
+            self, dir_output, delim='!', path_to_dir=None,
+            combined=False
+            ):
         """
         Create a directory for storing the output of this run.
 
@@ -161,6 +162,25 @@ class Setup(object):
             dir_output = f'{dir_start}{delim}{suffix}'
             return dir_output
 
+        # First, do we need to make a new top directory?
+        if self.create_new_top_dir:
+            # While the requested output folder already exists,
+            # add a suffix or increase its number until there's a new name.
+            dir_output_all_runs = self.dir_output_all_runs
+            dir_output_top = os.path.split(dir_output_all_runs)[-1]
+            while os.path.isdir(dir_output_all_runs):
+                dir_output_top = _iterate_dir_suffix(
+                    dir_output_top, delim)
+                dir_output_all_runs = os.path.join(
+                    self.dir_output_this_setup, dir_output_top)
+            self.dir_output_all_runs = dir_output_all_runs
+            # Create top directory:
+            os.mkdir(self.dir_output_all_runs)
+            # Update flag so this doesn't run again.
+            self.create_new_top_dir = False
+        else:
+            pass
+
         if path_to_dir is None:
             path_to_dir = self.dir_output_all_runs
             subdir = True
@@ -181,7 +201,11 @@ class Setup(object):
         # Create this directory:
         os.mkdir(dir_output_this_run)
 
-        if subdir:
+        if combined:
+            # Save to self
+            # (and so overwrite any name that was there before):
+            self.dir_output_combined = dir_output_this_run
+        elif subdir:
             # Add the output directory to the list:
             self.list_dir_output.append(dir_output_this_run)
             # Save to self

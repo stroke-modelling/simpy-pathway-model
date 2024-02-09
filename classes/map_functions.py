@@ -226,7 +226,7 @@ def annotate_unit_labels(ax, gdf):
 # ##### MAIN PLOTS #####
 # ######################
 def plot_map_selected_units(
-        gdf_boundaries_regions,
+        gdf_boundaries_regions,  # TO DO - make this optional?
         gdf_points_units,
         gdf_lines_transfer,
         ax=None
@@ -293,7 +293,7 @@ def plot_map_selected_units(
 
 def plot_map_catchment(
         gdf_boundaries_lsoa,
-        gdf_boundaries_regions,
+        gdf_boundaries_regions,  # TO DO - make this optional
         gdf_points_units,
         gdf_lines_transfer,
         ax=None,
@@ -395,7 +395,13 @@ def plot_map_catchment(
     return ax
 
 
-def plot_map_outcome(region_type='ICB22NM', outcome='mrs_shift', destination_type=0):
+def plot_map_outcome(
+        gdf_boundaries_lsoa,
+        gdf_boundaries_regions,  # TO DO - make this optional
+        gdf_points_units,
+        ax=None,
+        boundary_kwargs={}
+        ):
     """
     Map the selected units, containing regions, and catchment areas.
 
@@ -457,118 +463,35 @@ def plot_map_outcome(region_type='ICB22NM', outcome='mrs_shift', destination_typ
     + file_mothership_map
     + file_msu_map
     """
-    # ----- Plotting setup -----
-
-    data_dicts = {
-        'mrs_shift': {
-            'title': 'mRS shift',
-            'file': setup.file_outcome_map_mrs_shift,
-            'boundary_kwargs': {
-                'column': 'mRS shift',
-                'cmap': 'plasma',
-                'edgecolor': 'face',
-                # Adjust size of colourmap key, and add label
-                'legend_kwds': {
-                    'shrink': 0.5,
-                    'label': 'mRS shift'
-                    },
-                # Set to display legend
-                'legend': True
-                }
-            },
-        'utility_shift': {
-            'title': 'Utility shift',
-            'file': setup.file_outcome_map_utility_shift,
-            'boundary_kwargs': {
-                'column': 'utility_shift',
-                'cmap': 'plasma',
-                'edgecolor': 'face',
-                # Adjust size of colourmap key, and add label
-                'legend_kwds': {
-                    'shrink': 0.5,
-                    'label': 'Utility shift'
-                    },
-                # Set to display legend
-                'legend': True,
-                },
-            },
-        'mrs_02': {
-            'title': 'mRS 0-2',
-            'file': setup.file_outcome_map_mrs_02,
-            'boundary_kwargs': {
-                'column': 'mRS 0-2',
-                'cmap': 'plasma',
-                'edgecolor': 'face',
-                # Adjust size of colourmap key, and add label
-                'legend_kwds': {
-                    'shrink': 0.5,
-                    'label': 'mRS 0-2'
-                    },
-                # Set to display legend
-                'legend': True,
-                }
-            },
-    }
-
-    if destination_type == 0:
-        unit_dict = {
-            'scatter_ivt': True,
-            'scatter_mt': True,
-            'scatter_msu': False,
-        }
-    elif destination_type == 1:
-        unit_dict = {
-            'scatter_ivt': False,
-            'scatter_mt': True,
-            'scatter_msu': False,
-            }
-    else:
-        unit_dict = {
-            'scatter_ivt': False,
-            'scatter_mt': False,
-            'scatter_msu': True,
-            }
-
-    # ----- Actual plotting -----
-    for outcome, data_dict in zip(data_dicts.keys(), data_dicts.values()):
-        # Plot the map.
+    if ax is None:
         # Make max dimensions XxY inch:
         fig, ax = plt.subplots(figsize=(10, 10))
-        ax.set_title(data_dict['title'])
 
-        # LSOAs:
-        ax = draw_boundaries(
-            ax, gdf_boundaries_lsoa,
-            **data_dict['boundary_kwargs']
-            )
+    # LSOAs:
+    ax = draw_boundaries(
+        ax, gdf_boundaries_lsoa,
+        **boundary_kwargs
+        )
 
-        # Background regions:
-        ax = draw_boundaries_by_contents(ax, gdf_boundaries_regions)
+    # Background regions:
+    ax = draw_boundaries_by_contents(ax, gdf_boundaries_regions)
 
-        # Stroke unit markers.
-        # Keep track of which units to label in here:
-        gdf_points_units['labels_mask'] = False
-        if unit_dict['scatter_ivt']:
-            ax = scatter_ivt_units(ax, gdf_points_units)
-            gdf_points_units.loc[
-                gdf_points_units['Use_IVT'] == 1, 'labels_mask'] = True
-        if unit_dict['scatter_mt']:
-            ax = scatter_mt_units(ax, gdf_points_units)
-            gdf_points_units.loc[
-                gdf_points_units['Use_MT'] == 1, 'labels_mask'] = True
-        if unit_dict['scatter_msu']:
-            ax = scatter_msu_units(ax, gdf_points_units)
-            gdf_points_units.loc[
-                gdf_points_units['Use_MSU'] == 1, 'labels_mask'] = True
+    # Stroke unit markers.
+    ax = scatter_ivt_units(ax, gdf_points_units)
+    ax = scatter_mt_units(ax, gdf_points_units)
+    ax = scatter_msu_units(ax, gdf_points_units)
+    # Keep track of which units to label in here:
+    gdf_points_units['labels_mask'] = False
+    gdf_points_units.loc[
+        gdf_points_units['Use_IVT'] == 1, 'labels_mask'] = True
+    gdf_points_units.loc[
+        gdf_points_units['Use_MT'] == 1, 'labels_mask'] = True
+    gdf_points_units.loc[
+        gdf_points_units['Use_MSU'] == 1, 'labels_mask'] = True
 
-        # # Stroke unit labels.
-        # ax = annotate_unit_labels(ax, gdf_points_units)
+    # # Stroke unit labels.
+    # ax = annotate_unit_labels(ax, gdf_points_units)
 
-        ax.set_axis_off()  # Turn off axis line and numbers
+    ax.set_axis_off()  # Turn off axis line and numbers
 
-        # Save output to output folder.
-        dir_output = setup.dir_output
-        file_name = data_dict['file']
-        path_to_file = os.path.join(dir_output, file_name)
-        plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
-        plt.close()
+    return ax

@@ -146,6 +146,18 @@ class Units(object):
         # 'SSNAP name' (str), and 'Use_IVT', 'Use_MT', and 'Use_MSU'
         # (int | bool).
 
+        # If the model type is "mothership" or "MSU"
+        # then remove the IVT units.
+        # destination_decision_type = 0 is 'drip-and-ship'
+        if int(self.destination_decision_type) == 1:
+            mask = (services['Use_MT'] == 0)
+            services['Use_IVT'][mask] = 0
+        elif int(self.destination_decision_type) == 2:
+            # TO DO - this is temporary, might not want this in
+            # final MSU model:
+            mask = (services['Use_MSU'] == 0)
+            services['Use_IVT'][mask] = 0
+
         # Overwrite hospital info if given.
         # Keep the same list of hospitals nationally but update
         # which services they provide. We can't easily add a totally

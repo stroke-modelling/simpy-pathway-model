@@ -158,7 +158,9 @@ class Scenario(object):
             self.setup = Setup()
         # And create an output directory for this Scenario:
         dir_output = self.name
-        self.setup.create_output_dir(dir_output)
+        # Return here because the output dir will be changed if
+        # a dir with the same name already exists.
+        dir_output = self.setup.create_output_dir(dir_output)
 
         # Convert run duration to minutes
         self.run_duration *= 1440

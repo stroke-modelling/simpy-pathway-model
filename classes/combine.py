@@ -38,6 +38,10 @@ class Combine(object):
         except AttributeError:
             self.setup = Setup()
 
+        # Create the output folder for these combined files.
+        self.dir_output_combined = self.setup.create_output_dir(
+            self.setup.dir_output_combined, combined=True)
+
     def combine_files(self):
         self.combine_selected_units()
         self.combine_selected_transfer()
@@ -97,7 +101,7 @@ class Combine(object):
         df.columns = df.columns.set_names(['scenario', 'property'])
 
         if save_to_file:
-            output_dir = self.setup.dir_output_all_runs
+            output_dir = self.setup.dir_output_combined
             output_filename = self.setup.file_combined_selected_stroke_units
             path_to_file = os.path.join(output_dir, output_filename)
             df.to_csv(path_to_file)#, index=False)
@@ -147,7 +151,7 @@ class Combine(object):
         df.columns = df.columns.set_names(['scenario', 'property'])
 
         if save_to_file:
-            output_dir = self.setup.dir_output_all_runs
+            output_dir = self.setup.dir_output_combined
             output_filename = self.setup.file_combined_selected_transfer_units
             path_to_file = os.path.join(output_dir, output_filename)
             df.to_csv(path_to_file)#, index=False)
@@ -193,7 +197,7 @@ class Combine(object):
         df.columns = df.columns.set_names(['scenario', 'property'])
 
         if save_to_file:
-            output_dir = self.setup.dir_output_all_runs
+            output_dir = self.setup.dir_output_combined
             output_filename = self.setup.file_combined_selected_lsoas
             path_to_file = os.path.join(output_dir, output_filename)
             df.to_csv(path_to_file)#, index=False)
@@ -243,7 +247,7 @@ class Combine(object):
         df = df.fillna(value=0)
 
         if save_to_file:
-            output_dir = self.setup.dir_output_all_runs
+            output_dir = self.setup.dir_output_combined
             output_filename = self.setup.file_combined_selected_regions
             path_to_file = os.path.join(output_dir, output_filename)
             df.to_csv(path_to_file)#, index=False)
@@ -306,7 +310,7 @@ class Combine(object):
         df.columns = df.columns.set_names(['scenario', 'property', 'subtype'])
 
         if save_to_file:
-            output_dir = self.setup.dir_output_all_runs
+            output_dir = self.setup.dir_output_combined
             output_filename = self.setup.file_combined_results_summary_by_lsoa
             path_to_file = os.path.join(output_dir, output_filename)
             df.to_csv(path_to_file)#, index=False)
@@ -369,7 +373,7 @@ class Combine(object):
         df.columns = df.columns.set_names(['scenario', 'property', 'subtype'])
 
         if save_to_file:
-            output_dir = self.setup.dir_output_all_runs
+            output_dir = self.setup.dir_output_combined
             output_filename = (
                 self.setup.file_combined_results_summary_by_admitting_unit)
             path_to_file = os.path.join(output_dir, output_filename)
