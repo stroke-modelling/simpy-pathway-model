@@ -657,6 +657,27 @@ class Map(object):
         # TO DO - implement CRS explicitly ---------------------------------------------
         return gdf
 
+    def create_combo_cols(self, gdf, scenario):
+        # Find out what diff what:
+        scen_bits = scenario.split('_')
+        # Assume scenario = diff_scenario1_minus_scenario2:
+        scen1 = scen_bits[1]
+        scen2 = scen_bits[3]
+
+        cols_to_combine = gdf[scen1].columns.to_list()
+        for col in cols_to_combine:
+            if isinstance(col, tuple):
+                scen_col = (scenario, *col)
+                scen1_col = (scen1, *col)
+                scen2_col = (scen2, *col)
+            else:
+                # Assume it's a string.
+                scen_col = (scenario, col)
+                scen1_col = (scen1, col)
+                scen2_col = (scen2, col)
+            gdf[scen_col] = gdf[[scen1_col, scen2_col]].max(axis='columns')
+        return gdf
+
     def assign_colours_to_regions(self, gdf, region_type, col_col):
 
         colours = ['ForestGreen', 'LimeGreen', 'RebeccaPurple', 'Teal']
@@ -1015,10 +1036,9 @@ class Map(object):
             try:
                 gdf_boundaries_lsoa = self.gdf_boundaries_lsoa
             except KeyError:
-                # The scenario isn't in the Data.
                 # TO DO - proper error message here
                 print('oh no')
-                raise KeyError('Scenario is missing.') from None
+                raise KeyError('LSOA are missing?') from None
 
             # Find shared outcome limits.
             # Take only scenarios containing 'diff':
@@ -1042,15 +1062,27 @@ class Map(object):
             vmax = all_mean_vals.max().values[0]
             vmin = all_mean_vals.min().values[0]
 
-            # Remove excess scenario data:
             try:
-                gdf_boundaries_lsoa = gdf_boundaries_lsoa[['any', scenario]]
-                gdf_boundaries_regions = self.gdf_boundaries_regions[['any', scenario]]
-                gdf_points_units = self.gdf_points_units[['any', scenario]]
-                gdf_lines_transfer = self.gdf_lines_transfer[['any', scenario]]
+                gdf_boundaries_regions = self.gdf_boundaries_regions
+                gdf_points_units = self.gdf_points_units
+                # gdf_lines_transfer = self.gdf_lines_transfer
 
-                # Could do with a "Use" column in the other dfs. TO DO ----------------
-                # Or a "diff this minus that" column for use. ------------------------
+                if 'diff' in scenario:
+                    # Add any other columns that these expect.
+                    gdf_boundaries_regions = self.create_combo_cols(
+                        gdf_boundaries_regions, scenario)
+                    gdf_points_units = self.create_combo_cols(
+                        gdf_points_units, scenario)
+                    # gdf_lines_transfer = self.create_combo_cols(
+                    #     gdf_lines_transfer, scenario)
+
+                # # Remove excess scenario data:
+                scenarios_to_keep = ['any', scenario]
+                gdf_boundaries_lsoa = gdf_boundaries_lsoa[scenarios_to_keep]
+                gdf_boundaries_regions = gdf_boundaries_regions[scenarios_to_keep]
+                gdf_points_units = gdf_points_units[scenarios_to_keep]
+                # gdf_lines_transfer = gdf_lines_transfer[scenarios_to_keep]
+
             except KeyError:
                 # The scenario isn't in the Data.
                 # TO DO - proper error message here
@@ -1073,8 +1105,8 @@ class Map(object):
                 0, axis='columns')
             gdf_points_units = gdf_points_units.droplevel(
                 0, axis='columns')
-            gdf_lines_transfer = gdf_lines_transfer.droplevel(
-                0, axis='columns')
+            # gdf_lines_transfer = gdf_lines_transfer.droplevel(
+            #     0, axis='columns')
 
             # TO DO - FUCNTION THIS PLEASE
             # The geometry column is still defined with the excess
@@ -1082,13 +1114,13 @@ class Map(object):
             gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_geometry('geometry')
             gdf_boundaries_regions = gdf_boundaries_regions.set_geometry('geometry')
             gdf_points_units = gdf_points_units.set_geometry('geometry')
-            gdf_lines_transfer = gdf_lines_transfer.set_geometry('geometry')
+            # gdf_lines_transfer = gdf_lines_transfer.set_geometry('geometry')
 
         else:
             gdf_boundaries_lsoa = self.gdf_boundaries_lsoa
             gdf_boundaries_regions = self.gdf_boundaries_regions
             gdf_points_units = self.gdf_points_units
-            gdf_lines_transfer = self.gdf_lines_transfer
+            # gdf_lines_transfer = self.gdf_lines_transfer
 
             # Find the colour limits.
             mask = (

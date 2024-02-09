@@ -286,7 +286,7 @@ def plot_map_selected_units(
         )
     ax = scatter_ivt_units(ax, gdf_points_units)
     ax = scatter_mt_units(ax, gdf_points_units)
-    ax = scatter_msu_units(ax, gdf_points_units)
+    # ax = scatter_msu_units(ax, gdf_points_units)  # Not for Optimist
     ax = plot_lines_between_units(ax, gdf_lines_transfer)
 
     # Keep track of which units to label in here:
@@ -383,7 +383,7 @@ def plot_map_catchment(
     # Stroke unit markers.
     ax = scatter_ivt_units(ax, gdf_points_units)
     ax = scatter_mt_units(ax, gdf_points_units)
-    ax = scatter_msu_units(ax, gdf_points_units)
+    # ax = scatter_msu_units(ax, gdf_points_units)  # Not for Optimist
     # Keep track of which units to label in here:
     gdf_points_units['labels_mask'] = False
     gdf_points_units.loc[
@@ -484,7 +484,7 @@ def plot_map_outcome(
     # Stroke unit markers.
     ax = scatter_ivt_units(ax, gdf_points_units)
     ax = scatter_mt_units(ax, gdf_points_units)
-    ax = scatter_msu_units(ax, gdf_points_units)
+    # ax = scatter_msu_units(ax, gdf_points_units)  # Not for Optimist
     # Keep track of which units to label in here:
     gdf_points_units['labels_mask'] = False
     gdf_points_units.loc[
