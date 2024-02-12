@@ -53,6 +53,8 @@ column index labels and levels and that, but should be able to function
 it up. Automatically know what levels are already there and which need
 adding.
 
+TO DO - automatic repr() for making maps
+
 """
 # TO DO
 import numpy as np
@@ -896,6 +898,23 @@ class Map(object):
             gdf_points_units = self.gdf_points_units
             gdf_lines_transfer = self.gdf_lines_transfer
 
+        # Reduce the DataFrames to just the needed parts:
+        gdf_boundaries_regions = gdf_boundaries_regions[[
+            'geometry',                # shapes
+            'colour',                  # background colour
+            'contains_selected_unit',  # line type selection
+            'contains_selected_lsoa',  # line type selection
+            ]]
+        gdf_points_units = gdf_points_units[[
+            'geometry',                             # locations
+            'Use_IVT', 'Use_MT', 'Use_MSU', 'Use',  # point selection
+            'Hospital_name'                         # labels
+            ]]
+        gdf_lines_transfer = gdf_lines_transfer[[
+            'geometry',  # line end points
+            'Use'        # line selection
+            ]]
+
         fig, ax = plt.subplots(figsize=(10, 10))
 
         ax = maps.plot_map_selected_units(
@@ -978,6 +997,26 @@ class Map(object):
             # Remove the excess column headings:
             gdf_boundaries_lsoa = gdf_boundaries_lsoa.droplevel(
                 1, axis='columns')
+
+        # Reduce the DataFrames to just the needed parts:
+        gdf_boundaries_lsoa = gdf_boundaries_lsoa[[
+            'geometry',  # shapes
+            ]]
+        gdf_boundaries_regions = gdf_boundaries_regions[[
+            'geometry',                # shapes
+            'colour',                  # background colour
+            'contains_selected_unit',  # line type selection
+            'contains_selected_lsoa',  # line type selection
+            ]]
+        gdf_points_units = gdf_points_units[[
+            'geometry',                             # locations
+            'Use_IVT', 'Use_MT', 'Use_MSU', 'Use',  # point selection
+            'Hospital_name'                         # labels
+            ]]
+        gdf_lines_transfer = gdf_lines_transfer[[
+            'geometry',  # line end points
+            'Use'        # line selection
+        ]]
 
         lsoa_boundary_kwargs = {
             'column': 'postcode_nearest',
@@ -1145,6 +1184,22 @@ class Map(object):
             # The geometry column is still defined with the excess
             # heading, so update which column is geometry:
             gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_geometry('geometry')
+
+        # Reduce the DataFrames to just the needed parts:
+        gdf_boundaries_lsoa = gdf_boundaries_lsoa[[
+            'geometry',  # shapes
+            outcome      # colours
+            ]]
+        gdf_boundaries_regions = gdf_boundaries_regions[[
+            'geometry',                # shapes
+            'contains_selected_unit',  # line type selection
+            'contains_selected_lsoa',  # line type selection
+            ]]
+        gdf_points_units = gdf_points_units[[
+            'geometry',                             # locations
+            'Use_IVT', 'Use_MT', 'Use_MSU', 'Use',  # point selection
+            'Hospital_name'                         # labels
+            ]]
 
         lsoa_boundary_kwargs = {
             'column': outcome,

@@ -235,6 +235,7 @@ class Combine(object):
         try:
             df = self._hstack_multiple_dataframes(
                 file_to_merge,
+                csv_index=[0, 1],
                 cols_for_scenario=[
                     'contains_selected_unit', 'contains_selected_lsoa'])
         except FileNotFoundError:
@@ -440,7 +441,8 @@ class Combine(object):
     def _hstack_multiple_dataframes(
             self,
             file_to_merge,
-            csv_header=None,
+            csv_header=0,
+            csv_index=0,
             add_use_column=False,
             cols_for_scenario=[],
             extra_cols_for_index=[]
@@ -482,11 +484,12 @@ class Combine(object):
             file_input = file_to_merge
             path_to_file = os.path.join(dir_output, file_input)
 
-            if csv_header is None:
-                df = pd.read_csv(path_to_file, index_col=0)
-            else:
-                # Specify header to import as a multiindex DataFrame.
-                df = pd.read_csv(path_to_file, header=csv_header, index_col=0)
+            # if csv_header is None:
+                
+            df = pd.read_csv(path_to_file, index_col=csv_index, header=csv_header)
+            # else:
+            #     # Specify header to import as a multiindex DataFrame.
+            #     df = pd.read_csv(path_to_file, header=csv_header, index_col=0)
 
             if len(extra_cols_for_index) > 0:
                 index_col = df.index.name

@@ -54,7 +54,9 @@ class Setup(object):
         # Scenario():
         self.file_selected_stroke_units = 'selected_stroke_units.csv'
         self.file_selected_transfer_units = 'selected_transfer_units.csv'
+        self.file_selected_unit_regions = 'selected_unit_regions.csv'
         self.file_selected_lsoas = 'selected_lsoas.csv'
+        self.file_selected_lsoa_regions = 'selected_lsoa_regions.csv'
         self.file_selected_regions = 'selected_regions.csv'
         # Model():
         self.file_results_all = 'results_all.csv'
