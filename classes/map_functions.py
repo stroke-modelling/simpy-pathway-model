@@ -10,7 +10,34 @@ import matplotlib.pyplot as plt
 # n.b. The following functions mostly just use plt.plot()
 # but are given different wrappers anyway for the sake of
 # applying some kwargs automatically.
-def draw_boundaries_by_contents(ax, gdf_boundaries_regions):
+def draw_boundaries_by_contents(
+        ax,
+        gdf_boundaries_regions,
+        kwargs_with_nowt={},
+        kwargs_with_lsoa={},
+        kwargs_with_unit={}
+        ):
+    # Set up kwargs.
+    kwargs_nowt = {
+        'edgecolor': 'none',
+        'facecolor': 'none',
+    }
+    kwargs_lsoa = {
+        'edgecolor': 'silver',
+        'facecolor': 'none',
+        'linewidth': 0.5,
+        'linestyle': '--'
+    }
+    kwargs_unit = {
+        'edgecolor': 'k',
+        'facecolor': 'none',
+        'linewidth': 0.5
+    }
+    # Update these with anything from the input dicts:
+    kwargs_nowt = kwargs_nowt | kwargs_with_nowt
+    kwargs_lsoa = kwargs_lsoa | kwargs_with_lsoa
+    kwargs_unit = kwargs_unit | kwargs_with_unit
+
     # Regions containing neither LSOAs nor stroke units here:
     mask = (
         (gdf_boundaries_regions['contains_selected_unit'] == 0) &
@@ -20,7 +47,7 @@ def draw_boundaries_by_contents(ax, gdf_boundaries_regions):
     if len(gdf_boundaries_with_nowt) > 0:
         ax = draw_boundaries(
             ax, gdf_boundaries_with_nowt,
-            facecolor='none', edgecolor='none'
+            **kwargs_nowt
             )
         # Make these invisible but draw them anyway to make sure the
         # extent of the map is similar to other runs.
@@ -36,7 +63,7 @@ def draw_boundaries_by_contents(ax, gdf_boundaries_regions):
     if len(gdf_boundaries_with_lsoa) > 0:
         ax = draw_boundaries(
             ax, gdf_boundaries_with_lsoa,
-            facecolor='none', edgecolor='silver', linewidth=0.5, linestyle='--'
+            **kwargs_lsoa
             )
     else:
         pass
@@ -47,7 +74,7 @@ def draw_boundaries_by_contents(ax, gdf_boundaries_regions):
     if len(gdf_boundaries_with_units) > 0:
         ax = draw_boundaries(
             ax, gdf_boundaries_with_units,
-            facecolor='none', edgecolor='k', linewidth=0.5
+            **kwargs_unit
             )
     else:
         pass
@@ -274,15 +301,22 @@ def plot_map_selected_units(
 
     Result is saved as the name given in setup.file_selected_units_map.
     """
+
+    # Set up kwargs
+    kwargs_with_nowt = {}
+    kwargs_with_lsoa = {}
+    kwargs_with_unit = {'facecolor': gdf_boundaries_regions['colour']}
+
     if ax is None:
         # Make max dimensions XxY inch:
         fig, ax = plt.subplots(figsize=(10, 10))
 
-    ax = draw_boundaries(
+    ax = draw_boundaries_by_contents(
         ax,
         gdf_boundaries_regions,
-        color=gdf_boundaries_regions['colour'],
-        edgecolor='k'
+        kwargs_with_nowt=kwargs_with_nowt,
+        kwargs_with_lsoa=kwargs_with_lsoa,
+        kwargs_with_unit=kwargs_with_unit
         )
     ax = scatter_ivt_units(ax, gdf_points_units)
     ax = scatter_mt_units(ax, gdf_points_units)

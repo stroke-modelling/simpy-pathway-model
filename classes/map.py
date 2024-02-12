@@ -124,7 +124,7 @@ class Map(object):
             'df_regions': {
                 'file': self.setup.file_combined_selected_regions,
                 'header': [0, 1],
-                'index_col': 0,
+                'index_col': [0, 1],
                 },
             'df_results_by_unit': {
                 'file': (
@@ -159,7 +159,7 @@ class Map(object):
             'df_regions': {
                 'file': self.setup.file_selected_regions,
                 'header': [0],
-                'index_col': 0,
+                'index_col': [0, 1],
                 },
             'df_results_by_unit': {
                 'file': (
@@ -251,7 +251,36 @@ class Map(object):
         file_input = geojson_file_dict[region_type]
         path_to_file = os.path.join(dir_input, file_input)
         gdf_boundaries = geopandas.read_file(path_to_file)
-        gdf_boundaries = gdf_boundaries.set_index(region_type)
+        try:
+            gdf_boundaries = gdf_boundaries.set_index(region_type)
+        except KeyError:
+            # That column doesn't exist.
+            # Try finding a column that has the same start and end
+            # as requested:
+            prefix = region_type[:3]
+            suffix = region_type[-2:]
+            success = False
+            for column in gdf_boundaries.columns:
+                # Casefold turns all UPPER into lower case for the
+                # comparison.
+                match = (
+                    (column[:3].casefold() == prefix.casefold()) &
+                    (column[-2:].casefold() == suffix.casefold())
+                    )
+                if match:
+                    # Rename this column:
+                    gdf_boundaries = gdf_boundaries.rename(
+                        columns={column: region_type}
+                    )
+                    # Set the index:
+                    gdf_boundaries = gdf_boundaries.set_index(region_type)
+                    success = True
+                else:
+                    pass
+            if success is False:
+                # TO DO - proper error message - this shouldn't happen!- ---------------
+                print('did not set geojson index')
+
         # If crs is given in the file, geopandas automatically
         # pulls it through. Convert to National Grid coordinates:
         if gdf_boundaries.crs != 'EPSG:27700':
@@ -263,7 +292,7 @@ class Map(object):
     # ##########################
     def process_data(self):
         self.load_geometry_lsoa()
-        self.load_geometry_regions()
+        self.load_geometry_regions(self.region_type)
         self.load_geometry_stroke_units()
         self.load_geometry_transfer_units()
 
@@ -410,7 +439,7 @@ class Map(object):
 
         self.gdf_boundaries_lsoa = gdf_boundaries_lsoa
 
-    def load_geometry_regions(self):
+    def load_geometry_regions(self, region_type: str):
         """
         Create GeoDataFrames of new geometry and existing DataFrames.
         """
@@ -419,14 +448,14 @@ class Map(object):
         # ['{region type}', 'contains_selected_unit',
         #  'contains_selected_lsoa']
         df_regions = self.df_regions
-        # Index column: {region type}.
+        # Index column: ['region', 'region_type'].
         # Expected column MultiIndex levels:
         #   - combined: ['scenario', 'property']
         #   - separate: ['{unnamed level}']
 
         # All region polygons:
-        gdf_boundaries_regions = self.import_geojson(self.region_type)
-        # Index column: LSOA11NM.
+        gdf_boundaries_regions = self.import_geojson(region_type)
+        # Index column: {region_type}.
         # Always has only one unnamed column index level.
 
         if self.data_type == 'combined':
@@ -436,6 +465,14 @@ class Map(object):
 
             # Region names and usage:
             # This already has the two column levels.
+            # It also has a MultiIndex index - ['region_type', 'region'].
+            # Limit the data to just the selected region type...
+            mask = df_regions.index.get_level_values(0) == region_type
+            df_regions = df_regions.loc[mask, :]
+            # ... and then discard the 'region_type' index...
+            df_regions.index = df_regions.index.droplevel(0)
+            # ... and rename the index:
+            df_regions.index = df_regions.index.rename(region_type)
 
             # Geometry:
             gdf_boundaries_regions = pd.DataFrame(
@@ -472,9 +509,19 @@ class Map(object):
 
             # Assign colours:
             gdf_boundaries_regions = self.assign_colours_to_regions(
-                gdf_boundaries_regions, self.region_type, ('any', 'colour'))
+                gdf_boundaries_regions, region_type, ('any', 'colour'))
         else:
             # Similar process but without the scenario row.
+
+            # Region names file has a MultiIndex index -
+            # ['region_type', 'region'].
+            # Limit the data to just the selected region type...
+            mask = df_regions.index.get_level_values(0) == region_type
+            df_regions = df_regions.loc[mask, :]
+            # ... and then discard the 'region_type' index...
+            df_regions.index = df_regions.index.droplevel(0)
+            # ... and rename the index:
+            df_regions.index = df_regions.index.rename(region_type)
 
             # Merge together all of the DataFrames.
             gdf_boundaries_regions = pd.merge(
@@ -496,9 +543,10 @@ class Map(object):
 
             # Assign colours:
             gdf_boundaries_regions = self.assign_colours_to_regions(
-                gdf_boundaries_regions, self.region_type, 'colour')
+                gdf_boundaries_regions, region_type, 'colour')
 
         self.gdf_boundaries_regions = gdf_boundaries_regions
+        self.region_type = region_type
 
     def load_geometry_stroke_units(self):
         """
@@ -938,7 +986,7 @@ class Map(object):
                     # Setup is not defined.
                     pass
 
-            file_name = f'map_selected_units_{scenario}.jpg'
+            file_name = f'map_selected_units_{scenario}_{self.region_type}.jpg'
 
             path_to_file = os.path.join(dir_output, file_name)
             plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
@@ -1000,11 +1048,11 @@ class Map(object):
 
         # Reduce the DataFrames to just the needed parts:
         gdf_boundaries_lsoa = gdf_boundaries_lsoa[[
-            'geometry',  # shapes
+            'geometry',         # shapes
+            'postcode_nearest'  # background colour
             ]]
         gdf_boundaries_regions = gdf_boundaries_regions[[
             'geometry',                # shapes
-            'colour',                  # background colour
             'contains_selected_unit',  # line type selection
             'contains_selected_lsoa',  # line type selection
             ]]
@@ -1052,7 +1100,7 @@ class Map(object):
                     # Setup is not defined.
                     pass
 
-            file_name = f'map_catchment_{scenario}.jpg'
+            file_name = f'map_catchment_{scenario}_{self.region_type}.jpg'
 
             path_to_file = os.path.join(dir_output, file_name)
             plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
@@ -1254,7 +1302,7 @@ class Map(object):
                     # Setup is not defined.
                     pass
 
-            file_name = f'map_{outcome}_{scenario}.jpg'
+            file_name = f'map_{outcome}_{scenario}_{self.region_type}.jpg'
 
             path_to_file = os.path.join(dir_output, file_name)
             plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
