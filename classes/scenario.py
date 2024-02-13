@@ -343,6 +343,9 @@ class Scenario(object):
 
         # Limit the available hospitals if required.
         if len(self.mt_hub_postcodes) > 0:
+            # TO DO - stick this in a function find_feeder_units or similar
+            # and combine it with the transfer unit coordinates function below.-------------
+
             # If a list of MT units was given, use only those units.
 
             # Find which IVT units feed into these MT units.
@@ -436,8 +439,10 @@ class Scenario(object):
     def _link_units_to_regions(self):
         """
         TO DO
+
+        TO DO - combine this with link LSOAs to regions? ------------------------------
         """
-        # Load and parse hospital data
+        # Load and parse full hospital data with regions:
         dir_input = self.setup.dir_data
         file_input = self.setup.file_input_hospital_info
         path_to_file = os.path.join(dir_input, file_input)
@@ -473,7 +478,8 @@ class Scenario(object):
         # List of the region type prefixes excluding LSOA and MSOA:
         region_types = ['CCG', 'ICB', 'LAD', 'STP',
                         'LHB', 'SCN', 'RGN', 'CTRY']
-        region_cols = ([c for s in region_types for c in df_units_regions.columns
+        region_cols = ([c for s in region_types
+                        for c in df_units_regions.columns
                         if c.startswith(s)])
 
         # In this list, store a DataFrame for each region type:
@@ -542,6 +548,8 @@ class Scenario(object):
     # #########################
     def _load_lsoa_names(self):
         """
+        TO DO - make this simpler!! -----------------------------------------------
+
         WIP
         Load names of LSOAs in catchment areas of chosen stroke teams.
 
@@ -607,6 +615,8 @@ class Scenario(object):
             left_on='LSOA11NM', right_on='LSOA11NM',
             how='right'
             )
+
+        # TO DO - can the travel stuff move elsewhere? ---------------------------------
 
         # Stroke unit data for each LSOA.
         # Take list of all LSOA names and travel times:
@@ -732,6 +742,9 @@ class Scenario(object):
     def _select_lsoas_by_region(self):
         """
         Limit LSOAs to those in the same region as stroke units.
+
+        TO DO - new function - limit big LSOA list to only those in the requested regions.
+        And set all other stroke unit services to zero?
         """
         # Column:
         col = self.region_column_for_lsoa_selection

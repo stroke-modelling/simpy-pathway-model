@@ -55,6 +55,10 @@ adding.
 
 TO DO - automatic repr() for making maps
 
+TO DO - better colour assignment.
+e.g. drip and ship catchment map, make all feeder units different shades
+of the same colour for each MT unit.
+
 """
 # TO DO
 import numpy as np
@@ -100,7 +104,7 @@ class Map(object):
     # ##########################
     # ##### FILE SELECTION #####
     # ##########################
-    def load_run_data(self, dir_data=None):
+    def load_run_data(self, load_list=[], dir_data=None):
         """
         Load in data specific to these runs.
         """
@@ -188,7 +192,12 @@ class Map(object):
             dicts_data = dicts_single
             self.data_type = 'single'
 
-        for label, data_dict in dicts_data.items():
+        if len(load_list) == 0:
+            # Load everything.
+            load_list = list(dicts_data.keys())
+
+        for label in load_list:
+            data_dict = dicts_data[label]
             # Make path to file:
             path_to_file = os.path.join(dir_data, data_dict['file'])
             try:
@@ -207,7 +216,11 @@ class Map(object):
                 setattr(self, label, df)
             except FileNotFoundError:
                 # TO DO - proper error message
-                print(f'Cannot import {label} from {data_dict["file"]}')
+                raise FileNotFoundError(
+                    f'Cannot import {label} from {data_dict["file"]}'
+                    ) from None
+
+    # MOVE THESE LOAD LINES TO SEPARATE FUNCTION FOR EACH FILE TYPE ----------------------
 
     def import_geojson(self, region_type: 'str'):
         """
@@ -287,12 +300,16 @@ class Map(object):
             gdf_boundaries = gdf_boundaries.to_crs('EPSG:27700')
         return gdf_boundaries
 
+    def update_regions(self, region_type: str):
+        self.region_type = region_type
+        self.load_geometry_regions()
+
     # ##########################
     # ##### DATA WRANGLING #####
     # ##########################
     def process_data(self):
         self.load_geometry_lsoa()
-        self.load_geometry_regions(self.region_type)
+        self.load_geometry_regions()
         self.load_geometry_stroke_units()
         self.load_geometry_transfer_units()
 
@@ -303,7 +320,11 @@ class Map(object):
         # ----- Gather data -----
         # Selected LSOA names, codes.
         # ['LSOA11NM', 'LSOA11CD', '{region}', 'postcode_nearest', 'Use']
-        df_lsoa = self.df_lsoa
+        try:
+            df_lsoa = self.df_lsoa
+        except AttributeError:
+            self.load_run_data(['df_lsoa'])
+            df_lsoa = self.df_lsoa
         # Index column: LSOA11NM.
         # Expected column MultiIndex levels:
         #   - combined: ['scenario', 'property']
@@ -325,228 +346,209 @@ class Map(object):
             #   - separate: ['property', 'subtype]
             results_exist = True
         except AttributeError:
-            pass
+            try:
+                self.load_run_data(['df_results_by_lsoa'])
+                df_lsoa_results = self.df_results_by_lsoa
+                results_exist = True
+            except FileNotFoundError:
+                # Give up on loading this in.
+                pass
+
+
+        # ----- Prepare separate data -----
+        # Set up column level info for the merged DataFrame.
+        # The "combined" scenario Dataframe will have an extra
+        # column level with the scenario name.
+        if self.data_type == 'combined':
+            # LSOA names:
+            cols_to_drop_lsoa = [('any', 'LSOA11CD')]
+            cols_lsoa = df_lsoa.columns.drop(cols_to_drop_lsoa)
+            df_lsoa_column_arr = np.array(
+                [[n for n in c] for c in cols_lsoa])
+            cols_df_lsoa = [
+                df_lsoa_column_arr[:, 0],                    # scenario
+                df_lsoa_column_arr[:, 1],                    # property
+                [''] * len(cols_lsoa),                       # subtype
+            ]
+            # Geometry:
+            cols_gdf_boundaries_lsoa = [
+                ['any'] * len(gdf_boundaries_lsoa.columns),  # scenario
+                gdf_boundaries_lsoa.columns,                 # property
+                [''] * len(gdf_boundaries_lsoa.columns),     # subtype
+            ]
+            # Final data:
+            col_level_names = ['scenario', 'property', 'subtype']
+            col_geometry = ('any', 'geometry', '')
+        else:
+            # LSOA names:
+            cols_to_drop_lsoa = 'LSOA11CD'
+            cols_lsoa = df_lsoa.columns.drop(cols_to_drop_lsoa)
+            cols_df_lsoa = [
+                cols_lsoa,                                   # property
+                [''] * len(cols_lsoa),                       # subtype
+            ]
+            # Geometry:
+            cols_gdf_boundaries_lsoa = [
+                gdf_boundaries_lsoa.columns,                 # property
+                [''] * len(gdf_boundaries_lsoa.columns),     # subtype
+            ]
+            # Final data:
+            col_level_names = ['property', 'subtype']
+            col_geometry = ('geometry', '')
+
+        # Drop columns that are duplicated across DataFrames.
+        df_lsoa = df_lsoa.drop(cols_to_drop_lsoa, axis='columns')
+
+        # Make all data to be combined have the same column levels.
+        # LSOA names:
+        df_lsoa = pd.DataFrame(
+            df_lsoa.values,
+            index=df_lsoa.index,
+            columns=cols_df_lsoa
+        )
+
+        # Geometry:
+        gdf_boundaries_lsoa = pd.DataFrame(
+            gdf_boundaries_lsoa.values,
+            index=gdf_boundaries_lsoa.index,
+            columns=cols_gdf_boundaries_lsoa
+        )
+
+        # Results:
+        # This already has the right number of column levels.
+
+        # ----- Create final data -----
+        # Merge together all of the DataFrames.
+        gdf_boundaries_lsoa = pd.merge(
+            gdf_boundaries_lsoa, df_lsoa,
+            left_index=True, right_index=True, how='right'
+        )
+        if results_exist:
+            gdf_boundaries_lsoa = pd.merge(
+                gdf_boundaries_lsoa, df_lsoa_results,
+                left_index=True, right_index=True, how='left'
+            )
+        # Name the column levels:
+        gdf_boundaries_lsoa.columns = (
+            gdf_boundaries_lsoa.columns.set_names(col_level_names))
 
         if self.data_type == 'combined':
-            # Drop columns that are duplicated across DataFrames.
-            df_lsoa = df_lsoa.drop([('any', 'LSOA11CD')], axis='columns')
-
-            # Make all data to be combined have the same column levels.
-            # TO DO - is there a more pandas way to do this?
-
-            # LSOA names:
-            df_lsoa_column_arr = np.array(
-                [[n for n in c] for c in df_lsoa.columns])
-            df_lsoa = pd.DataFrame(
-                df_lsoa.values,
-                index=df_lsoa.index,
-                columns=[
-                    df_lsoa_column_arr[:, 0],       # scenario
-                    df_lsoa_column_arr[:, 1],       # property
-                    [''] * len(df_lsoa.columns),    # subtype
-                ]
-            )
-            # Geometry:
-            gdf_boundaries_lsoa = pd.DataFrame(
-                gdf_boundaries_lsoa.values,
-                index=gdf_boundaries_lsoa.index,
-                columns=[
-                    ['any'] * len(gdf_boundaries_lsoa.columns),    # scenario
-                    gdf_boundaries_lsoa.columns,                   # property
-                    [''] * len(gdf_boundaries_lsoa.columns),       # subtype
-                ]
-            )
-            # Results:
-            # This already has the three column levels.
-
-            # Then merge together all of the DataFrames.
-            gdf_boundaries_lsoa = pd.merge(
-                gdf_boundaries_lsoa, df_lsoa,
-                left_index=True, right_index=True, how='right'
-            )
-            if results_exist:
-                gdf_boundaries_lsoa = pd.merge(
-                    gdf_boundaries_lsoa, df_lsoa_results,
-                    left_index=True, right_index=True, how='left'
-                )
-            # Name the column levels:
-            gdf_boundaries_lsoa.columns = (
-                gdf_boundaries_lsoa.columns.set_names(
-                    ['scenario', 'property', 'subtype']))
-
             # Sort the results by scenario (top column index):
-            gdf_boundaries_lsoa = gdf_boundaries_lsoa[sorted(list(set(
-                gdf_boundaries_lsoa.columns.get_level_values('scenario'))))]
-
-            # Convert to GeoDataFrame:
-            gdf_boundaries_lsoa = geopandas.GeoDataFrame(
-                gdf_boundaries_lsoa,
-                geometry=('any', 'geometry', '')
-                )
-            # gdf_boundaries_lsoa = gdf_boundaries_lsoa.drop(
-            #     ('any', 'geometry', ''), axis='columns')
+            cols_scen = (
+                gdf_boundaries_lsoa.columns.get_level_values('scenario'))
+            cols_scen = sorted(list(set(cols_scen)))
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa[cols_scen]
         else:
-            # Similar process but without the scenario row.
-            # Drop columns that are duplicated across DataFrames.
-            df_lsoa = df_lsoa.drop('LSOA11CD', axis='columns')
+            # Don't sort.
+            pass
 
-            # Make all data to be combined have the same column levels.
-            # TO DO - is there a more pandas way to do this?
-
-            # LSOA names:
-            df_lsoa = pd.DataFrame(
-                df_lsoa.values,
-                index=df_lsoa.index,
-                columns=[
-                    df_lsoa.columns,                # property
-                    [''] * len(df_lsoa.columns),    # subtype
-                ]
+        # Convert to GeoDataFrame:
+        gdf_boundaries_lsoa = geopandas.GeoDataFrame(
+            gdf_boundaries_lsoa,
+            geometry=col_geometry
             )
-            # Geometry:
-            gdf_boundaries_lsoa = pd.DataFrame(
-                gdf_boundaries_lsoa.values,
-                index=gdf_boundaries_lsoa.index,
-                columns=[
-                    gdf_boundaries_lsoa.columns,                # property
-                    [''] * len(gdf_boundaries_lsoa.columns),    # subtype
-                ]
-            )
-            # Results:
-            # This already has the two column levels.
 
-            # Then merge together all of the DataFrames.
-            gdf_boundaries_lsoa = pd.merge(
-                gdf_boundaries_lsoa, df_lsoa,
-                left_index=True, right_index=True, how='right'
-            )
-            if results_exist:
-                gdf_boundaries_lsoa = pd.merge(
-                    gdf_boundaries_lsoa, df_lsoa_results,
-                    left_index=True, right_index=True, how='left'
-                )
-            # Name the column levels:
-            gdf_boundaries_lsoa.columns = (
-                gdf_boundaries_lsoa.columns.set_names(
-                    ['property', 'subtype']))
-
-            # Convert to GeoDataFrame:
-            gdf_boundaries_lsoa = geopandas.GeoDataFrame(
-                gdf_boundaries_lsoa,
-                geometry=('geometry', '')
-                )
-            # gdf_boundaries_lsoa = gdf_boundaries_lsoa.drop(
-            #     ('geometry', ''), axis='columns')
-
+        # ----- Save to self -----
         self.gdf_boundaries_lsoa = gdf_boundaries_lsoa
 
-    def load_geometry_regions(self, region_type: str):
+    def load_geometry_regions(self):
         """
         Create GeoDataFrames of new geometry and existing DataFrames.
         """
         # ----- Gather data -----
         # Selected regions names and usage.
-        # ['{region type}', 'contains_selected_unit',
-        #  'contains_selected_lsoa']
-        df_regions = self.df_regions
+        # ['{region type}', 'contains_selected_unit', 'contains_selected_lsoa']
+        try:
+            df_regions = self.df_regions
+        except AttributeError:
+            self.load_run_data(['df_regions'])
+            df_regions = self.df_regions
         # Index column: ['region', 'region_type'].
         # Expected column MultiIndex levels:
         #   - combined: ['scenario', 'property']
         #   - separate: ['{unnamed level}']
 
         # All region polygons:
-        gdf_boundaries_regions = self.import_geojson(region_type)
+        gdf_boundaries_regions = self.import_geojson(self.region_type)
         # Index column: {region_type}.
         # Always has only one unnamed column index level.
 
+        # ----- Prepare separate data -----
+        # Set up column level info for the merged DataFrame.
+        # The "combined" scenario Dataframe will have an extra
+        # column level with the scenario name.
         if self.data_type == 'combined':
-            # Make all data to be combined have the same column levels.
-            # TO DO - is there a more pandas way to do this?
-            # Would save bungling the geodataframe/ crs lines.
-
-            # Region names and usage:
-            # This already has the two column levels.
-            # It also has a MultiIndex index - ['region_type', 'region'].
-            # Limit the data to just the selected region type...
-            mask = df_regions.index.get_level_values(0) == region_type
-            df_regions = df_regions.loc[mask, :]
-            # ... and then discard the 'region_type' index...
-            df_regions.index = df_regions.index.droplevel(0)
-            # ... and rename the index:
-            df_regions.index = df_regions.index.rename(region_type)
-
             # Geometry:
-            gdf_boundaries_regions = pd.DataFrame(
-                gdf_boundaries_regions.values,
-                index=gdf_boundaries_regions.index,
-                columns=[
-                    ['any'] * len(gdf_boundaries_regions.columns),    # scenario
-                    gdf_boundaries_regions.columns,                   # property
-                ]
-            )
-
-            # Then merge together all of the DataFrames.
-            gdf_boundaries_regions = pd.merge(
-                gdf_boundaries_regions, df_regions,
-                left_index=True, right_index=True, how='right'
-            )
-
-            # Name the column levels:
-            gdf_boundaries_regions.columns = (
-                gdf_boundaries_regions.columns.set_names(
-                    ['scenario', 'property']))
-
-            # Sort the results by scenario (top column index):
-            gdf_boundaries_regions = gdf_boundaries_regions[sorted(list(set(
-                gdf_boundaries_regions.columns.get_level_values('scenario'))))]
-
-            # Convert to GeoDataFrame:
-            gdf_boundaries_regions = geopandas.GeoDataFrame(
-                gdf_boundaries_regions,
-                geometry=('any', 'geometry')
-                )
-            # gdf_boundaries_regions = gdf_boundaries_regions.drop(
-            #     ('any', 'geometry'), axis='columns')
-
-            # Assign colours:
-            gdf_boundaries_regions = self.assign_colours_to_regions(
-                gdf_boundaries_regions, region_type, ('any', 'colour'))
+            cols_gdf_boundaries_regions = [
+                ['any'] * len(gdf_boundaries_regions.columns),  # scenario
+                gdf_boundaries_regions.columns,                 # property
+            ]
+            # Final data:
+            col_level_names = ['scenario', 'property']
+            col_geometry = ('any', 'geometry')
+            col_colour = ('any', 'colour')
         else:
-            # Similar process but without the scenario row.
+            # Geometry:
+            cols_gdf_boundaries_regions = gdf_boundaries_regions.columns
+            # Final data:
+            col_level_names = ['property']
+            col_geometry = 'geometry'
+            col_colour = 'colour'
 
-            # Region names file has a MultiIndex index -
-            # ['region_type', 'region'].
-            # Limit the data to just the selected region type...
-            mask = df_regions.index.get_level_values(0) == region_type
-            df_regions = df_regions.loc[mask, :]
-            # ... and then discard the 'region_type' index...
-            df_regions.index = df_regions.index.droplevel(0)
-            # ... and rename the index:
-            df_regions.index = df_regions.index.rename(region_type)
+        # Region names and usage:
+        # This has a MultiIndex index - ['region_type', 'region'].
+        # Limit the data to just the selected region type...
+        mask = df_regions.index.get_level_values(0) == self.region_type
+        df_regions = df_regions.loc[mask, :]
+        # ... and then discard the 'region_type' index...
+        df_regions.index = df_regions.index.droplevel(0)
+        # ... and rename the index.
+        # (to match the index of the gdf geometry DataFrame).
+        df_regions.index = df_regions.index.rename(self.region_type)
 
-            # Merge together all of the DataFrames.
-            gdf_boundaries_regions = pd.merge(
-                gdf_boundaries_regions, df_regions,
-                left_index=True, right_index=True, how='right'
+        # Geometry:
+        # If necessary, add more column levels.
+        gdf_boundaries_regions = pd.DataFrame(
+            gdf_boundaries_regions.values,
+            index=gdf_boundaries_regions.index,
+            columns=cols_gdf_boundaries_regions
+        )
+
+        # ----- Create final data -----
+        # Merge together the DataFrames.
+        gdf_boundaries_regions = pd.merge(
+            gdf_boundaries_regions, df_regions,
+            left_index=True, right_index=True, how='right'
+        )
+
+        # Name the column levels:
+        gdf_boundaries_regions.columns = (
+            gdf_boundaries_regions.columns.set_names(col_level_names))
+
+        if self.data_type == 'combined':
+            # Sort the results by scenario (top column index):
+            cols_scen = (
+                gdf_boundaries_regions.columns.get_level_values('scenario'))
+            cols_scen = sorted(list(set(cols_scen)))
+            gdf_boundaries_regions = gdf_boundaries_regions[cols_scen]
+        else:
+            # Don't sort.
+            pass
+
+        # Convert to GeoDataFrame:
+        gdf_boundaries_regions = geopandas.GeoDataFrame(
+            gdf_boundaries_regions,
+            geometry=col_geometry
             )
 
-            # Name the column levels:
-            gdf_boundaries_regions.columns = (
-                gdf_boundaries_regions.columns.set_names(['property']))
+        # ----- Additional setup -----
+        # Assign colours:
+        gdf_boundaries_regions = self.assign_colours_to_regions(
+            gdf_boundaries_regions, self.region_type, col_colour)
 
-            # Convert to GeoDataFrame:
-            gdf_boundaries_regions = geopandas.GeoDataFrame(
-                gdf_boundaries_regions,
-                geometry='geometry'
-                )
-            # gdf_boundaries_lsoa = gdf_boundaries_lsoa.drop(
-            #     ('geometry', ''), axis='columns')
-
-            # Assign colours:
-            gdf_boundaries_regions = self.assign_colours_to_regions(
-                gdf_boundaries_regions, region_type, 'colour')
-
+        # ----- Save to self -----
         self.gdf_boundaries_regions = gdf_boundaries_regions
-        self.region_type = region_type
+        self.region_type = self.region_type
 
     def load_geometry_stroke_units(self):
         """
@@ -573,7 +575,11 @@ class Map(object):
                     the file. Columns include unit name and geometry.
         """
         # Selected stroke units names, coordinates, and services.
-        df_units = self.df_units
+        try:
+            df_units = self.df_units
+        except AttributeError:
+            self.load_run_data(['df_units'])
+            df_units = self.df_units
         # Index column: Postcode.
         # Expected column MultiIndex levels:
         #   - combined: ['scenario', 'property']
@@ -614,7 +620,11 @@ class Map(object):
         Create GeoDataFrames of new geometry and existing DataFrames.
         """
         # Selected stroke units names, coordinates, and services.
-        df_transfer = self.df_transfer
+        try:
+            df_transfer = self.df_transfer
+        except AttributeError:
+            self.load_run_data(['df_transfer'])
+            df_transfer = self.df_transfer
         # Index column:
         #   - combined: ['Postcode', 'name_nearest_MT']
         #   - separate: 'Postcode'
@@ -662,7 +672,13 @@ class Map(object):
     # ############################
     # ##### HELPER FUNCTIONS #####
     # ############################
-    def create_lines_from_coords(self, df, cols_with_coords, col_coord, col_geom):
+    def create_lines_from_coords(
+            self,
+            df,
+            cols_with_coords,
+            col_coord,
+            col_geom
+            ):
         """
         Convert DataFrame with coords to GeoDataFrame with LineString.
 
@@ -686,7 +702,7 @@ class Map(object):
         -------
         gdf - GeoDataFrame. The input df with the new Line
             geometry objects and converted to a GeoDataFrame.
-        """    
+        """
         # Combine multiple columns of coordinates into a single column
         # with a list of lists of coordinates:
         df[col_coord] = df[cols_with_coords].values.tolist()
@@ -708,6 +724,11 @@ class Map(object):
         return gdf
 
     def create_combo_cols(self, gdf, scenario):
+        """
+        TO DO - write me
+        When dataframe doesn't have the diff_this_minus_that columns,
+        use this function to create that data and prevent KeyError later.
+        """
         # Find out what diff what:
         scen_bits = scenario.split('_')
         # Assume scenario = diff_scenario1_minus_scenario2:
@@ -729,6 +750,9 @@ class Map(object):
         return gdf
 
     def assign_colours_to_regions(self, gdf, region_type, col_col):
+        """
+        wip, this version pretty useless.
+        """
 
         colours = ['ForestGreen', 'LimeGreen', 'RebeccaPurple', 'Teal']
 
@@ -909,38 +933,139 @@ class Map(object):
         df['total_neighbours'] = df['neighbour_list'].str.len()
         return df
 
-    # ####################
-    # ##### PLOTTING #####
-    # ####################
+    # #########################
+    # ##### PLOT WRAPPERS #####
+    # #########################
     def plot_map_selected_units(
             self,
             scenario: str,
-            save=True
+            save=True,
+            region=None
             ):
         """
-
+        Wrangle data and plot a map of selected units.
         """
+        if region is None:
+            pass
+        else:
+            # Update the region data so it reloads in setup function.
+            self.region_type = region
+
+        map_args, map_kwargs = self._setup_plot_map_selected_units(
+            scenario,
+            save
+            )
+        self._plt_plot_map_selected_units(
+            *map_args,
+            **map_kwargs,
+            save=save
+        )
+
+    def plot_map_catchment(
+            self,
+            scenario: str,
+            save=True,
+            region=None
+            ):
+        """
+        Wrangle data and plot a map of selected unit catchments.
+        """
+        if region is None:
+            pass
+        else:
+            # Reload the region data.
+            self.region_type = region
+            self.load_geometry_regions()
+
+        map_args, map_kwargs = self._setup_plot_map_catchment(
+            scenario,
+            save=save
+            )
+        self._plt_plot_map_catchment(
+            *map_args,
+            **map_kwargs,
+            save=save,
+            title=scenario,
+        )
+
+    def plot_map_outcome(
+            self,
+            scenario: str,
+            outcome: str,
+            save=True,
+            region=None,
+            boundary_kwargs={},
+            ):
+        """
+        Wrangle data and plot a map of LSOA outcomes.
+        """
+        if region is None:
+            pass
+        else:
+            # Reload the region data.
+            self.region_type = region
+            self.load_geometry_regions(region)
+
+        map_args, map_kwargs = self._setup_plot_map_outcome(
+            scenario,
+            outcome,
+            boundary_kwargs=boundary_kwargs,
+            save=save
+            )
+        self._plt_plot_map_outcome(
+            *map_args,
+            **map_kwargs,
+            title=f'{scenario}\n{outcome}',
+            save=save
+        )
+
+    # ###########################
+    # ##### SETUP FOR PLOTS #####
+    # ###########################
+    def _setup_plot_map_selected_units(
+            self,
+            scenario,
+            save=True
+            ):
+    
+        # If the geometry data doesn't exist, load it in:
+        data_dict = {
+            'gdf_boundaries_regions': self.load_geometry_regions,
+            'gdf_points_units': self.load_geometry_stroke_units,
+            'gdf_lines_transfer': self.load_geometry_transfer_units,
+        }
+        for attr, func in data_dict.items():
+            try:
+                self.getattr(attr)
+            except AttributeError:
+                func()
+
         if self.data_type == 'combined':
             # Remove excess scenario data:
             try:
-                gdf_boundaries_regions = self.gdf_boundaries_regions[['any', scenario]]
-                gdf_points_units = self.gdf_points_units[['any', scenario]]
-                gdf_lines_transfer = self.gdf_lines_transfer[['any', scenario]]
+                c = ['any', scenario]
+                gdf_boundaries_regions = self.gdf_boundaries_regions[c]
+                gdf_points_units = self.gdf_points_units[c]
+                gdf_lines_transfer = self.gdf_lines_transfer[c]
             except KeyError:
                 # The scenario isn't in the Data.
-                # TO DO - proper error message here
+                # TO DO - proper error message here ---------------------------------------------
                 print('oh no')
                 raise KeyError('Scenario is missing.') from None
-
             # Remove the excess column heading:
-            gdf_boundaries_regions = gdf_boundaries_regions.droplevel(0, axis='columns')
-            gdf_points_units = gdf_points_units.droplevel(0, axis='columns')
-            gdf_lines_transfer = gdf_lines_transfer.droplevel(0, axis='columns')
+            # TO DO - set up column level name 'scenario' here -----------------------------------
+            gdf_boundaries_regions = (
+                gdf_boundaries_regions.droplevel(0, axis='columns'))
+            gdf_points_units = (
+                gdf_points_units.droplevel(0, axis='columns'))
+            gdf_lines_transfer = (
+                gdf_lines_transfer.droplevel(0, axis='columns'))
             # The geometry column is still defined with the excess
             # heading, so update which column is geometry:
-            gdf_boundaries_regions = gdf_boundaries_regions.set_geometry('geometry')
-            gdf_points_units = gdf_points_units.set_geometry('geometry')
-            gdf_lines_transfer = gdf_lines_transfer.set_geometry('geometry')
+            g = 'geometry'
+            gdf_boundaries_regions = gdf_boundaries_regions.set_geometry(g)
+            gdf_points_units = gdf_points_units.set_geometry(g)
+            gdf_lines_transfer = gdf_lines_transfer.set_geometry(g)
         else:
             gdf_boundaries_regions = self.gdf_boundaries_regions
             gdf_points_units = self.gdf_points_units
@@ -948,10 +1073,10 @@ class Map(object):
 
         # Reduce the DataFrames to just the needed parts:
         gdf_boundaries_regions = gdf_boundaries_regions[[
-            'geometry',                # shapes
-            'colour',                  # background colour
-            'contains_selected_unit',  # line type selection
-            'contains_selected_lsoa',  # line type selection
+            'geometry',                             # shapes
+            'colour',                               # background colour
+            'contains_selected_unit',               # line type selection
+            'contains_selected_lsoa',               # line type selection
             ]]
         gdf_points_units = gdf_points_units[[
             'geometry',                             # locations
@@ -959,19 +1084,11 @@ class Map(object):
             'Hospital_name'                         # labels
             ]]
         gdf_lines_transfer = gdf_lines_transfer[[
-            'geometry',  # line end points
-            'Use'        # line selection
+            'geometry',                             # line end points
+            'Use'                                   # line selection
             ]]
 
-        fig, ax = plt.subplots(figsize=(10, 10))
-
-        ax = maps.plot_map_selected_units(
-            gdf_boundaries_regions,
-            gdf_points_units,
-            gdf_lines_transfer,
-            ax=ax
-        )
-
+        # Create file name:
         if save:
             dir_output = ''
             if self.data_type == 'combined':
@@ -987,14 +1104,21 @@ class Map(object):
                     pass
 
             file_name = f'map_selected_units_{scenario}_{self.region_type}.jpg'
-
             path_to_file = os.path.join(dir_output, file_name)
-            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
-            plt.close()
         else:
-            plt.show()
+            path_to_file = None
 
-    def plot_map_catchment(
+        map_args = (
+            gdf_boundaries_regions,
+            gdf_points_units,
+            gdf_lines_transfer
+        )
+        map_kwargs = dict(
+            path_to_file=path_to_file
+            )
+        return map_args, map_kwargs
+
+    def _setup_plot_map_catchment(
             self,
             scenario: str,
             boundary_kwargs={},
@@ -1003,13 +1127,27 @@ class Map(object):
         """
 
         """
+        # If the geometry data doesn't exist, load it in:
+        data_dict = {
+            'gdf_boundaries_regions': self.load_geometry_regions,
+            'gdf_boundaries_lsoa': self.load_geometry_lsoa,
+            'gdf_points_units': self.load_geometry_stroke_units,
+            'gdf_lines_transfer': self.load_geometry_transfer_units,
+        }
+        for attr, func in data_dict.items():
+            try:
+                self.getattr(attr)
+            except AttributeError:
+                func()
+
         if self.data_type == 'combined':
             # Remove excess scenario data:
             try:
-                gdf_boundaries_lsoa = self.gdf_boundaries_lsoa[['any', scenario]]
-                gdf_boundaries_regions = self.gdf_boundaries_regions[['any', scenario]]
-                gdf_points_units = self.gdf_points_units[['any', scenario]]
-                gdf_lines_transfer = self.gdf_lines_transfer[['any', scenario]]
+                c = ['any', scenario]
+                gdf_boundaries_lsoa = self.gdf_boundaries_lsoa[c]
+                gdf_boundaries_regions = self.gdf_boundaries_regions[c]
+                gdf_points_units = self.gdf_points_units[c]
+                gdf_lines_transfer = self.gdf_lines_transfer[c]
             except KeyError:
                 # The scenario isn't in the Data.
                 # TO DO - proper error message here
@@ -1031,10 +1169,11 @@ class Map(object):
             # TO DO - FUCNTION THIS PLEASE
             # The geometry column is still defined with the excess
             # heading, so update which column is geometry:
-            gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_geometry('geometry')
-            gdf_boundaries_regions = gdf_boundaries_regions.set_geometry('geometry')
-            gdf_points_units = gdf_points_units.set_geometry('geometry')
-            gdf_lines_transfer = gdf_lines_transfer.set_geometry('geometry')
+            g = 'geometry'
+            gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_geometry(g)
+            gdf_boundaries_regions = gdf_boundaries_regions.set_geometry(g)
+            gdf_points_units = gdf_points_units.set_geometry(g)
+            gdf_lines_transfer = gdf_lines_transfer.set_geometry(g)
 
         else:
             gdf_boundaries_lsoa = self.gdf_boundaries_lsoa
@@ -1045,16 +1184,17 @@ class Map(object):
             # Remove the excess column headings:
             gdf_boundaries_lsoa = gdf_boundaries_lsoa.droplevel(
                 1, axis='columns')
+            # TO DO - change this to drop by level name -------------------------
 
         # Reduce the DataFrames to just the needed parts:
         gdf_boundaries_lsoa = gdf_boundaries_lsoa[[
-            'geometry',         # shapes
-            'postcode_nearest'  # background colour
+            'geometry',                             # shapes
+            'postcode_nearest'                      # background colour
             ]]
         gdf_boundaries_regions = gdf_boundaries_regions[[
-            'geometry',                # shapes
-            'contains_selected_unit',  # line type selection
-            'contains_selected_lsoa',  # line type selection
+            'geometry',                             # shapes
+            'contains_selected_unit',               # line type selection
+            'contains_selected_lsoa',               # line type selection
             ]]
         gdf_points_units = gdf_points_units[[
             'geometry',                             # locations
@@ -1062,8 +1202,8 @@ class Map(object):
             'Hospital_name'                         # labels
             ]]
         gdf_lines_transfer = gdf_lines_transfer[[
-            'geometry',  # line end points
-            'Use'        # line selection
+            'geometry',                             # line end points
+            'Use'                                   # line selection
         ]]
 
         lsoa_boundary_kwargs = {
@@ -1073,18 +1213,6 @@ class Map(object):
         }
         # Update this with anything from the input dict:
         lsoa_boundary_kwargs = lsoa_boundary_kwargs | boundary_kwargs
-
-        fig, ax = plt.subplots(figsize=(10, 10))
-        ax.set_title(scenario)
-
-        ax = maps.plot_map_catchment(
-            gdf_boundaries_lsoa,
-            gdf_boundaries_regions,
-            gdf_points_units,
-            gdf_lines_transfer,
-            ax=ax,
-            boundary_kwargs=lsoa_boundary_kwargs
-        )
 
         if save:
             dir_output = ''
@@ -1103,22 +1231,43 @@ class Map(object):
             file_name = f'map_catchment_{scenario}_{self.region_type}.jpg'
 
             path_to_file = os.path.join(dir_output, file_name)
-            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
-            plt.close()
         else:
-            plt.show()
+            path_to_file = None
 
-    def plot_map_outcome(
+        map_args = (
+            gdf_boundaries_lsoa,
+            gdf_boundaries_regions,
+            gdf_points_units,
+            gdf_lines_transfer
+            )
+        map_kwargs = dict(
+            lsoa_boundary_kwargs=lsoa_boundary_kwargs,
+            path_to_file=path_to_file
+        )
+        return map_args, map_kwargs
+
+    def _setup_plot_map_outcome(
             self,
             scenario: str,
             outcome: str,
             boundary_kwargs={},
-            save=True,
-            cbar_diff=False
+            save=True
             ):
         """
 
         """
+        # If the geometry data doesn't exist, load it in:
+        data_dict = {
+            'gdf_boundaries_regions': self.load_geometry_regions,
+            'gdf_boundaries_lsoa': self.load_geometry_lsoa,
+            'gdf_points_units': self.load_geometry_stroke_units,
+        }
+        for attr, func in data_dict.items():
+            try:
+                self.getattr(attr)
+            except AttributeError:
+                func()
+
         if self.data_type == 'combined':
             try:
                 gdf_boundaries_lsoa = self.gdf_boundaries_lsoa
@@ -1132,7 +1281,7 @@ class Map(object):
             mask = (
                 (gdf_boundaries_lsoa.columns.get_level_values(0).str.contains('diff'))
             )
-            if 'diff' in outcome:
+            if outcome.startswith('diff'):
                 pass
             else:
                 # Take the opposite condition, take only scenarios
@@ -1152,7 +1301,6 @@ class Map(object):
             try:
                 gdf_boundaries_regions = self.gdf_boundaries_regions
                 gdf_points_units = self.gdf_points_units
-                # gdf_lines_transfer = self.gdf_lines_transfer
 
                 if 'diff' in scenario:
                     # Add any other columns that these expect.
@@ -1160,22 +1308,18 @@ class Map(object):
                         gdf_boundaries_regions, scenario)
                     gdf_points_units = self.create_combo_cols(
                         gdf_points_units, scenario)
-                    # gdf_lines_transfer = self.create_combo_cols(
-                    #     gdf_lines_transfer, scenario)
 
                 # # Remove excess scenario data:
-                scenarios_to_keep = ['any', scenario]
-                gdf_boundaries_lsoa = gdf_boundaries_lsoa[scenarios_to_keep]
-                gdf_boundaries_regions = gdf_boundaries_regions[scenarios_to_keep]
-                gdf_points_units = gdf_points_units[scenarios_to_keep]
-                # gdf_lines_transfer = gdf_lines_transfer[scenarios_to_keep]
+                s = ['any', scenario]
+                gdf_boundaries_lsoa = gdf_boundaries_lsoa[s]
+                gdf_boundaries_regions = gdf_boundaries_regions[s]
+                gdf_points_units = gdf_points_units[s]
 
             except KeyError:
                 # The scenario isn't in the Data.
                 # TO DO - proper error message here
                 print('oh no')
                 raise KeyError('Scenario is missing.') from None
-
 
             # Remove the "std" columns.
             gdf_boundaries_lsoa = gdf_boundaries_lsoa.drop(
@@ -1192,8 +1336,6 @@ class Map(object):
                 0, axis='columns')
             gdf_points_units = gdf_points_units.droplevel(
                 0, axis='columns')
-            # gdf_lines_transfer = gdf_lines_transfer.droplevel(
-            #     0, axis='columns')
 
             # TO DO - FUCNTION THIS PLEASE
             # The geometry column is still defined with the excess
@@ -1201,13 +1343,11 @@ class Map(object):
             gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_geometry('geometry')
             gdf_boundaries_regions = gdf_boundaries_regions.set_geometry('geometry')
             gdf_points_units = gdf_points_units.set_geometry('geometry')
-            # gdf_lines_transfer = gdf_lines_transfer.set_geometry('geometry')
 
         else:
             gdf_boundaries_lsoa = self.gdf_boundaries_lsoa
             gdf_boundaries_regions = self.gdf_boundaries_regions
             gdf_points_units = self.gdf_points_units
-            # gdf_lines_transfer = self.gdf_lines_transfer
 
             # Find the colour limits.
             mask = (
@@ -1261,6 +1401,7 @@ class Map(object):
             'legend': True,
             }
 
+        cbar_diff = True if outcome.startswith('diff') else False
         if cbar_diff:
             lsoa_boundary_kwargs['cmap'] = 'seismic'
             lsoa_boundary_kwargs['vmin'] = -vlim_abs
@@ -1277,17 +1418,6 @@ class Map(object):
         # Update this with anything from the input dict:
         lsoa_boundary_kwargs = lsoa_boundary_kwargs | boundary_kwargs
 
-        fig, ax = plt.subplots(figsize=(10, 10))
-        ax.set_title(f'{scenario}: {outcome}')
-
-        ax = maps.plot_map_outcome(
-            gdf_boundaries_lsoa,
-            gdf_boundaries_regions,
-            gdf_points_units,
-            ax=ax,
-            boundary_kwargs=lsoa_boundary_kwargs
-        )
-
         if save:
             dir_output = ''
             if self.data_type == 'combined':
@@ -1303,8 +1433,98 @@ class Map(object):
                     pass
 
             file_name = f'map_{outcome}_{scenario}_{self.region_type}.jpg'
-
             path_to_file = os.path.join(dir_output, file_name)
+        else:
+            path_to_file = None
+
+        map_args = (
+            gdf_boundaries_lsoa,
+            gdf_boundaries_regions,
+            gdf_points_units
+        )
+        map_kwargs = dict(
+            lsoa_boundary_kwargs=lsoa_boundary_kwargs,
+            path_to_file=path_to_file
+        )
+        return map_args, map_kwargs
+
+    # #######################
+    # ##### PYPLOT MAPS #####
+    # #######################
+    def _plt_plot_map_selected_units(
+            self,
+            gdf_boundaries_regions,
+            gdf_points_units,
+            gdf_lines_transfer,
+            path_to_file='',
+            save=True
+            ):
+        fig, ax = plt.subplots(figsize=(10, 10))
+
+        ax = maps.plot_map_selected_units(
+            gdf_boundaries_regions,
+            gdf_points_units,
+            gdf_lines_transfer,
+            ax=ax
+        )
+
+        if save:
+            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
+            plt.close()
+        else:
+            plt.show()
+
+    def _plt_plot_map_catchment(
+            self,
+            gdf_boundaries_lsoa,
+            gdf_boundaries_regions,
+            gdf_points_units,
+            gdf_lines_transfer,
+            title='',
+            lsoa_boundary_kwargs={},
+            save=True,
+            path_to_file=''
+            ):
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.set_title(title)
+
+        ax = maps.plot_map_catchment(
+            gdf_boundaries_lsoa,
+            gdf_boundaries_regions,
+            gdf_points_units,
+            gdf_lines_transfer,
+            ax=ax,
+            boundary_kwargs=lsoa_boundary_kwargs
+        )
+
+        if save:
+            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
+            plt.close()
+        else:
+            plt.show()
+
+    def _plt_plot_map_outcome(
+            self,
+            gdf_boundaries_lsoa,
+            gdf_boundaries_regions,
+            gdf_points_units,
+            title='',
+            lsoa_boundary_kwargs={},
+            save=True,
+            path_to_file=None
+            ):
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.set_title(title)
+
+        ax = maps.plot_map_outcome(
+            gdf_boundaries_lsoa,
+            gdf_boundaries_regions,
+            gdf_points_units,
+            ax=ax,
+            boundary_kwargs=lsoa_boundary_kwargs
+        )
+
+        if save:
             plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
             plt.close()
         else:
