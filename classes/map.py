@@ -1077,8 +1077,8 @@ class Map(object):
             # Remove excess scenario data:
             try:
                 c = ['any', scenario]
-                gdf_boundaries_regions = self.gdf_boundaries_regions[c]
-                gdf_points_units = self.gdf_points_units[c]
+                gdf_boundaries_regions = self.gdf_boundaries_regions[c].copy()
+                gdf_points_units = self.gdf_points_units[c].copy()
             except KeyError:
                 # The scenario isn't in the Data.
                 # TO DO - proper error message here ---------------------------------------------
@@ -1096,8 +1096,8 @@ class Map(object):
             gdf_boundaries_regions = gdf_boundaries_regions.set_geometry(g)
             gdf_points_units = gdf_points_units.set_geometry(g)
         else:
-            gdf_boundaries_regions = self.gdf_boundaries_regions
-            gdf_points_units = self.gdf_points_units
+            gdf_boundaries_regions = self.gdf_boundaries_regions.copy()
+            gdf_points_units = self.gdf_points_units.copy()
 
         # What is the extent of the selected regions?
         gdf_selected = gdf_boundaries_regions[gdf_boundaries_regions['selected'] == 1]
@@ -1178,6 +1178,7 @@ class Map(object):
             'selected',                             # line type selection
             'label',                                # label annotation
             'point_label',                          # label position
+            'region',                               # legend label
             ]]
         gdf_points_units = gdf_points_units[[
             'geometry',                             # locations
@@ -1654,9 +1655,9 @@ class Map(object):
             map_extent=[],
             save=True
             ):
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=(12, 8))
 
-        ax = maps.plot_map_selected_regions(
+        ax, extra_artists = maps.plot_map_selected_regions(
             gdf_boundaries_regions,
             gdf_points_units,
             ax=ax,
@@ -1664,7 +1665,11 @@ class Map(object):
         )
 
         if save:
-            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
+            # Return extra artists so that bbox_inches='tight' line
+            # in savefig() doesn't cut off the legends.
+            # Adding legends with ax.add_artist() means that the
+            # bbox_inches='tight' line ignores them.
+            plt.savefig(path_to_file, bbox_extra_artists=extra_artists, dpi=300, bbox_inches='tight')
             plt.close()
         else:
             plt.show()

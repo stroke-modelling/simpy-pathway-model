@@ -2,6 +2,35 @@
 Functions for drawing maps.
 """
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+
+
+# ###################
+# ##### HELPERS #####
+# ###################
+def combine_legend_sections(section_labels, handles_lists, labels_lists):
+    handles_all = []
+    labels_all = []
+    for i, section_label in enumerate(section_labels):
+        # Add a blank handle to start of this handles list...
+        blank_section_patch = mpatches.Patch(visible=False)
+        handles_s = [blank_section_patch] + handles_lists[i]
+        # ... and the section label to the start of this labels list.
+        labels_s = [section_label] + labels_lists[i]
+        # Add these lists to the combined list.
+        handles_all += handles_s
+        labels_all += labels_s
+    return handles_all, labels_all
+
+
+def set_legend_section_labels_to_bold(leg, section_labels, all_labels):
+    # Set the section labels to bold (heavy) text:
+    leg1_list = leg.get_texts()
+    for s in section_labels:
+        i = all_labels.index(s)
+        leg1_list[i] = leg1_list[i].set_weight('heavy')
+    return leg
 
 
 # ####################
@@ -161,7 +190,8 @@ def draw_boundaries(ax, gdf, **kwargs):
     return ax
 
 
-def scatter_units(ax, gdf, mask_col='', ivt=True, mt=True, msu=True, **kwargs):
+def scatter_units(ax, gdf, mask_col='', ivt=True, mt=True, msu=True,
+        return_handle=False, **kwargs):
     """
     Draw scatter markers for IVT stroke units.
 
@@ -178,7 +208,7 @@ def scatter_units(ax, gdf, mask_col='', ivt=True, mt=True, msu=True, **kwargs):
         kwargs_dict = dict(
             edgecolor='k',
             facecolor='w',
-            markersize=50,
+            s=50,
             marker='o',
             zorder=2
         )
@@ -186,7 +216,7 @@ def scatter_units(ax, gdf, mask_col='', ivt=True, mt=True, msu=True, **kwargs):
         kwargs_dict = dict(
             edgecolor='k',
             facecolor='y',
-            markersize=300,
+            s=300,
             marker='*',
             zorder=2
         )
@@ -194,7 +224,7 @@ def scatter_units(ax, gdf, mask_col='', ivt=True, mt=True, msu=True, **kwargs):
         kwargs_dict = dict(
             edgecolor='k',
             facecolor='orange',
-            markersize=50,
+            s=50,
             marker='s',
             zorder=2
         )
@@ -212,11 +242,29 @@ def scatter_units(ax, gdf, mask_col='', ivt=True, mt=True, msu=True, **kwargs):
     else:
         masked_gdf = gdf
 
-    masked_gdf.plot(
-        ax=ax,
-        **kwargs_dict
-        )
-    return ax
+    if return_handle:
+        # Draw each point separately for use with the legend later.
+        # n.b. this might not be necessary if I can instead work out
+        # how to get separate objects out of a PathCollection object
+        # containing multiple scatter points. TO DO - check this! ----------------
+        handles = []
+        for row in masked_gdf.index:
+            gdf_m = masked_gdf.loc[row]
+            handle = ax.scatter(
+                gdf_m.geometry.x,
+                gdf_m.geometry.y,
+                **kwargs_dict
+                )
+            handles.append(handle)
+        return ax, handles
+    else:
+        # Draw all points in one call.
+        ax.scatter(
+            masked_gdf.geometry.x,
+            masked_gdf.geometry.y,
+            **kwargs_dict
+            )
+        return ax
 
 
 # def scatter_mt_units(ax, gdf):
@@ -341,36 +389,56 @@ def annotate_unit_labels(ax, gdf):
     return ax
 
 
-def draw_labels_short(ax, points, labels, **kwargs):
+def draw_labels_short(ax, points, map_labels, leg_labels, **kwargs):
     """
     Draw labels from the geodataframe.
     """
-    label_kwargs = dict(
-        ha='center',
-        va='center',
+    marker_kwargs = dict(
+        # ha='center',
+        # va='center',
         # bbox=dict(facecolor='w', edgecolor='k'),
-        fontsize=8
+        # fontsize=8,
+        # weight=None,
+        s=8,
+        edgecolor="none",
+        color='k'
     )
     # Update this with anything from the input dict:
-    label_kwargs = label_kwargs | kwargs
+    marker_kwargs = marker_kwargs | kwargs
+
+    markers_for_legend = []
+    labels_for_legend = []
 
     # Define "z" to shorten following "for" line:
     z = zip(
         points.x,
         points.y,
-        labels
+        map_labels,
+        leg_labels
         )
-    for x, y, label in z:
+    for x, y, map_label, leg_label in z:
         # Place the label slightly offset from the
         # exact hospital coordinates (x, y).
-        ax.annotate(
-            label,
-            xy=(x, y),
-            # xytext=(8, 8),
-            textcoords='data',
-            **label_kwargs
-            )
-    return ax
+        if len(map_label) == 1:
+            # Add an empty space after it.
+            map_label = f'{map_label}~'
+        m = ax.scatter(
+            x, y,
+            marker=r'$\mathdefault{' + f'{map_label}' + '}$',
+            # label=leg_label,
+            zorder=5,
+            **marker_kwargs
+        )
+        markers_for_legend.append(m)
+        labels_for_legend.append(leg_label)
+        # ax.annotate(
+        #     label,
+        #     xy=(x, y),
+        #     # xytext=(8, 8),
+        #     textcoords='data',
+        #     **label_kwargs
+        #     )
+    return ax, markers_for_legend, labels_for_legend
 
 
 # ######################
@@ -402,7 +470,7 @@ def plot_map_selected_regions(
 
     if ax is None:
         # Make max dimensions XxY inch:
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=(12, 8))
 
     ax = draw_boundaries_by_contents(
         ax,
@@ -413,42 +481,46 @@ def plot_map_selected_regions(
         # kwargs_selected=kwargs_selected,
         # kwargs_not_selected=kwargs_not_selected
         )
-    
+
     # In selected regions:
     mask = gdf_points_units['region_selected'] == 1
-    ax = scatter_units(
+    ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
         linewidth=0,
-        facecolor='r'
+        facecolor='LightCoral',
+        return_handle=True
         )
     # Outside selected regions:
     mask = ~mask
-    ax = scatter_units(
+    ax, handles_scatter_uns = scatter_units(
         ax,
         gdf_points_units[mask],
         linewidth=0,
-        facecolor='Gainsboro'
+        facecolor='Pink',
+        return_handle=True
         )
 
     # Label units:
     # In selected regions:
     mask = gdf_points_units['region_selected'] == 1
-    ax = draw_labels_short(
+    ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].label,
-        fontsize=6,
+        gdf_points_units[mask].Hospital_name,
+        s=30,
         color='k',
         # bbox=dict(facecolor='WhiteSmoke', edgecolor='r'),
     )
     # Outside selected regions:
     mask = ~mask
-    ax = draw_labels_short(
+    ax, handles_uns, labels_uns = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].label,
-        fontsize=6,
+        gdf_points_units[mask].Hospital_name,
+        s=30,
         color='DimGray',
         # bbox=dict(facecolor='GhostWhite', edgecolor='DimGray'),
     )
@@ -459,26 +531,68 @@ def plot_map_selected_regions(
     gdf_boundaries_regions = gdf_boundaries_regions.set_geometry('point_label')
     # In selected regions:
     mask = gdf_boundaries_regions['selected'] == 1
-    ax = draw_labels_short(
+    ax, handles_rs, labels_rs = draw_labels_short(
         ax,
         gdf_boundaries_regions[mask].point_label,
         gdf_boundaries_regions[mask].label,
-        weight='bold',
-        fontsize=10,
+        gdf_boundaries_regions[mask].region,
+        # weight='bold',
+        s=50,
         color='k'
     )
     # Outside selected regions:
     mask = ~mask
-    ax = draw_labels_short(
+    ax, handles_rns, labels_rns = draw_labels_short(
         ax,
         gdf_boundaries_regions[mask].point_label,
         gdf_boundaries_regions[mask].label,
-        weight='bold',
-        fontsize=10,
+        gdf_boundaries_regions[mask].region,
+        # weight='bold',
+        s=50,
         color='DimGray'
     )
 
-    # Add legends. TO DO --------------------------------------------------------
+    # Add legends.
+
+    # Regions:
+    # Add a blank handle and a section label:
+    section_labels = ['Selected regions', 'Other regions']
+    handles_r, labels_r = combine_legend_sections(
+        section_labels, [handles_rs, handles_rns], [labels_rs, labels_rns])
+    # Create the legend from the lists:
+    leg1 = ax.add_artist(plt.legend(
+        handles_r, labels_r, fontsize=6,
+        bbox_to_anchor=[0.0, 1.0],
+        loc='upper right'
+        ))
+    leg1 = set_legend_section_labels_to_bold(
+        leg1, section_labels, labels_r)
+
+    # Units:
+    # To combine the two handle types, the list needs to be like:
+    # [(h[0], h2[0]), (h[1], h2[1]), ...]
+    # and it has to be pairs of tuple, not of list.
+    # Units in selected regions:
+    handles_us_list = np.array([handles_scatter_us, handles_us]).T.tolist()
+    handles_us_list = [tuple(l) for l in handles_us_list]
+    # Other units:
+    handles_uns_list = np.array([handles_scatter_uns, handles_uns]).T.tolist()
+    handles_uns_list = [tuple(l) for l in handles_uns_list]
+    # Add a blank handle and a section label:
+    section_labels = ['Units in selected regions', 'Other units']
+    handles_u, labels_u = combine_legend_sections(
+        section_labels,
+        [handles_us_list, handles_uns_list],
+        [labels_us, labels_uns]
+        )
+    # Create the legend from the lists:
+    leg2 = ax.add_artist(plt.legend(
+        handles_u, labels_u, fontsize=6,
+        bbox_to_anchor=[1.0, 1.0],
+        loc='upper left'
+        ))
+    leg2 = set_legend_section_labels_to_bold(
+        leg2, section_labels, labels_u)
 
     if len(map_extent) > 0:
         # Limit to given extent:
@@ -490,7 +604,15 @@ def plot_map_selected_regions(
 
     ax.set_axis_off()  # Turn off axis line and numbers
 
-    return ax
+    # ax.legend()
+
+    # Return extra artists so that bbox_inches='tight' line
+    # in savefig() doesn't cut off the legends.
+    # Adding legends with ax.add_artist() means that the
+    # bbox_inches='tight' line ignores them.
+    extra_artists = (leg1, leg2)
+
+    return ax, extra_artists
 
 
 def plot_map_selected_units(
