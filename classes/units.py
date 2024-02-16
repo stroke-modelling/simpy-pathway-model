@@ -31,7 +31,7 @@ class Units(object):
         #     'hospital_name2': {'Use_IVT': 0, 'Use_MSU': None},
         #     'hospital_name3': {'Nearest_MT': 'EX25DW'},
         #     }
-        self.services_updates = {}
+        # self.services_updates = {}
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
@@ -77,7 +77,7 @@ class Units(object):
         #   --> saves to: file_national_unit_services
 
         # Find each LSOA's nearest IVT, MT, and MSU units:
-        self._find_national_lsoa_nearest_units()
+        # self._find_national_lsoa_nearest_units()  # TEMP COMMENTED OUT - FIX ME PLEASE - TO DO
         # Stores:
         # + self.national_lsoa_nearest_units
         #   --> saves to: file_national_lsoa_travel
@@ -98,7 +98,7 @@ class Units(object):
         # Place everything useful into a dict for returning:
         national_dict = dict(
             hospital_services=self.national_hospital_services,
-            lsoa_nearest_units=self.national_lsoa_nearest_units,
+            # lsoa_nearest_units=self.national_lsoa_nearest_units,
             ivt_feeder_units=self.national_ivt_feeder_units,
             mt_transfer_time=self.national_mt_transfer_time,
             mt_transfer_unit=self.national_mt_transfer_unit,
@@ -135,70 +135,22 @@ class Units(object):
             Columns for whether a team provides IVT, MT, and MSU.
         """
         # Load default stroke unit services:
-        dir_input = self.setup.dir_data
-        file_input = self.setup.file_input_unit_services
+        dir_input = self.setup.dir_output
+        file_input = self.setup.file_selected_stroke_units
         path_to_file = os.path.join(dir_input, file_input)
-        services = pd.read_csv(
-            path_to_file,
-            index_col='Postcode'
-            )
+        services = pd.read_csv(path_to_file)
         # Each row is a stroke unit. The columns are 'Postcode' and
         # 'SSNAP name' (str), and 'Use_IVT', 'Use_MT', and 'Use_MSU'
         # (int | bool).
 
-        # If the model type is "mothership" or "MSU"
-        # then remove the IVT units.
-        # destination_decision_type = 0 is 'drip-and-ship'
-        if int(self.destination_decision_type) == 1:
-            mask = (services['Use_MT'] == 0)
-            services['Use_IVT'][mask] = 0
-        elif int(self.destination_decision_type) == 2:
-            # TO DO - this is temporary, might not want this in
-            # final MSU model:
-            mask = (services['Use_MSU'] == 0)
-            services['Use_IVT'][mask] = 0
-
-        # Overwrite hospital info if given.
-        # Keep the same list of hospitals nationally but update
-        # which services they provide. We can't easily add a totally
-        # new unit because the travel times need to be calculated
-        # outside of this class.
-
-        # Define "kv" to shorten following line:
-        for hospital, service_dict in self.services_updates.items():
-            for key, value in service_dict.items():
-                if key[:4] == 'Use_':
-                    success = True
-                    try:
-                        value = int(value)
-                    except TypeError:
-                        if value is None:
-                            # Nothing to see here.
-                            pass
-                        else:
-                            # This shouldn't happen.
-                            # TO DO - flag up an error or something?
-                            success = False
-                    if success:
-                        # Get the right row with services.loc[hospital],
-                        # then the right column with [key],
-                        # and overwrite the existing value.
-                        services.loc[hospital, key] = value
-                else:
-                    # This isn't an entry about service provision.
-                    pass
-
-        # Remove index column:
-        services = services.reset_index()
-
         # Store national hospitals and their services in self.
         self.national_hospital_services = services
 
-        # Save output to output folder.
-        dir_output = self.setup.dir_output
-        file_name = self.setup.file_national_unit_services
-        path_to_file = os.path.join(dir_output, file_name)
-        services.to_csv(path_to_file, index=False)
+        # # Save output to output folder.
+        # dir_output = self.setup.dir_output
+        # file_name = self.setup.file_national_unit_services
+        # path_to_file = os.path.join(dir_output, file_name)
+        # services.to_csv(path_to_file, index=False)
 
     def _find_national_lsoa_nearest_units(self):
         """
@@ -440,26 +392,20 @@ class Units(object):
 
         # Update the feeder units list with anything specified
         # by the user.
-        for stroke_unit, stroke_unit_dict in self.services_updates.items():
-            if stroke_unit in df_stroke_teams.index.values:
-                # This stroke unit has at least one service
-                # (Use_IVT, Use_MT, and/or Use_MSU = 1).
-                if 'Nearest_MT' in list(stroke_unit_dict.keys()):
-                    # Name of the unit:
-                    mt_name = stroke_unit_dict['Nearest_MT']
+        df_services = self.national_hospital_services
+        df_services_to_update = df_services[
+            df_services['Chosen_MT'] != 'nearest']
+        units_to_update = df_services_to_update['Postcode'].values
+        transfer_units_to_update = df_services_to_update['Chosen_MT'].values
+        for u, unit in units_to_update:
+            transfer_unit = transfer_units_to_update[u]
 
-                    # Find the time to this MT unit.
-                    mt_time = df_time_inter_hospital.loc[stroke_unit][mt_name]
+            # Find the time to this MT unit.
+            mt_time = df_time_inter_hospital.loc[unit][transfer_unit]
 
-                    # Update the chosen nearest MT unit name and time.
-                    df_nearest_mt.at[stroke_unit, 'name_nearest_MT'] = mt_name
-                    df_nearest_mt.at[stroke_unit, 'time_nearest_MT'] = mt_time
-                else:
-                    # Nothing to update.
-                    pass
-            else:
-                # Reject stroke units that have no services.
-                pass
+            # Update the chosen nearest MT unit name and time.
+            df_nearest_mt.at[unit, 'name_nearest_MT'] = transfer_unit
+            df_nearest_mt.at[unit, 'time_nearest_MT'] = mt_time
 
         # Store in self:
         self.national_ivt_feeder_units = df_nearest_mt

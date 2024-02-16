@@ -13,7 +13,6 @@ import os
 
 from classes.units import Units
 from classes.setup import Setup
-from classes.map import Map
 
 
 class Scenario(object):
@@ -218,6 +217,13 @@ class Scenario(object):
         path_to_file = os.path.join(dir_output, file_name)
         df.to_csv(path_to_file, index=False)
 
+        try:
+            df_units = self.unit_services
+        except AttributeError:
+            # Automatically create units based on these areas.
+            df_units = self.get_unit_services()
+            self.set_unit_services(df_units)
+
     # #########################
     # ##### UNIT SERVICES #####   --> should this move to Units()?
     # #########################
@@ -255,17 +261,22 @@ class Scenario(object):
     def set_unit_services(self, df):
         # TO DO - run sanity checks
 
-        # Merge in geometry.
-        # TO DO - just store this somewhere else:
-        # Load and parse geometry data
-        dir_input = self.setup.dir_data
-        file_input = self.setup.file_input_hospital_info
-        path_to_file = os.path.join(dir_input, file_input)
-        df_info = pd.read_csv(path_to_file)
-        # Merge:
-        df = pd.merge(
-            df, df_info[['Postcode', 'Easting', 'Northing', 'long_x', 'lat_x']],
-            left_on='Postcode', right_on='Postcode', how='left')
+        try:
+            df[['Easting', 'Northing', 'long_x', 'lat_x']]
+        except KeyError:
+            # Merge in geometry.
+            # TO DO - just store this somewhere else:
+            # - it's annoying when this runs twice accidentally and get loads of extra
+            # geometry columns and suffixes. FIX ME! ----------------------------------------------
+            # Load and parse geometry data
+            dir_input = self.setup.dir_data
+            file_input = self.setup.file_input_hospital_info
+            path_to_file = os.path.join(dir_input, file_input)
+            df_info = pd.read_csv(path_to_file)
+            # Merge:
+            df = pd.merge(
+                df, df_info[['Postcode', 'Easting', 'Northing', 'long_x', 'lat_x']],
+                left_on='Postcode', right_on='Postcode', how='left')
 
         # TO DO - add an option to load this from a custom file.
         self.unit_services = df
@@ -275,6 +286,9 @@ class Scenario(object):
         file_name = self.setup.file_selected_stroke_units
         path_to_file = os.path.join(dir_output, file_name)
         df.to_csv(path_to_file, index=False)
+
+        # Calculate national unit info:
+        self.load_units_data()
 
     # ##########################
     # ##### ... write me TO DO #####
@@ -308,6 +322,18 @@ class Scenario(object):
                 # TO DO - raise an exception or something here. -----------------------------
         return col
 
+    def load_units_data(self):
+        # ##### NATIONAL UNITS #####
+        try:
+            self.units
+        except AttributeError:
+            self.units = Units({'setup': self.setup})
+        self.national_dict = self.units.load_data()
+
+        # ##### SELECTED UNITS #####
+        self._load_transfer_units()
+        # WRITE ME TO DO -----------------------------------------------------------------
+
     def load_data(self):
         """
         Load required data.
@@ -330,27 +356,6 @@ class Scenario(object):
         More details on each attribute are given in the docstrings
         of the methods that create them.
         """
-        # ##### NATIONAL UNITS #####
-        units = Units({
-            'services_updates': self.services_updates,
-            'setup': self.setup,
-            'destination_decision_type': self.destination_decision_type
-            })
-        self.national_dict = units.load_data()
-
-        # ##### SELECTED UNITS #####
-        # Import hospital names:
-        self._load_hospitals()
-        # Stores:
-        # + self.hospitals
-        #   --> saves to: file_selected_stroke_units
-        self._load_transfer_units()
-        # WRITE ME TO DO -----------------------------------------------------------------
-
-        # Find which regions contain a unit.
-        self._link_units_to_regions()
-        # --> saves to: file_selected_regions
-
         # Find which LSOAs are in these stroke teams' catchment areas:
         self._load_lsoa_names()
         # Stores:
@@ -377,120 +382,6 @@ class Scenario(object):
     # ##########################
     # ##### SELECTED UNITS #####
     # ##########################
-    def _load_hospitals(self):
-        """
-        Load data on the selected stroke units.
-
-        If no units are specified but "limit_to_england" is True,
-        then only English stroke units are kept. If no units are
-        specified and "limit_to_england" is False, then all stroke
-        units are kept.
-
-        Stores
-        ------
-
-        hospitals:
-            pd.DataFrame. Each stroke team's data including name,
-            postcode, region, lat/long, provide IVT or MT...
-        """
-        # Load and parse hospital data
-        dir_input = self.setup.dir_data
-        file_input = self.setup.file_input_hospital_info
-        path_to_file = os.path.join(dir_input, file_input)
-        hospitals = pd.read_csv(path_to_file)
-
-        # Reduce the number of columns:
-        hospitals = hospitals[[
-            'Postcode',
-            'Hospital_name',
-            'SSNAP name',
-            self.region_column_for_lsoa_selection,
-            'Easting',
-            'Northing',
-            'long_x',
-            'lat_x',
-        ]]
-        hospitals = hospitals.rename(columns={'long_x': 'long', 'lat_x': 'lat'})
-        # TO DO - sort out the _x suffix unwanted -----------------------------------
-
-        # # Keep a copy of the coordinates:
-        # hospital_coords = hospitals[[
-        #     'Postcode', 'Easting', 'Northing', 'long', 'lat']].copy()
-
-        # Load and parse hospital services data
-        dir_input = self.setup.dir_output
-        file_input = self.setup.file_national_unit_services
-        path_to_file = os.path.join(dir_input, file_input)
-        services = pd.read_csv(path_to_file)
-
-        # Update hospital data with services data:
-        # hospitals = hospitals.drop(['Use_IVT', 'Use_MT', 'Use_MSU'], axis=1)
-        hospitals = pd.merge(
-            hospitals, services[['Postcode', 'Use_IVT', 'Use_MT', 'Use_MSU']],
-            left_on='Postcode', right_on='Postcode', how='left'
-        )
-
-        # Only keep stroke units that offer IVT, MT, and/or MSU:
-        hospitals['Use'] = hospitals[
-            ['Use_IVT', 'Use_MT', 'Use_MSU']].max(axis=1)
-        mask = hospitals['Use'] == 1
-        hospitals = hospitals[mask]
-
-        # Limit the available hospitals if required.
-        if len(self.mt_hub_postcodes) > 0:
-            # TO DO - stick this in a function find_feeder_units or similar
-            # and combine it with the transfer unit coordinates function below.-------------
-
-            # If a list of MT units was given, use only those units.
-
-            # Find which IVT units feed into these MT units.
-            # First take the data of all feeder units nationally:
-            df_feeders = self.national_dict['ivt_feeder_units']
-            # Each row is a stroke unit. Columns are
-            # its postcode, the postcode of the nearest MT unit,
-            # and travel time to that MT unit.
-
-            # Which hospitals feed into the selected MT units?
-            mask = [
-                df_feeders['name_nearest_MT'].str.contains(s)
-                for s in self.mt_hub_postcodes
-                ]
-            # The following mask is True for any stroke unit that is
-            # has any of the MT hub postcodes as its chosen unit:
-            mask = np.any(mask, axis=0)
-            # Select just those stroke units:
-            feeder_units = df_feeders.index.values[mask]
-
-            # Reduce the hospitals DataFrame to just the feeder units
-            # and the MT units themselves:
-            hospitals = pd.merge(
-                left=hospitals,
-                right=pd.Series(feeder_units, name='Postcode'),
-                left_on='Postcode',
-                right_on='Postcode',
-                how='inner'
-            )
-            # Use 'inner' merge to remove any stroke units that
-            # are not in "hospitals" because they do not provide
-            # any services (Use_IVT, Use_MT, Use_MSU all are 0).
-
-        elif self.limit_to_england:
-            # Limit the data to English stroke units only.
-            mask = hospitals["Country"] == "England"
-            hospitals = hospitals[mask]
-        else:
-            # Use the full "hospitals" data.
-            pass
-
-        hospitals = hospitals.set_index('Postcode')
-        self.hospitals = hospitals
-
-        # Save output to output folder.
-        dir_output = self.setup.dir_output
-        file_name = self.setup.file_selected_stroke_units
-        path_to_file = os.path.join(dir_output, file_name)
-        hospitals.to_csv(path_to_file)
-
     def _load_transfer_units(self):
 
         # Merge in transfer unit names.
@@ -500,10 +391,15 @@ class Scenario(object):
         path_to_file = os.path.join(dir_input, file_input)
         transfer = pd.read_csv(path_to_file, index_col=0)
 
+        dir_input = self.setup.dir_output
+        file_input = self.setup.file_selected_stroke_units
+        path_to_file = os.path.join(dir_input, file_input)
+        hospitals = pd.read_csv(path_to_file, index_col=0)
+
         # Keep a copy of the coordinates:
-        hospital_coords = self.hospitals.copy()
+        hospital_coords = hospitals.copy()
         hospital_coords = hospital_coords[[
-            'Easting', 'Northing', 'long', 'lat']]
+            'Easting', 'Northing', 'long_x', 'lat_x']]  # TO DO - Fix this annoying suffix
 
         transfer = transfer.drop(['time_nearest_MT'], axis='columns')
         # Merge in the transfer unit coordinates:
@@ -530,113 +426,6 @@ class Scenario(object):
         file_name = self.setup.file_selected_transfer_units
         path_to_file = os.path.join(dir_output, file_name)
         transfer_hospitals.to_csv(path_to_file)
-
-    def _link_units_to_regions(self):
-        """
-        TO DO
-
-        TO DO - combine this with link LSOAs to regions? ------------------------------
-        """
-        # Load and parse full hospital data with regions:
-        dir_input = self.setup.dir_data
-        file_input = self.setup.file_input_hospital_info
-        path_to_file = os.path.join(dir_input, file_input)
-        df_units_regions = pd.read_csv(path_to_file, index_col=0)
-
-        # Selected units:
-        df_units_selected = self.hospitals
-
-        # Limit the big DataFrame to just the units wanted:
-        df_units_regions = pd.merge(
-            df_units_regions,
-            pd.DataFrame(index=df_units_selected.index),
-            left_index=True,
-            right_index=True,
-            how='right'
-            )
-
-        # Region columns:
-        # +--------+---------------+
-        # | Start  | End           |
-        # +--------+---------------+
-        # | LSOA11 | CD / NM / NMW |
-        # | MSOA11 | CD / NM       |
-        # | CCG19  | CD / NM       |
-        # | ICB22  | CD / NM       |
-        # | LAD17  | CD / NM       |
-        # | STP19  | CD / NM       |
-        # | LHB20  | CD / NM / NMW |
-        # | SCN17  | CD / NM       |
-        # | RGN11  | CD / NM       |
-        # | CTRY11 | NM            |
-        # +--------+---------------+
-        # List of the region type prefixes excluding LSOA and MSOA:
-        region_types = ['CCG', 'ICB', 'LAD', 'STP',
-                        'LHB', 'SCN', 'RGN', 'CTRY']
-        region_cols = ([c for s in region_types
-                        for c in df_units_regions.columns
-                        if c.startswith(s)])
-
-        # In this list, store a DataFrame for each region type:
-        data_to_stack = []
-        # For each region type, find the regions containing LSOA:
-        for region_type in region_cols:
-            # Remove any missing names:
-            regions_here = df_units_regions[region_type].dropna()
-            regions_here = sorted(list(set(regions_here)))
-
-            data_here = np.array([
-                [region_type]  * len(regions_here),
-                regions_here,
-                [1] * len(regions_here)
-            ]).T
-            data_to_stack.append(data_here)
-        # Combine the list of data into one tall DataFrame.
-        # Stack them all on top of the other with no change in columns.
-        df = pd.DataFrame(
-            np.concatenate(data_to_stack),
-            columns=['region_type', 'region', 'contains_selected_unit']
-        )
-        # Set index column:
-        df = df.set_index(['region_type', 'region'])
-
-        # If there is already region info, merge this in:
-        try:
-            df_before = self.region_choice
-            # If the dataframe already contains unit info,
-            # then drop it:
-            try:
-                df_before = df_before.drop('contains_selected_unit', axis='columns')
-            except KeyError:
-                # The unit info doesn't exist yet.
-                pass
-            # Merge in the newly-found unit info.
-            # Only keep the region (index) and contains_selected_lsoa
-            # columns from df_before.
-            df = pd.merge(
-                df_before, df,
-                left_index=True, right_index=True, how='outer'
-            )
-            # Fill missing values with 0.
-            df = df.fillna(0)
-            # Update dtypes in case NaN changed ints to floats.
-            df = df.convert_dtypes()
-            # # Drop duplicate rows:
-            # df = df.drop_duplicates()
-        except AttributeError:
-            # The region_choice dataframe doesn't exist yet.
-            pass
-
-        # Sort by region type:
-        df = df.sort_values('region_type')
-        # Save to self:
-        self.region_choice = df
-
-        # Save to file:
-        dir_output = self.setup.dir_output
-        file_name = self.setup.file_selected_regions
-        path_to_file = os.path.join(dir_output, file_name)
-        df.to_csv(path_to_file)#, index=False)
 
     # #########################
     # ##### SELECTED LSOA #####
@@ -903,101 +692,10 @@ class Scenario(object):
         path_to_file = os.path.join(dir_input, file_input)
         df_lsoa_regions = pd.read_csv(path_to_file)
 
-        # Ditch the coordinates:
-        df_lsoa_regions = df_lsoa_regions.drop([
-            'LSOA11BNG_N', 'LSOA11BNG_E', 'LSOA11LONG', 'LSOA11LAT'],
-            axis='columns')
-        # Keep a copy of the column names:
-        region_cols = df_lsoa_regions.columns
+        # TO DO - pick out which LSOA will be included in the model. Two model types:
+        # either limit to the exact boundaries of the selected regions,
+        # or use the catchment areas of all stroke units that were selected.
 
-        # Selected LSOA:
-        df_lsoa_selected = self.lsoa_names
-
-        # Limit the big DataFrame to just the LSOAs wanted:
-        df_lsoa_regions = pd.merge(
-            df_lsoa_regions,
-            pd.DataFrame(index=df_lsoa_selected.index),
-            left_on='LSOA11NM',
-            right_index=True,
-            how='right'
-            )
-
-        # Save to file:
-        dir_output = self.setup.dir_output
-        file_name = self.setup.file_selected_lsoa_regions
-        path_to_file = os.path.join(dir_output, file_name)
-        df_lsoa_regions.to_csv(path_to_file)#, index=False)
-
-        # Region columns:
-        # +--------+---------------+
-        # | Start  | End           |
-        # +--------+---------------+
-        # | LSOA11 | CD / NM / NMW |
-        # | MSOA11 | CD / NM       |
-        # | CCG19  | CD / NM       |
-        # | ICB22  | CD / NM       |
-        # | LAD17  | CD / NM       |
-        # | STP19  | CD / NM       |
-        # | LHB20  | CD / NM / NMW |
-        # | SCN17  | CD / NM       |
-        # | RGN11  | CD / NM       |
-        # | CTRY11 | NM            |
-        # +--------+---------------+
-        # Exclude LSOA and MSOA:
-        region_cols = [c for c in region_cols if 'SOA' not in c]
-
-        # In this list, store a DataFrame for each region type:
-        data_to_stack = []
-        # For each region type, find the regions containing LSOA:
-        for region_type in region_cols:
-            # Exclude any empty names.
-            regions_here = df_lsoa_regions[region_type].dropna()
-            regions_here = sorted(list(set(regions_here)))
-
-            data_here = np.array([
-                [region_type]  * len(regions_here),
-                regions_here,
-                [1] * len(regions_here)
-            ]).T
-            data_to_stack.append(data_here)
-        # Combine the list of data into one tall DataFrame.
-        # Stack them all on top of the other with no change in columns.
-        df = pd.DataFrame(
-            np.concatenate(data_to_stack),
-            columns=['region_type', 'region', 'contains_selected_lsoa']
-        )
-        # Set index column:
-        df = df.set_index(['region_type', 'region'])
-
-        # If there is already region info, merge this in:
-        try:
-            df_before = self.region_choice
-            # If the dataframe already contains unit info,
-            # then drop it:
-            try:
-                df_before = df_before.drop('contains_selected_lsoa', axis='columns')
-            except KeyError:
-                # The unit info doesn't exist yet.
-                pass
-            # Merge in the newly-found unit info.
-            # Only keep the region (index) and contains_selected_units
-            # columns from df_before.
-            df = pd.merge(
-                df_before, df,
-                left_index=True, right_index=True, how='outer'
-            )
-            # Fill missing values with 0.
-            df = df.fillna(0)
-            # Update dtypes in case NaN changed ints to floats.
-            df = df.convert_dtypes()
-            # # Drop duplicate rows:
-            # df = df.drop_duplicates()
-        except AttributeError:
-            # The region_choice dataframe doesn't exist yet.
-            pass
-
-        # Sort by region type:
-        df = df.sort_values('region_type')
         # Save to self:
         self.region_choice = df
 

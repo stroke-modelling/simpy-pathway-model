@@ -68,6 +68,7 @@ import matplotlib.pyplot as plt
 import os
 
 from shapely import LineString  # For creating line geometry.
+from shapely.geometry import Polygon # For extent box.
 
 from classes.setup import Setup
 
@@ -83,8 +84,6 @@ class Map(object):
     TO DO - write me
     """
     def __init__(self, *initial_data, **kwargs):
-
-        self.region_type = 'ICB22NM'
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
@@ -153,7 +152,7 @@ class Map(object):
             'df_transfer': {
                 'file': self.setup.file_selected_transfer_units,
                 'header': [0],
-                'index_col': [0],
+                'index_col': 0,
                 },
             'df_lsoa': {
                 'file': self.setup.file_selected_lsoas,
@@ -310,9 +309,9 @@ class Map(object):
             gdf_boundaries = gdf_boundaries.to_crs('EPSG:27700')
         return gdf_boundaries
 
-    def update_regions(self, region_type: str):
-        self.region_type = region_type
-        self.load_geometry_regions()
+    # def update_regions(self, region_type: str):
+    #     self.region_type = region_type
+    #     self.load_geometry_regions()
 
     # ##########################
     # ##### DATA WRANGLING #####
@@ -556,11 +555,11 @@ class Map(object):
         # ----- Additional setup -----
         # Assign colours:
         gdf_boundaries_regions = self.assign_colours_to_regions(
-            gdf_boundaries_regions, self.region_type, col_colour)
+            gdf_boundaries_regions, 'region', col_colour)
 
         # ----- Save to self -----
         self.gdf_boundaries_regions = gdf_boundaries_regions
-        self.region_type = self.region_type
+        # self.region_type = self.region_type
 
     def load_geometry_stroke_units(self):
         """
@@ -945,13 +944,41 @@ class Map(object):
         df['total_neighbours'] = df['neighbour_list'].str.len()
         return df
 
+    def get_selected_area_extent(
+            self,
+            gdf_boundaries_regions,
+            leeway=20000,
+            ):
+        """
+        # What is the extent of the selected regions?
+        """
+        gdf_selected = gdf_boundaries_regions[
+            gdf_boundaries_regions['selected'] == 1]
+        minx, miny, maxx, maxy = gdf_selected.geometry.total_bounds
+        # Give this some leeway:
+        minx -= leeway
+        miny -= leeway
+        maxx += leeway
+        maxy += leeway
+        map_extent = [minx, maxx, miny, maxy]
+        # Turn the points into a box:
+        box = Polygon((
+            (minx, miny),
+            (minx, maxy),
+            (maxx, maxy),
+            (maxx, miny),
+            (minx, miny),
+        ))
+        return box, map_extent
+
     # #########################
     # ##### PLOT WRAPPERS #####
     # #########################
     def plot_map_selected_regions(
             self,
             scenario: str,
-            save=True
+            save=True,
+            show=False
             ):
         """
         Wrangle data and plot a map of selected units.
@@ -963,23 +990,19 @@ class Map(object):
         self._plt_plot_map_selected_regions(
             *map_args,
             **map_kwargs,
-            save=save
+            save=save,
+            show=show
         )
 
     def plot_map_selected_units(
             self,
             scenario: str,
             save=True,
-            region=None
+            show=False
             ):
         """
         Wrangle data and plot a map of selected units.
         """
-        if region is None:
-            pass
-        else:
-            # Update the region data so it reloads in setup function.
-            self.region_type = region
 
         map_args, map_kwargs = self._setup_plot_map_selected_units(
             scenario,
@@ -988,7 +1011,8 @@ class Map(object):
         self._plt_plot_map_selected_units(
             *map_args,
             **map_kwargs,
-            save=save
+            save=save,
+            show=show
         )
 
     def plot_map_catchment(
@@ -1099,25 +1123,10 @@ class Map(object):
             gdf_boundaries_regions = self.gdf_boundaries_regions.copy()
             gdf_points_units = self.gdf_points_units.copy()
 
-        # What is the extent of the selected regions?
-        gdf_selected = gdf_boundaries_regions[gdf_boundaries_regions['selected'] == 1]
-        minx, miny, maxx, maxy = gdf_selected.geometry.total_bounds
-        # Give this some leeway:
-        leeway = 20000
-        minx -= leeway
-        miny -= leeway
-        maxx += leeway
-        maxy += leeway
-        map_extent = [minx, maxx, miny, maxy]
-        # Turn the points into a box:
-        from shapely.geometry import Polygon
-        box = Polygon((
-            (minx, miny),
-            (minx, maxy),
-            (maxx, maxy),
-            (maxx, miny),
-            (minx, miny),
-        ))
+        box, map_extent = self.get_selected_area_extent(
+            gdf_boundaries_regions,
+            leeway=20000,
+            )
 
         # Which other regions are contained in this bounding box?
         mask = gdf_boundaries_regions.geometry.intersects(box)
@@ -1224,6 +1233,13 @@ class Map(object):
             save=True
             ):
 
+        # Load in reference data for this scenario
+        # (always ignore "combined"):
+        self.load_run_data(
+            ['df_regions', 'df_units', 'df_transfer'],
+            dir_data=scenario
+            )
+
         # If the geometry data doesn't exist, load it in:
         data_dict = {
             'gdf_boundaries_regions': self.load_geometry_regions,
@@ -1240,9 +1256,9 @@ class Map(object):
             # Remove excess scenario data:
             try:
                 c = ['any', scenario]
-                gdf_boundaries_regions = self.gdf_boundaries_regions[c]
-                gdf_points_units = self.gdf_points_units[c]
-                gdf_lines_transfer = self.gdf_lines_transfer[c]
+                gdf_boundaries_regions = self.gdf_boundaries_regions[c].copy()
+                gdf_points_units = self.gdf_points_units[c].copy()
+                gdf_lines_transfer = self.gdf_lines_transfer[c].copy()
             except KeyError:
                 # The scenario isn't in the Data.
                 # TO DO - proper error message here ---------------------------------------------
@@ -1263,21 +1279,91 @@ class Map(object):
             gdf_points_units = gdf_points_units.set_geometry(g)
             gdf_lines_transfer = gdf_lines_transfer.set_geometry(g)
         else:
-            gdf_boundaries_regions = self.gdf_boundaries_regions
-            gdf_points_units = self.gdf_points_units
-            gdf_lines_transfer = self.gdf_lines_transfer
+            gdf_boundaries_regions = self.gdf_boundaries_regions.copy()
+            gdf_points_units = self.gdf_points_units.copy()
+            gdf_lines_transfer = self.gdf_lines_transfer.copy()
+
+        box, map_extent = self.get_selected_area_extent(
+            gdf_boundaries_regions,
+            leeway=20000,
+            )
+
+        # TO DO - function this --------------------------------------------------------?
+        # Which other regions are contained in this bounding box?
+        mask = gdf_boundaries_regions.geometry.intersects(box)
+        gdf_boundaries_regions = gdf_boundaries_regions[mask]
+        # Which stroke units are contained in this bounding box?
+        mask = gdf_points_units.geometry.intersects(box)
+        gdf_points_units = gdf_points_units[mask]
+
+        # TO DO - function this --------------------------------------------------------?
+        # Restrict polygon geometry to the edges of the box.
+        gdf_boundaries_regions['geometry'] = (
+            gdf_boundaries_regions.geometry.intersection(box))
+
+        # TO DO - function this --------------------------------------------------------
+        # Which stroke units are in the selected regions?
+        regions_selected = gdf_boundaries_regions['region'][
+            gdf_boundaries_regions['selected'] == 1]
+        mask = gdf_points_units['region'].isin(regions_selected)
+        gdf_points_units['region_selected'] = 0
+        gdf_points_units.loc[mask, 'region_selected'] = 1
+        # Add a label letter for each unit.
+        gdf_points_units = gdf_points_units.sort_values(
+            ['region_selected', 'Northing'], ascending=False
+        )
+        import string
+        # List ['A', 'B', 'C', ..., 'Z']:
+        str_labels = list(string.ascii_uppercase)
+        if len(str_labels) < len(gdf_points_units):
+            # Add more letters at the end starting with
+            # ['AA', 'AB', 'AC', ... 'AZ'].
+            i = 0
+            str_labels_orig = list(string.ascii_uppercase)
+            while len(str_labels) < len(gdf_points_units):
+                str_labels2 = [f'{str_labels[i]}{s}' for s in str_labels_orig]
+                str_labels += str_labels2
+                i += 1
+        else:
+            pass
+        gdf_points_units['label'] = str_labels[:len(gdf_points_units)]
+
+        gdf_lines_transfer = gdf_lines_transfer.reset_index().copy()
+        # Set 'Use' to 1 when either the start or end unit
+        # is in 'region_selected':
+        gdf_lines_transfer['Use'] = 0
+        df_units_rs = gdf_points_units.copy()
+        df_units_rs = df_units_rs.reset_index()
+        # Is start unit in region_selected?
+        gdf_lines_transfer = pd.merge(
+            gdf_lines_transfer,
+            df_units_rs[['Postcode', 'region_selected']],
+            left_on='Postcode', right_on='Postcode', how='left'
+        )
+        # Is end unit in region_selected?
+        gdf_lines_transfer = pd.merge(
+            gdf_lines_transfer,
+            df_units_rs[['Postcode', 'region_selected']],
+            left_on='name_nearest_MT', right_on='Postcode', how='left',
+            suffixes=(None, '_MT')
+        )
+        gdf_lines_transfer['Use'][(
+            (gdf_lines_transfer['region_selected'] == 1) |
+            (gdf_lines_transfer['region_selected_MT'] == 1)
+            )] = 1
 
         # Reduce the DataFrames to just the needed parts:
         gdf_boundaries_regions = gdf_boundaries_regions[[
             'geometry',                             # shapes
             'colour',                               # background colour
-            'contains_selected_unit',               # line type selection
-            'contains_selected_lsoa',               # line type selection
+            'selected',                             # line type selection
             ]]
         gdf_points_units = gdf_points_units[[
             'geometry',                             # locations
-            'Use_IVT', 'Use_MT', 'Use_MSU', 'Use',  # point selection
-            'Hospital_name'                         # labels
+            'Use_IVT', 'Use_MT', 'Use_MSU',         # point selection
+            'Hospital_name',                        # labels
+            'label',                                # label annotation
+            'region_selected'                       # label kwargs
             ]]
         gdf_lines_transfer = gdf_lines_transfer[[
             'geometry',                             # line end points
@@ -1299,7 +1385,7 @@ class Map(object):
                     # Setup is not defined.
                     pass
 
-            file_name = f'map_selected_units_{scenario}_{self.region_type}.jpg'
+            file_name = f'map_selected_units_{scenario}.jpg'
             path_to_file = os.path.join(dir_output, file_name)
         else:
             path_to_file = None
@@ -1310,7 +1396,8 @@ class Map(object):
             gdf_lines_transfer
         )
         map_kwargs = dict(
-            path_to_file=path_to_file
+            path_to_file=path_to_file,
+            map_extent=map_extent
             )
         return map_args, map_kwargs
 
@@ -1651,11 +1738,12 @@ class Map(object):
             self,
             gdf_boundaries_regions,
             gdf_points_units,
-            path_to_file='',
             map_extent=[],
-            save=True
+            path_to_file='',
+            save=True,
+            show=False
             ):
-        fig, ax = plt.subplots(figsize=(12, 8))
+        fig, ax = plt.subplots(figsize=(8, 5))
 
         ax, extra_artists = maps.plot_map_selected_regions(
             gdf_boundaries_regions,
@@ -1669,33 +1757,50 @@ class Map(object):
             # in savefig() doesn't cut off the legends.
             # Adding legends with ax.add_artist() means that the
             # bbox_inches='tight' line ignores them.
-            plt.savefig(path_to_file, bbox_extra_artists=extra_artists, dpi=300, bbox_inches='tight')
+            plt.savefig(
+                path_to_file,
+                bbox_extra_artists=extra_artists,
+                dpi=300, bbox_inches='tight'
+                )
             plt.close()
-        else:
+        elif show:
             plt.show()
+        else:
+            # Don't do anything.
+            plt.close()
 
     def _plt_plot_map_selected_units(
             self,
             gdf_boundaries_regions,
             gdf_points_units,
             gdf_lines_transfer,
+            map_extent=[],
             path_to_file='',
-            save=True
+            save=True,
+            show=False
             ):
         fig, ax = plt.subplots(figsize=(10, 10))
 
-        ax = maps.plot_map_selected_units(
+        ax, extra_artists = maps.plot_map_selected_units(
             gdf_boundaries_regions,
             gdf_points_units,
             gdf_lines_transfer,
-            ax=ax
+            ax=ax,
+            map_extent=map_extent,
         )
 
         if save:
-            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
+            plt.savefig(
+                path_to_file,
+                bbox_extra_artists=extra_artists,
+                dpi=300, bbox_inches='tight'
+                )
             plt.close()
-        else:
+        elif show:
             plt.show()
+        else:
+            # Don't do anything.
+            plt.close()
 
     def _plt_plot_map_catchment(
             self,
