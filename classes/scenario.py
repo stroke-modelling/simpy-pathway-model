@@ -12,7 +12,8 @@ import pandas as pd
 import os
 
 from classes.units import Units
-from classes.units import Setup
+from classes.setup import Setup
+from classes.map import Map
 
 
 class Scenario(object):
@@ -102,6 +103,10 @@ class Scenario(object):
         self.region_type_for_lsoa_selection = None
         self.region_column_for_lsoa_selection = None
 
+        # If stroke units
+        self.limit_lsoa_to_regions = True
+
+
         self.run_duration = 365  # Days
         self.warm_up = 50
 
@@ -179,11 +184,101 @@ class Scenario(object):
         else:
             pass
 
-        # Load data:
-        # (run this after MT hospitals are updated in
-        # initial_data or kwargs).
-        self.load_data()
+        # # Load data:
+        # # (run this after MT hospitals are updated in
+        # # initial_data or kwargs).
+        # self.load_data()
 
+    # ##########################
+    # ##### AREAS TO MODEL #####   --> should this move to Units()?
+    # ##########################
+    def get_model_areas(self):
+        try:
+            df = self.selected_regions
+        except AttributeError:
+            # Load and parse area data
+            dir_input = self.setup.dir_data
+            file_input = self.setup.file_input_regions
+            path_to_file = os.path.join(dir_input, file_input)
+            df = pd.read_csv(path_to_file)
+
+            # Add a "selected" column for user input.
+            df['selected'] = 0
+        return df
+
+    def set_model_areas(self, df):
+        # TO DO - run sanity checks
+
+        # TO DO - add an option to load this from a custom file.
+        self.selected_regions = df
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_selected_regions
+        path_to_file = os.path.join(dir_output, file_name)
+        df.to_csv(path_to_file, index=False)
+
+    # #########################
+    # ##### UNIT SERVICES #####   --> should this move to Units()?
+    # #########################
+    def get_unit_services(self):
+        try:
+            df = self.unit_services
+        except AttributeError:
+            # Load and parse unit data
+            dir_input = self.setup.dir_data
+            file_input = self.setup.file_input_unit_services
+            path_to_file = os.path.join(dir_input, file_input)
+            df = pd.read_csv(path_to_file)
+
+            # Drop the LSOA column.
+            df = df.drop('LSOA11NM', axis='columns')
+            # Add a "selected" column for user input.
+            df['selected'] = 0
+
+            try:
+                # Load in the selected areas.
+                df_areas = self.selected_regions
+                # Which areas were selected?
+                selected = df_areas['region'][df_areas['selected'] == 1]
+                # Shouldn't contain repeats or NaN, but just in case:
+                selected = selected.dropna().unique()
+                # Set "selected" to 1 for any unit in the
+                # selected areas.
+                mask = df['region'].isin(selected)
+                df.loc[mask, 'selected'] = 1
+            except AttributeError:
+                # self.selected_regions has not yet been set.
+                pass
+        return df
+
+    def set_unit_services(self, df):
+        # TO DO - run sanity checks
+
+        # Merge in geometry.
+        # TO DO - just store this somewhere else:
+        # Load and parse geometry data
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_hospital_info
+        path_to_file = os.path.join(dir_input, file_input)
+        df_info = pd.read_csv(path_to_file)
+        # Merge:
+        df = pd.merge(
+            df, df_info[['Postcode', 'Easting', 'Northing', 'long_x', 'lat_x']],
+            left_on='Postcode', right_on='Postcode', how='left')
+
+        # TO DO - add an option to load this from a custom file.
+        self.unit_services = df
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_selected_stroke_units
+        path_to_file = os.path.join(dir_output, file_name)
+        df.to_csv(path_to_file, index=False)
+
+    # ##########################
+    # ##### ... write me TO DO #####
+    # ##########################
     def _find_region_column(self, region_type, columns):
         """
         Find the column name that best matches the region type.

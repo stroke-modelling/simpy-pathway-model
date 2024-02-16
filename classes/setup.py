@@ -29,7 +29,8 @@ class Setup(object):
         self.list_dir_output = []
 
         # Input file names:
-        self.file_input_unit_services = 'stroke_unit_services.csv'
+        self.file_input_regions = 'regions_ew.csv'
+        self.file_input_unit_services = 'stroke_units_regions.csv'
         self.file_input_travel_times = 'lsoa_travel_time_matrix_calibrated.csv'
         self.file_input_travel_times_inter_unit = (
             'inter_hospital_time_calibrated.csv')
@@ -38,13 +39,9 @@ class Setup(object):
         self.file_input_admissions = 'admissions_2017-2019.csv'
         # Geojson files:
         self.file_geojson_lsoa = 'LSOA_(Dec_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson'
-        self.file_geojson_ccg = 'Clinical_Commissioning_Groups_April_2019_Boundaries_EN_BGC_2022_-7963862461000886750.geojson'
-        self.file_geojson_icb = 'ICB_JUL_2022_EN_BGC_V3_7901616774526941461.geojson'
-        self.file_geojson_lad = 'LAD_Dec_2017_GCB_GB_2022_5230662237199919616.geojson'
-        self.file_geojson_stp = 'STP_Apr_2019_GCB_in_England_2022_3138810296697318496.geojson'
+        self.file_geojson_sibcl = 'SICBL_JUL_2022_EN_BUC_4104971945004813003.geojson'
+        # self.file_geojson_icb = 'ICB_JUL_2022_EN_BGC_V3_7901616774526941461.geojson'
         self.file_geojson_lhb = 'Local_Health_Boards_April_2020_WA_BGC_2022_94310626700012506.geojson'
-        self.file_geojson_scn = 'SCN_Dec_2016_GCB_in_England_2022_8470122845735728627.geojson'
-        self.file_geojson_rgn = 'Regions_December_2022_EN_BGC_4589208765943883498.geojson'
 
         # Output file names:
         # Units():
@@ -52,9 +49,11 @@ class Setup(object):
         self.file_national_lsoa_travel = 'national_lsoa_travel_units.csv'
         self.file_national_transfer_units = 'national_transfer_units.csv'
         # Scenario():
+        self.file_selected_regions = 'selected_regions.csv'
+        # self.file_unit_services = 'unit_services.csv'
         self.file_selected_stroke_units = 'selected_stroke_units.csv'
         self.file_selected_transfer_units = 'selected_transfer_units.csv'
-        self.file_selected_unit_regions = 'selected_unit_regions.csv'
+        # self.file_selected_unit_regions = 'selected_unit_regions.csv'
         self.file_selected_lsoas = 'selected_lsoas.csv'
         self.file_selected_lsoa_regions = 'selected_lsoa_regions.csv'
         self.file_selected_regions = 'selected_regions.csv'
@@ -66,6 +65,8 @@ class Setup(object):
         self.file_results_summary_by_lsoa = (
             'results_summary_by_lsoa.csv')
         # Combined:
+        self.file_combined_selected_regions = (
+            'combined_selected_regions.csv')
         self.file_combined_selected_stroke_units = (
             'combined_selected_stroke_units.csv')
         self.file_combined_selected_transfer_units = (
@@ -90,17 +91,20 @@ class Setup(object):
         self.dir_output_all_runs = os.path.join(
             self.dir_output_this_setup, self.dir_output_all_runs
         )
-        self.create_new_top_dir = False
+        self.create_new_top_dir = True
         # Does this dir already exist?
         if os.path.exists(self.dir_output_all_runs):
             # Flag to create a new top dir.
-            self.create_new_top_dir = True
+            self.rename_top_dir = True
         else:
             # Don't need to change the name.
-            pass
+            self.rename_top_dir = False
 
     def create_output_dir(
-            self, dir_output, delim='!', path_to_dir=None,
+            self,
+            dir_output,
+            delim='!',
+            path_to_dir=None,
             combined=False
             ):
         """
@@ -165,7 +169,7 @@ class Setup(object):
             return dir_output
 
         # First, do we need to make a new top directory?
-        if self.create_new_top_dir:
+        if self.rename_top_dir:
             # While the requested output folder already exists,
             # add a suffix or increase its number until there's a new name.
             dir_output_all_runs = self.dir_output_all_runs
@@ -176,6 +180,11 @@ class Setup(object):
                 dir_output_all_runs = os.path.join(
                     self.dir_output_this_setup, dir_output_top)
             self.dir_output_all_runs = dir_output_all_runs
+            # Update flag so this doesn't run again.
+            self.rename_top_dir = False
+        else:
+            pass
+        if self.create_new_top_dir:
             # Create top directory:
             os.mkdir(self.dir_output_all_runs)
             # Update flag so this doesn't run again.

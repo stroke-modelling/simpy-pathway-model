@@ -128,7 +128,7 @@ class Map(object):
             'df_regions': {
                 'file': self.setup.file_combined_selected_regions,
                 'header': [0, 1],
-                'index_col': [0, 1],
+                'index_col': 1,
                 },
             'df_results_by_unit': {
                 'file': (
@@ -163,7 +163,7 @@ class Map(object):
             'df_regions': {
                 'file': self.setup.file_selected_regions,
                 'header': [0],
-                'index_col': [0, 1],
+                'index_col': 1,
                 },
             'df_results_by_unit': {
                 'file': (
@@ -220,8 +220,6 @@ class Map(object):
                     f'Cannot import {label} from {data_dict["file"]}'
                     ) from None
 
-    # MOVE THESE LOAD LINES TO SEPARATE FUNCTION FOR EACH FILE TYPE ----------------------
-
     def import_geojson(self, region_type: 'str'):
         """
         Import a geojson file as GeoDataFrame.
@@ -245,27 +243,32 @@ class Map(object):
         # Select geojson file based on input region type:
         geojson_file_dict = {
             'LSOA11NM': self.setup.file_geojson_lsoa,
-            'CCG19NM': self.setup.file_geojson_ccg,
-            'ICB22NM': self.setup.file_geojson_icb,
-            'LAD17NM': self.setup.file_geojson_lad,
-            'STP19NM': self.setup.file_geojson_stp,
+            'SICBL22NM': self.setup.file_geojson_sibcl,
+            # 'ICB22NM': self.setup.file_geojson_icb,
             'LHB20NM': self.setup.file_geojson_lhb,
-            'SCN17NM': self.setup.file_geojson_scn,
-            'RGN11NM': self.setup.file_geojson_rgn,
         }
-        # n.b. current setup as of January 2024 is that the dict
-        # keys match the column names in the LSOA_regions.csv
-        # and similar reference files. The actual geojson files
-        # definitely contain the same type of region, but could
-        # be from a different year than the one listed here.
 
         # Import region file:
         dir_input = self.setup.dir_data_geojson
         file_input = geojson_file_dict[region_type]
         path_to_file = os.path.join(dir_input, file_input)
         gdf_boundaries = geopandas.read_file(path_to_file)
+
+        if region_type.endswith('NM'):
+            region_code = region_type[:-2] + 'CD'
+        elif region_type.endswith('nm'):
+            region_code = region_type[:-2] + 'cd'
+        else:
+            # This shouldn't happen.
+            # TO DO - error handle for NMW?
+            region_code = region_type[:-2] + 'CD'
+
         try:
-            gdf_boundaries = gdf_boundaries.set_index(region_type)
+            # Rename this column:
+            gdf_boundaries = gdf_boundaries.rename(columns={
+                    region_type: 'region',
+                    region_code: 'region_code'
+                })
         except KeyError:
             # That column doesn't exist.
             # Try finding a column that has the same start and end
@@ -282,17 +285,24 @@ class Map(object):
                     )
                 if match:
                     # Rename this column:
-                    gdf_boundaries = gdf_boundaries.rename(
-                        columns={column: region_type}
-                    )
-                    # Set the index:
-                    gdf_boundaries = gdf_boundaries.set_index(region_type)
+                    col_code = column[:-2] + region_code[-2:]
+                    gdf_boundaries = gdf_boundaries.rename(columns={
+                        column: 'region',
+                        col_code: 'region_code'
+                        })
                     success = True
                 else:
+                    # TO DO - proper error here --------------------------------
                     pass
-            if success is False:
-                # TO DO - proper error message - this shouldn't happen!- ---------------
-                print('did not set geojson index')
+
+        # Set the index:
+        gdf_boundaries = gdf_boundaries.set_index('region_code')
+
+        # Only keep geometry data:
+        geo_cols = [
+            'region', 'BNG_E', 'BNG_N', 'LONG', 'LAT', 'GlobalID', 'geometry'
+        ]
+        gdf_boundaries = gdf_boundaries[geo_cols]
 
         # If crs is given in the file, geopandas automatically
         # pulls it through. Convert to National Grid coordinates:
@@ -454,6 +464,8 @@ class Map(object):
     def load_geometry_regions(self):
         """
         Create GeoDataFrames of new geometry and existing DataFrames.
+
+        TO DO - load in both Wales and England if necessary.
         """
         # ----- Gather data -----
         # Selected regions names and usage.
@@ -463,15 +475,26 @@ class Map(object):
         except AttributeError:
             self.load_run_data(['df_regions'])
             df_regions = self.df_regions
-        # Index column: ['region', 'region_type'].
+        # Index column: 'region'.
         # Expected column MultiIndex levels:
         #   - combined: ['scenario', 'property']
         #   - separate: ['{unnamed level}']
 
         # All region polygons:
-        gdf_boundaries_regions = self.import_geojson(self.region_type)
-        # Index column: {region_type}.
+        gdf_boundaries_regions_e = self.import_geojson('SICBL22NM')
+        gdf_boundaries_regions_w = self.import_geojson('LHB20NM')
+        # Combine:
+        gdf_boundaries_regions = pd.concat(
+            (gdf_boundaries_regions_e, gdf_boundaries_regions_w),
+            axis='rows'
+        )
+        # Index column: 'region'.
         # Always has only one unnamed column index level.
+
+        # Drop columns in both DataFrames:
+        gdf_boundaries_regions = gdf_boundaries_regions.drop(
+            'region', axis='columns'
+        )
 
         # ----- Prepare separate data -----
         # Set up column level info for the merged DataFrame.
@@ -494,17 +517,6 @@ class Map(object):
             col_level_names = ['property']
             col_geometry = 'geometry'
             col_colour = 'colour'
-
-        # Region names and usage:
-        # This has a MultiIndex index - ['region_type', 'region'].
-        # Limit the data to just the selected region type...
-        mask = df_regions.index.get_level_values(0) == self.region_type
-        df_regions = df_regions.loc[mask, :]
-        # ... and then discard the 'region_type' index...
-        df_regions.index = df_regions.index.droplevel(0)
-        # ... and rename the index.
-        # (to match the index of the gdf geometry DataFrame).
-        df_regions.index = df_regions.index.rename(self.region_type)
 
         # Geometry:
         # If necessary, add more column levels.
@@ -936,6 +948,24 @@ class Map(object):
     # #########################
     # ##### PLOT WRAPPERS #####
     # #########################
+    def plot_map_selected_regions(
+            self,
+            scenario: str,
+            save=True
+            ):
+        """
+        Wrangle data and plot a map of selected units.
+        """
+        map_args, map_kwargs = self._setup_plot_map_selected_regions(
+            scenario,
+            save
+            )
+        self._plt_plot_map_selected_regions(
+            *map_args,
+            **map_kwargs,
+            save=save
+        )
+
     def plot_map_selected_units(
             self,
             scenario: str,
@@ -1022,12 +1052,177 @@ class Map(object):
     # ###########################
     # ##### SETUP FOR PLOTS #####
     # ###########################
+    def _setup_plot_map_selected_regions(
+            self,
+            scenario: str,
+            save=True
+            ):
+        # Load in reference data for this scenario
+        # (always ignore "combined"):
+        self.load_run_data(['df_regions', 'df_units'], dir_data=scenario)
+
+        # If the geometry data doesn't exist, load it in:
+        data_dict = {
+            'gdf_boundaries_regions': self.load_geometry_regions,
+            'gdf_points_units': self.load_geometry_stroke_units
+        }
+        for attr, func in data_dict.items():
+            try:
+                self.getattr(attr)
+            except AttributeError:
+                func()
+
+        if self.data_type == 'combined':
+            # This shouldn't run... for now.
+            # Remove excess scenario data:
+            try:
+                c = ['any', scenario]
+                gdf_boundaries_regions = self.gdf_boundaries_regions[c]
+                gdf_points_units = self.gdf_points_units[c]
+            except KeyError:
+                # The scenario isn't in the Data.
+                # TO DO - proper error message here ---------------------------------------------
+                print('oh no')
+                raise KeyError('Scenario is missing.') from None
+            # Remove the excess column heading:
+            # TO DO - set up column level name 'scenario' here -----------------------------------
+            gdf_boundaries_regions = (
+                gdf_boundaries_regions.droplevel(0, axis='columns'))
+            gdf_points_units = (
+                gdf_points_units.droplevel(0, axis='columns'))
+            # The geometry column is still defined with the excess
+            # heading, so update which column is geometry:
+            g = 'geometry'
+            gdf_boundaries_regions = gdf_boundaries_regions.set_geometry(g)
+            gdf_points_units = gdf_points_units.set_geometry(g)
+        else:
+            gdf_boundaries_regions = self.gdf_boundaries_regions
+            gdf_points_units = self.gdf_points_units
+
+        # What is the extent of the selected regions?
+        gdf_selected = gdf_boundaries_regions[gdf_boundaries_regions['selected'] == 1]
+        minx, miny, maxx, maxy = gdf_selected.geometry.total_bounds
+        # Give this some leeway:
+        leeway = 20000
+        minx -= leeway
+        miny -= leeway
+        maxx += leeway
+        maxy += leeway
+        map_extent = [minx, maxx, miny, maxy]
+        # Turn the points into a box:
+        from shapely.geometry import Polygon
+        box = Polygon((
+            (minx, miny),
+            (minx, maxy),
+            (maxx, maxy),
+            (maxx, miny),
+            (minx, miny),
+        ))
+
+        # Which other regions are contained in this bounding box?
+        mask = gdf_boundaries_regions.geometry.intersects(box)
+        gdf_boundaries_regions = gdf_boundaries_regions[mask]
+        # Which stroke units are contained in this bounding box?
+        mask = gdf_points_units.geometry.intersects(box)
+        gdf_points_units = gdf_points_units[mask]
+
+        # Restrict polygon geometry to the edges of the box.
+        gdf_boundaries_regions['geometry'] = (
+            gdf_boundaries_regions.geometry.intersection(box))
+
+        # Add a label number for each boundary.
+        gdf_boundaries_regions = gdf_boundaries_regions.sort_values(
+            ['selected', 'BNG_N'], ascending=False
+        )
+        gdf_boundaries_regions['label'] = np.arange(
+            1, len(gdf_boundaries_regions) + 1).astype(str)
+        # Get coordinates for each label:
+        # point_label = []
+        # for poly in gdf_boundaries_regions.geometry:
+        #     point = poly.representative_point()
+        #     point_label.append(point)
+        point_label = ([poly.representative_point() for
+                        poly in gdf_boundaries_regions.geometry])
+        gdf_boundaries_regions['point_label'] = point_label
+
+        # Which stroke units are in the selected regions?
+        regions_selected = gdf_boundaries_regions['region'][
+            gdf_boundaries_regions['selected'] == 1]
+        mask = gdf_points_units['region'].isin(regions_selected)
+        gdf_points_units['region_selected'] = 0
+        gdf_points_units.loc[mask, 'region_selected'] = 1
+        # Add a label letter for each unit.
+        gdf_points_units = gdf_points_units.sort_values(
+            ['region_selected', 'Northing'], ascending=False
+        )
+        import string
+        # List ['A', 'B', 'C', ..., 'Z']:
+        str_labels = list(string.ascii_uppercase)
+        if len(str_labels) < len(gdf_points_units):
+            # Add more letters at the end starting with
+            # ['AA', 'AB', 'AC', ... 'AZ'].
+            i = 0
+            str_labels_orig = list(string.ascii_uppercase)
+            while len(str_labels) < len(gdf_points_units):
+                str_labels2 = [f'{str_labels[i]}{s}' for s in str_labels_orig]
+                str_labels += str_labels2
+                i += 1
+        else:
+            pass
+        gdf_points_units['label'] = str_labels[:len(gdf_points_units)]
+
+        # Reduce the DataFrames to just the needed parts:
+        gdf_boundaries_regions = gdf_boundaries_regions[[
+            'geometry',                             # shapes
+            'colour',                               # background colour
+            'selected',                             # line type selection
+            'label',                                # label annotation
+            'point_label',                          # label position
+            ]]
+        gdf_points_units = gdf_points_units[[
+            'geometry',                             # locations
+            'Use_IVT', 'Use_MT', 'Use_MSU',         # point selection
+            'Hospital_name',                        # labels
+            'label',                                # label annotation
+            'region_selected'                       # label kwargs
+            ]]
+
+        # Create file name:
+        if save:
+            dir_output = ''
+            if self.data_type == 'combined':
+                dir_output = self.setup.dir_output_combined
+            else:
+                try:
+                    for d in self.setup.list_dir_output:
+                        end = os.path.split(d)[-1]
+                        if end == scenario:
+                            dir_output = d
+                except AttributeError:
+                    # Setup is not defined.
+                    pass
+
+            file_name = f'map_selected_regions_{scenario}.jpg'
+            path_to_file = os.path.join(dir_output, file_name)
+        else:
+            path_to_file = None
+
+        map_args = (
+            gdf_boundaries_regions,
+            gdf_points_units
+            )
+        map_kwargs = dict(
+            map_extent=map_extent,
+            path_to_file=path_to_file
+            )
+        return map_args, map_kwargs
+
     def _setup_plot_map_selected_units(
             self,
             scenario,
             save=True
             ):
-    
+
         # If the geometry data doesn't exist, load it in:
         data_dict = {
             'gdf_boundaries_regions': self.load_geometry_regions,
@@ -1451,6 +1646,29 @@ class Map(object):
     # #######################
     # ##### PYPLOT MAPS #####
     # #######################
+    def _plt_plot_map_selected_regions(
+            self,
+            gdf_boundaries_regions,
+            gdf_points_units,
+            path_to_file='',
+            map_extent=[],
+            save=True
+            ):
+        fig, ax = plt.subplots(figsize=(10, 10))
+
+        ax = maps.plot_map_selected_regions(
+            gdf_boundaries_regions,
+            gdf_points_units,
+            ax=ax,
+            map_extent=map_extent
+        )
+
+        if save:
+            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
+            plt.close()
+        else:
+            plt.show()
+
     def _plt_plot_map_selected_units(
             self,
             gdf_boundaries_regions,

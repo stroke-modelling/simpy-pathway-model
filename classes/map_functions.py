@@ -39,10 +39,16 @@ def draw_boundaries_by_contents(
     kwargs_unit = kwargs_unit | kwargs_with_unit
 
     # Regions containing neither LSOAs nor stroke units here:
-    mask = (
-        (gdf_boundaries_regions['contains_selected_unit'] == 0) &
-        (gdf_boundaries_regions['contains_selected_lsoa'] == 0)
-    )
+    try:
+        mask = (
+            (gdf_boundaries_regions['selected'] == 0) &
+            (gdf_boundaries_regions['contains_selected_lsoa'] == 0)
+        )
+    except KeyError:
+        # Assume the LSOA column doesn't exist.
+        mask = (
+            (gdf_boundaries_regions['selected'] == 0)
+        )
     gdf_boundaries_with_nowt = gdf_boundaries_regions.loc[mask]
     if len(gdf_boundaries_with_nowt) > 0:
         ax = draw_boundaries(
@@ -55,10 +61,14 @@ def draw_boundaries_by_contents(
         pass
 
     # Regions containing LSOAs but not stroke units:
-    mask = (
-        (gdf_boundaries_regions['contains_selected_unit'] == 0) &
-        (gdf_boundaries_regions['contains_selected_lsoa'] == 1)
-    )
+    try:
+        mask = (
+            (gdf_boundaries_regions['selected'] == 0) &
+            (gdf_boundaries_regions['contains_selected_lsoa'] == 1)
+        )
+    except KeyError:
+        # Assume the LSOA column doesn't exist. Don't plot this.
+        mask = [False] * len(gdf_boundaries_regions)
     gdf_boundaries_with_lsoa = gdf_boundaries_regions.loc[mask]
     if len(gdf_boundaries_with_lsoa) > 0:
         ax = draw_boundaries(
@@ -69,7 +79,7 @@ def draw_boundaries_by_contents(
         pass
 
     # Regions containing stroke units:
-    mask = (gdf_boundaries_regions['contains_selected_unit'] == 1)
+    mask = (gdf_boundaries_regions['selected'] == 1)
     gdf_boundaries_with_units = gdf_boundaries_regions.loc[mask]
     if len(gdf_boundaries_with_units) > 0:
         ax = draw_boundaries(
@@ -79,6 +89,53 @@ def draw_boundaries_by_contents(
     else:
         pass
     return ax
+
+
+# def draw_boundaries_by_selected(
+#         ax,
+#         gdf_boundaries_regions,
+#         kwargs_selected={},
+#         kwargs_not_selected={}
+#         ):
+#     # Set up kwargs.
+#     kwargs_selected_defaults = {
+#         'edgecolor': 'k',
+#         'facecolor': 'none',
+#         'linewidth': 0.5
+#     }
+#     kwargs_not_selected_defaults = {
+#         'edgecolor': 'silver',
+#         'facecolor': 'none',
+#         'linewidth': 0.5,
+#         'linestyle': '--'
+#     }
+#     # Update these with anything from the input dicts:
+#     kwargs_selected = kwargs_selected_defaults | kwargs_selected
+#     kwargs_not_selected = kwargs_not_selected_defaults | kwargs_not_selected
+
+#     # Regions not selected:
+#     mask = (gdf_boundaries_regions['selected'] == 0)
+#     gdf_boundaries_not_selected = gdf_boundaries_regions.loc[mask]
+#     if len(gdf_boundaries_not_selected) > 0:
+#         ax = draw_boundaries(
+#             ax, gdf_boundaries_not_selected,
+#             **kwargs_not_selected
+#             )
+#     else:
+#         pass
+
+#     # Regions selected:
+#     mask = (gdf_boundaries_regions['selected'] == 1)
+#     gdf_boundaries_selected = gdf_boundaries_regions.loc[mask]
+#     if len(gdf_boundaries_selected) > 0:
+#         ax = draw_boundaries(
+#             ax, gdf_boundaries_selected,
+#             **kwargs_selected
+#             )
+#     else:
+#         pass
+
+#     return ax
 
 
 def draw_boundaries(ax, gdf, **kwargs):
@@ -104,7 +161,7 @@ def draw_boundaries(ax, gdf, **kwargs):
     return ax
 
 
-def scatter_ivt_units(ax, gdf):
+def scatter_units(ax, gdf, mask_col='', ivt=True, mt=True, msu=True, **kwargs):
     """
     Draw scatter markers for IVT stroke units.
 
@@ -117,72 +174,103 @@ def scatter_ivt_units(ax, gdf):
     -------
     ax - pyplot axis. Same as input but with scatter markers.
     """
-    # Scatter marker for each hospital:
-    mask = gdf['Use_IVT'] == 1
-    IVT = gdf[mask]
-    IVT.plot(
+    if ivt:
+        kwargs_dict = dict(
+            edgecolor='k',
+            facecolor='w',
+            markersize=50,
+            marker='o',
+            zorder=2
+        )
+    elif mt:
+        kwargs_dict = dict(
+            edgecolor='k',
+            facecolor='y',
+            markersize=300,
+            marker='*',
+            zorder=2
+        )
+    elif msu:
+        kwargs_dict = dict(
+            edgecolor='k',
+            facecolor='orange',
+            markersize=50,
+            marker='s',
+            zorder=2
+        )
+    else:
+        kwargs_dict = {}
+
+    # Overwrite default dict with user inputs:
+    for key, val in kwargs.items():
+        kwargs_dict[key] = val
+
+    # Only plot these units:
+    if len(mask_col) > 0:
+        mask = gdf[mask_col] == 1
+        masked_gdf = gdf[mask]
+    else:
+        masked_gdf = gdf
+
+    masked_gdf.plot(
         ax=ax,
-        edgecolor='k',
-        facecolor='w',
-        markersize=50,
-        marker='o',
-        zorder=2
+        **kwargs_dict
         )
     return ax
 
 
-def scatter_mt_units(ax, gdf):
-    """
-    Draw scatter markers for MT stroke units.
+# def scatter_mt_units(ax, gdf):
+#     """
+#     Draw scatter markers for MT stroke units.
 
-    Inputs
-    ------
-    ax     - pyplot axis. Where to draw the scatter markers.
-    gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
+#     Inputs
+#     ------
+#     ax     - pyplot axis. Where to draw the scatter markers.
+#     gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
 
-    Returns
-    -------
-    ax - pyplot axis. Same as input but with scatter markers.
-    """
-    # Scatter marker star for MT units:
-    mask = gdf['Use_MT'] == 1
-    MT = gdf[mask]
-    MT.plot(
-        ax=ax,
-        edgecolor='k',
-        facecolor='y',
-        markersize=300,
-        marker='*',
-        zorder=2
-        )
-    return ax
+#     Returns
+#     -------
+#     ax - pyplot axis. Same as input but with scatter markers.
+#     """
+#     # Scatter marker star for MT units:
+#     mask = gdf['Use_MT'] == 1
+#     MT = gdf[mask]
+#     MT.plot(
+#         ax=ax,
+#         edgecolor='k',
+#         facecolor='y',
+#         markersize=300,
+#         marker='*',
+#         zorder=2
+#         )
+#     return ax
 
 
-def scatter_msu_units(ax, gdf):
-    """
-    Draw scatter markers for MSU stroke units.
+# def scatter_msu_units(ax, gdf):
+#     """
+#     Draw scatter markers for MSU stroke units.
 
-    Inputs
-    ------
-    ax     - pyplot axis. Where to draw the scatter markers.
-    gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
+#     Inputs
+#     ------
+#     ax     - pyplot axis. Where to draw the scatter markers.
+#     gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
 
-    Returns
-    -------
-    ax - pyplot axis. Same as input but with scatter markers.
-    """
-    # Scatter marker star for MT/MSU units:
-    mask = gdf['Use_MSU'] == 1
-    MSU = gdf[mask]
-    MSU.plot(
-        ax=ax,
-        edgecolor='k',
-        facecolor='orange',
-        markersize=50,
-        marker='s',
-        zorder=2
-        )
-    return ax
+#     Returns
+#     -------
+#     ax - pyplot axis. Same as input but with scatter markers.
+#     """
+#     # Scatter marker star for MT/MSU units:
+#     mask = gdf['Use_MSU'] == 1
+#     MSU = gdf[mask]
+#     MSU.plot(
+#         ax=ax,
+#         edgecolor='k',
+#         facecolor='orange',
+#         markersize=50,
+#         marker='s',
+#         zorder=2
+#         )
+#     return ax
 
 
 def plot_lines_between_units(ax, gdf):
@@ -253,9 +341,158 @@ def annotate_unit_labels(ax, gdf):
     return ax
 
 
+def draw_labels_short(ax, points, labels, **kwargs):
+    """
+    Draw labels from the geodataframe.
+    """
+    label_kwargs = dict(
+        ha='center',
+        va='center',
+        # bbox=dict(facecolor='w', edgecolor='k'),
+        fontsize=8
+    )
+    # Update this with anything from the input dict:
+    label_kwargs = label_kwargs | kwargs
+
+    # Define "z" to shorten following "for" line:
+    z = zip(
+        points.x,
+        points.y,
+        labels
+        )
+    for x, y, label in z:
+        # Place the label slightly offset from the
+        # exact hospital coordinates (x, y).
+        ax.annotate(
+            label,
+            xy=(x, y),
+            # xytext=(8, 8),
+            textcoords='data',
+            **label_kwargs
+            )
+    return ax
+
+
 # ######################
 # ##### MAIN PLOTS #####
 # ######################
+def plot_map_selected_regions(
+        gdf_boundaries_regions,
+        gdf_points_units,
+        ax=None,
+        map_extent=[]
+        ):
+    """
+    Make map of the selected regions and any units.
+
+    TO DO - write me.
+    """
+
+    # Set up kwargs
+    kwargs_with_unit = {
+        'edgecolor': 'DimGray',
+        'linewidth': 0.5,
+        'facecolor': 'Gainsboro'
+    }
+    kwargs_with_nowt = {
+        'edgecolor': 'silver',
+        'linewidth': 0.5,
+        'facecolor': 'WhiteSmoke'
+        }
+
+    if ax is None:
+        # Make max dimensions XxY inch:
+        fig, ax = plt.subplots(figsize=(10, 10))
+
+    ax = draw_boundaries_by_contents(
+        ax,
+        gdf_boundaries_regions,
+        kwargs_with_nowt=kwargs_with_nowt,
+        kwargs_with_lsoa={},
+        kwargs_with_unit=kwargs_with_unit,
+        # kwargs_selected=kwargs_selected,
+        # kwargs_not_selected=kwargs_not_selected
+        )
+    
+    # In selected regions:
+    mask = gdf_points_units['region_selected'] == 1
+    ax = scatter_units(
+        ax,
+        gdf_points_units[mask],
+        linewidth=0,
+        facecolor='r'
+        )
+    # Outside selected regions:
+    mask = ~mask
+    ax = scatter_units(
+        ax,
+        gdf_points_units[mask],
+        linewidth=0,
+        facecolor='Gainsboro'
+        )
+
+    # Label units:
+    # In selected regions:
+    mask = gdf_points_units['region_selected'] == 1
+    ax = draw_labels_short(
+        ax,
+        gdf_points_units[mask].geometry,
+        gdf_points_units[mask].label,
+        fontsize=6,
+        color='k',
+        # bbox=dict(facecolor='WhiteSmoke', edgecolor='r'),
+    )
+    # Outside selected regions:
+    mask = ~mask
+    ax = draw_labels_short(
+        ax,
+        gdf_points_units[mask].geometry,
+        gdf_points_units[mask].label,
+        fontsize=6,
+        color='DimGray',
+        # bbox=dict(facecolor='GhostWhite', edgecolor='DimGray'),
+    )
+
+    # Label regions:
+    # Change geometry so that we can use the point coordinates
+    # in the following label function:
+    gdf_boundaries_regions = gdf_boundaries_regions.set_geometry('point_label')
+    # In selected regions:
+    mask = gdf_boundaries_regions['selected'] == 1
+    ax = draw_labels_short(
+        ax,
+        gdf_boundaries_regions[mask].point_label,
+        gdf_boundaries_regions[mask].label,
+        weight='bold',
+        fontsize=10,
+        color='k'
+    )
+    # Outside selected regions:
+    mask = ~mask
+    ax = draw_labels_short(
+        ax,
+        gdf_boundaries_regions[mask].point_label,
+        gdf_boundaries_regions[mask].label,
+        weight='bold',
+        fontsize=10,
+        color='DimGray'
+    )
+
+    # Add legends. TO DO --------------------------------------------------------
+
+    if len(map_extent) > 0:
+        # Limit to given extent:
+        ax.set_xlim(map_extent[0], map_extent[1])
+        ax.set_ylim(map_extent[2], map_extent[3])
+    else:
+        # Use default axis limits.
+        pass
+
+    ax.set_axis_off()  # Turn off axis line and numbers
+
+    return ax
+
+
 def plot_map_selected_units(
         gdf_boundaries_regions,  # TO DO - make this optional?
         gdf_points_units,
