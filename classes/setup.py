@@ -34,7 +34,7 @@ class Setup(object):
         self.file_input_travel_times = 'lsoa_travel_time_matrix_calibrated.csv'
         self.file_input_travel_times_inter_unit = (
             'inter_hospital_time_calibrated.csv')
-        self.file_input_lsoa_regions = 'LSOA_regions.csv'
+        self.file_input_lsoa_regions = 'regions_lsoa_ew.csv'
         self.file_input_hospital_info = 'stroke_hospitals_2022_regions.csv'
         self.file_input_admissions = 'admissions_2017-2019.csv'
         # Geojson files:
@@ -54,8 +54,10 @@ class Setup(object):
         self.file_selected_stroke_units = 'selected_stroke_units.csv'
         self.file_selected_transfer_units = 'selected_transfer_units.csv'
         # self.file_selected_unit_regions = 'selected_unit_regions.csv'
-        self.file_selected_lsoas = 'selected_lsoas.csv'
-        self.file_selected_lsoa_regions = 'selected_lsoa_regions.csv'
+        self.file_selected_lsoas = 'selected_lsoa_by_catchment.csv'  # UPDATE ME
+        # self.file_selected_lsoa_regions = 'selected_lsoa_regions.csv'
+        self.file_selected_lsoa_by_catchment = 'selected_lsoa_by_catchment.csv'
+        self.file_selected_lsoa_by_region_island = 'selected_lsoa_by_region_island.csv'
         self.file_selected_regions = 'selected_regions.csv'
         # Model():
         self.file_results_all = 'results_all.csv'

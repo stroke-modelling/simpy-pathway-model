@@ -829,10 +829,11 @@ def plot_map_selected_units(
 
 def plot_map_catchment(
         gdf_boundaries_lsoa,
-        gdf_boundaries_regions,  # TO DO - make this optional
+        gdf_boundaries_regions,  # TO DO - make this optional...?
         gdf_points_units,
         gdf_lines_transfer,
         ax=None,
+        map_extent=[],
         boundary_kwargs={}
         ):
     """
@@ -896,7 +897,7 @@ def plot_map_catchment(
     """
     if ax is None:
         # Make max dimensions XxY inch:
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=(12, 8))
 
     # LSOAs:
     ax = draw_boundaries(
@@ -904,27 +905,118 @@ def plot_map_catchment(
         **boundary_kwargs
         )
 
-    # Background regions:
-    ax = draw_boundaries_by_contents(ax, gdf_boundaries_regions)
+    # Region boundaries:
+    kwargs_region_with_unit = {
+        'edgecolor': 'DimGray',
+        'linewidth': 0.5,
+        'facecolor': 'none'
+        }
+    kwargs_region_with_lsoa = {
+        'edgecolor': 'silver',
+        'linewidth': 0.5,
+        'facecolor': 'none'
+        }
+    kwargs_region_with_nowt = kwargs_region_with_lsoa # {
+        # 'edgecolor': 'silver',
+        # 'linewidth': 0.5,
+        # 'facecolor': 'WhiteSmoke'
+        # }
 
-    # Stroke unit markers.
-    ax = scatter_ivt_units(ax, gdf_points_units)
-    ax = scatter_mt_units(ax, gdf_points_units)
-    # ax = scatter_msu_units(ax, gdf_points_units)  # Not for Optimist
-    # Keep track of which units to label in here:
-    gdf_points_units['labels_mask'] = False
-    gdf_points_units.loc[
-        gdf_points_units['Use'] == 1, 'labels_mask'] = True
+    ax = draw_boundaries_by_contents(
+        ax,
+        gdf_boundaries_regions,
+        kwargs_with_nowt=kwargs_region_with_nowt,
+        kwargs_with_lsoa=kwargs_region_with_lsoa,
+        kwargs_with_unit=kwargs_region_with_unit,
+        )
 
-    # Transfer unit lines.
-    ax = plot_lines_between_units(ax, gdf_lines_transfer)
+    # Set up markers using a new column in DataFrame.
+    # Set everything to the IVT marker:
+    markers = np.full(len(gdf_points_units), 'o')
+    # Update MT units:
+    mask_mt = (gdf_points_units['Use_MT'] == 1)
+    markers[mask_mt] = '*'
+    # Store in the DataFrame:
+    gdf_points_units['marker'] = markers
 
-    # Stroke unit labels.
-    ax = annotate_unit_labels(ax, gdf_points_units)
+    # In selected regions:
+    mask = gdf_points_units['region_selected'] == 1
+    ax, handles_scatter_us = scatter_units(
+        ax,
+        gdf_points_units[mask],
+        # marker=gdf_points_units[mask]['marker'].to_list(),
+        facecolor='Gainsboro',
+        return_handle=True
+        )
+    # Outside selected regions:
+    mask = gdf_points_units['region_selected'] == 0
+    ax, handles_scatter_uns = scatter_units(
+        ax,
+        gdf_points_units[mask],
+        # marker=gdf_points_units[mask]['marker'].to_list(),
+        facecolor='WhiteSmoke',
+        return_handle=True
+        )
+
+    # Label units:
+    # In selected regions:
+    mask = gdf_points_units['region_selected'] == 1
+    ax, handles_us, labels_us = draw_labels_short(
+        ax,
+        gdf_points_units[mask].geometry,
+        gdf_points_units[mask].label,
+        gdf_points_units[mask].Hospital_name,
+        s=20,
+        color='k'
+    )
+    # Outside selected regions:
+    mask = ~mask
+    ax, handles_uns, labels_uns = draw_labels_short(
+        ax,
+        gdf_points_units[mask].geometry,
+        gdf_points_units[mask].label,
+        gdf_points_units[mask].Hospital_name,
+        s=20,
+        color='DimGray'
+    )
+
+    # Units:
+    section_labels = ['Units in selected regions', 'Other units']
+    handles_lists = [
+        [handles_scatter_us, handles_us],
+        [handles_scatter_uns, handles_uns]
+    ]
+    labels_lists = [labels_us, labels_uns]
+
+    leg = create_units_legend(
+        ax,
+        handles_lists,
+        labels_lists,
+        section_labels,
+        fontsize=6,
+        bbox_to_anchor=[1.0, 1.0],
+        loc='upper left'
+        )
+
+    ax = plot_lines_between_units(
+        ax,
+        gdf_lines_transfer,
+        edgecolor='k'
+        )
+
+    if len(map_extent) > 0:
+        # Limit to given extent:
+        ax.set_xlim(map_extent[0], map_extent[1])
+        ax.set_ylim(map_extent[2], map_extent[3])
+    else:
+        # Use default axis limits.
+        pass
 
     ax.set_axis_off()  # Turn off axis line and numbers
 
-    return ax
+    extra_artists = (leg, )  # Has to be a tuple.
+
+    return ax, extra_artists
 
 
 def plot_map_outcome(

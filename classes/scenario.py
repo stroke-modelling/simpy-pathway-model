@@ -97,7 +97,8 @@ class Scenario(object):
 
         # Which LSOAs will we use?
         self.mt_hub_postcodes = []
-        self.limit_to_england = True
+        self.limit_to_england = False
+        self.limit_to_wales = False
         self.select_lsoa_method = 'nearest'
         self.region_type_for_lsoa_selection = None
         self.region_column_for_lsoa_selection = None
@@ -293,35 +294,6 @@ class Scenario(object):
     # ##########################
     # ##### ... write me TO DO #####
     # ##########################
-    def _find_region_column(self, region_type, columns):
-        """
-        Find the column name that best matches the region type.
-        """
-        if region_type in columns:
-            # Use this column.
-            col = region_type
-        else:
-            # Guess which one is intended.
-            cols = [c for c in columns if region_type in c]
-            # Prioritise the ones that start with the region type.
-            cols_prefix = [c for c in cols if (
-                (len(c) >= len(region_type)) &
-                (c[:len(region_type)] == region_type)
-            )]
-            # Prioritise the ones that end with 'NM':
-            cols_suffix = [c for c in cols if c[-2:] == 'NM']
-            if len(cols_suffix) > 0:
-                col = cols_suffix[0]
-            elif len(cols_prefix) > 0:
-                col = cols_prefix[0]
-            elif len(cols) > 0:
-                col = cols[0]
-            else:
-                # This shouldn't happen.
-                col = columns[0]
-                # TO DO - raise an exception or something here. -----------------------------
-        return col
-
     def load_units_data(self):
         # ##### NATIONAL UNITS #####
         try:
@@ -333,6 +305,51 @@ class Scenario(object):
         # ##### SELECTED UNITS #####
         self._load_transfer_units()
         # WRITE ME TO DO -----------------------------------------------------------------
+
+    def _load_transfer_units(self):
+
+        # Merge in transfer unit names.
+        # Load and parse hospital transfer data
+        dir_input = self.setup.dir_output
+        file_input = self.setup.file_national_transfer_units
+        path_to_file = os.path.join(dir_input, file_input)
+        transfer = pd.read_csv(path_to_file, index_col=0)
+
+        dir_input = self.setup.dir_output
+        file_input = self.setup.file_selected_stroke_units
+        path_to_file = os.path.join(dir_input, file_input)
+        hospitals = pd.read_csv(path_to_file, index_col=0)
+
+        # Keep a copy of the coordinates:
+        hospital_coords = hospitals.copy()
+        hospital_coords = hospital_coords[[
+            'Easting', 'Northing', 'long_x', 'lat_x']]  # TO DO - Fix this annoying suffix
+
+        transfer = transfer.drop(['time_nearest_MT'], axis='columns')
+        # Merge in the transfer unit coordinates:
+        transfer = pd.merge(
+            transfer, hospital_coords,
+            left_on='name_nearest_MT', right_index=True,
+            how='left', suffixes=('_mt', None)
+            )
+
+        transfer_hospitals = pd.merge(
+            hospital_coords,
+            transfer,
+            left_index=True,
+            right_index=True,
+            how='left', suffixes=(None, '_mt')
+        )
+        # TO DO - tidy up the excess columns in hospitals ---------------------------
+
+        # transfer_hospitals = transfer_hospitals.set_index('Postcode')
+        self.transfer_hospitals = transfer_hospitals
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_selected_transfer_units
+        path_to_file = os.path.join(dir_output, file_name)
+        transfer_hospitals.to_csv(path_to_file)
 
     def load_data(self):
         """
@@ -379,57 +396,174 @@ class Scenario(object):
         # + self.lsoa_relative_frequency
         # + self.inter_arrival_time
 
-    # ##########################
-    # ##### SELECTED UNITS #####
-    # ##########################
-    def _load_transfer_units(self):
+    # #########################
+    # ##### SELECTED LSOA #####    ---> move to Units()? TO DO -------------------------------------
+    # #########################
+    def find_lsoa_by_catchment(self):
+        # Find list of stroke units catching these LSOA.
+        # Limit to units offering IVT:
+        df_units = self.unit_services
+        treatment = 'IVT'
+        df_units = df_units[df_units[f'Use_{treatment}'] == 1]
+        # List of teams to use:
+        teams = df_units['Postcode'].values
 
-        # Merge in transfer unit names.
-        # Load and parse hospital transfer data
-        dir_input = self.setup.dir_output
-        file_input = self.setup.file_national_transfer_units
+        # Load travel time matrix:
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_travel_times
         path_to_file = os.path.join(dir_input, file_input)
-        transfer = pd.read_csv(path_to_file, index_col=0)
-
-        dir_input = self.setup.dir_output
-        file_input = self.setup.file_selected_stroke_units
-        path_to_file = os.path.join(dir_input, file_input)
-        hospitals = pd.read_csv(path_to_file, index_col=0)
-
-        # Keep a copy of the coordinates:
-        hospital_coords = hospitals.copy()
-        hospital_coords = hospital_coords[[
-            'Easting', 'Northing', 'long_x', 'lat_x']]  # TO DO - Fix this annoying suffix
-
-        transfer = transfer.drop(['time_nearest_MT'], axis='columns')
-        # Merge in the transfer unit coordinates:
-        transfer = pd.merge(
-            transfer, hospital_coords,
-            left_on='name_nearest_MT', right_index=True,
-            how='left', suffixes=('_mt', None)
+        df_time_lsoa_hospital = pd.read_csv(
+            path_to_file,
+            index_col='LSOA'
             )
+        # Each column is a postcode of a stroke team and
+        # each row is an LSOA name (LSOA11NM).
 
-        transfer_hospitals = pd.merge(
-            hospital_coords,
-            transfer,
-            left_index=True,
-            right_index=True,
-            how='left', suffixes=(None, '_mt')
-        )
-        # TO DO - tidy up the excess columns in hospitals ---------------------------
+        # Put the results in this dataframe where each row
+        # is a different LSOA:
+        df_results = pd.DataFrame(index=df_time_lsoa_hospital.index)
+        # The smallest time in each row:
+        df_results[f'time_nearest_{treatment}'] = (
+            df_time_lsoa_hospital[teams].min(axis='columns'))
+        # The name of the column containing the smallest
+        # time in each row:
+        df_results[f'postcode_nearest_{treatment}'] = (
+            df_time_lsoa_hospital[teams].idxmin(axis='columns'))
 
-        # transfer_hospitals = transfer_hospitals.set_index('Postcode')
-        self.transfer_hospitals = transfer_hospitals
+        # Separate out LSOA caught by selected units.
+        selected_units = df_units['Postcode'][df_units['selected']  == 1]
+        mask = df_results[f'postcode_nearest_{treatment}'].isin(selected_units)
+        df_results = df_results.loc[mask]
+
+        # Load in all LSOA names, codes, regions...
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_lsoa_regions
+        path_to_file = os.path.join(dir_input, file_input)
+        df_lsoa = pd.read_csv(path_to_file)
+        # Full list of columns:
+        # [LSOA11NM, LSOA11CD, region_code, region, region_type,
+        #  ICB22CD, ICB22NM, ISDN]
+
+        # If requested, limit to England or Wales.
+        if self.limit_to_england:
+            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LOC22NM']
+        elif self.limit_to_wales:
+            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LHB20NM']
+
+        # Limit to just these LSOA:
+        df_results = df_results.reset_index()
+        df_results = pd.merge(
+            df_results, df_lsoa[['LSOA11NM', 'LSOA11CD']],
+            left_on='LSOA', right_on='LSOA11NM', how='inner'
+            )
+        df_results = df_results.drop('LSOA', axis='columns')
+        df_results = df_results.set_index('LSOA11NM')
+
+        # Reorder columns:
+        df_results = df_results[[
+            'LSOA11CD',
+            f'postcode_nearest_{treatment}',
+            f'time_nearest_{treatment}'
+            ]]
 
         # Save output to output folder.
         dir_output = self.setup.dir_output
-        file_name = self.setup.file_selected_transfer_units
+        file_name = self.setup.file_selected_lsoa_by_catchment
         path_to_file = os.path.join(dir_output, file_name)
-        transfer_hospitals.to_csv(path_to_file)
+        df_results.to_csv(path_to_file)
 
-    # #########################
-    # ##### SELECTED LSOA #####
-    # #########################
+        # Save to self.
+        self.lsoa_travel_by_catchment = df_results
+        # self.lsoa_names
+
+    def find_lsoa_by_region_island(self):
+        # Load travel time matrix:
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_travel_times
+        path_to_file = os.path.join(dir_input, file_input)
+        df_time_lsoa_hospital = pd.read_csv(
+            path_to_file,
+            index_col='LSOA'
+            )
+        # Each column is a postcode of a stroke team and
+        # each row is an LSOA name (LSOA11NM).
+
+        # Limit selected units to those offering IVT:
+        df_units = self.unit_services
+        treatment = 'IVT'
+        df_units = df_units[df_units[f'Use_{treatment}'] == 1]
+        # List of teams to use:
+        teams = df_units['Postcode'].values
+        # Limit the travel time list to only selected units.
+        df_time_lsoa_hospital = df_time_lsoa_hospital[teams]
+
+        # Assign LSOA by catchment area of these stroke units.
+        # Put the results in this dataframe where each row
+        # is a different LSOA:
+        df_results = pd.DataFrame(index=df_time_lsoa_hospital.index)
+        # The smallest time in each row:
+        df_results[f'time_nearest_{treatment}'] = (
+            df_time_lsoa_hospital[teams].min(axis='columns'))
+        # The name of the column containing the smallest
+        # time in each row:
+        df_results[f'postcode_nearest_{treatment}'] = (
+            df_time_lsoa_hospital[teams].idxmin(axis='columns'))
+
+        # Load in all LSOA names, codes, regions...
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_lsoa_regions
+        path_to_file = os.path.join(dir_input, file_input)
+        df_lsoa = pd.read_csv(path_to_file)
+        # Full list of columns:
+        # [LSOA11NM, LSOA11CD, region_code, region, region_type,
+        #  ICB22CD, ICB22NM, ISDN]
+        # Only keep LSOA name and code and region name and code:
+        cols_to_keep = [
+            'LSOA11NM', 'LSOA11CD', 'region', 'region_code', 'region_type']
+        df_lsoa = df_lsoa[cols_to_keep]
+
+        # If requested, limit to England or Wales.
+        if self.limit_to_england:
+            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LOC22NM']
+        elif self.limit_to_wales:
+            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LHB20NM']
+
+        # Find selected regions:
+        # Columns [region, region_code, region_type,
+        #          ICB22CD, ICB22NM, ISDN, selected]
+        df_regions = self.selected_regions
+        region_list = sorted(list(set(
+            df_regions['region_code'][df_regions['selected'] == 1])))
+
+        # Find all LSOA within selected regions.
+        df_lsoa_in_regions = df_lsoa[df_lsoa['region_code'].isin(region_list)]
+
+        # Limit the results list to only selected LSOA.
+        df_results = df_results.reset_index()
+        df_results = pd.merge(
+            df_results, df_lsoa_in_regions[['LSOA11NM', 'LSOA11CD']],
+            left_on='LSOA', right_on='LSOA11NM', how='right'
+            )
+        df_results = df_results.drop('LSOA', axis='columns')
+        df_results = df_results.set_index('LSOA11NM')
+
+        # Reorder columns:
+        df_results = df_results[[
+            'LSOA11CD',
+            f'postcode_nearest_{treatment}',
+            f'time_nearest_{treatment}'
+            ]]
+
+        # Save output to output folder.
+        dir_output = self.setup.dir_output
+        file_name = self.setup.file_selected_lsoa_by_region_island
+        path_to_file = os.path.join(dir_output, file_name)
+        df_results.to_csv(path_to_file)
+
+        # Save to self.
+        self.lsoa_travel_by_region_island = df_results
+        # self.lsoa_names
+
     def _load_lsoa_names(self):
         """
         TO DO - make this simpler!! -----------------------------------------------
@@ -569,141 +703,6 @@ class Scenario(object):
         file_name = self.setup.file_selected_lsoas
         path_to_file = os.path.join(dir_output, file_name)
         df_regions.to_csv(path_to_file)#, index=False)
-
-    def _find_lsoa_catchment_mask(self, df_travel, col):
-        # Which LSOAs are in the catchment areas for these units?
-        # For each stroke team, make a long list of True/False for
-        # whether each LSOA has this as its nearest unit.
-        # Assume that "hospitals" has "Postcode" as its index.
-        lsoa_bool = [df_travel[col].str.contains(s)
-                    for s in self.hospitals.index.values]
-        # Mask is True for any LSOA that is True in any of the
-        # lists in lsoa_bool.
-        mask = np.any(lsoa_bool, axis=0)
-        return mask
-
-    def _select_lsoas_by_nearest(self):
-        """
-        Limit LSOAs to those whose nearest stroke units are selected.
-        """
-        # Take list of all LSOA names and travel times:
-        df_travel = self.national_dict['lsoa_nearest_units']
-        # This has one row for each LSOA nationally and columns
-        # for LSOA name and ONS code (LSOA11NM and LSOA11CD),
-        # and time, postcode, and SSNAP name of the nearest unit
-        # for each unit type (IVT, MT, MSU).
-        # Columns:
-        # + LSOA11NM
-        # + LSOA11CD
-        # + time_nearest_IVT
-        # + postcode_nearest_IVT
-        # + ssnap_name_nearest_IVT
-        # + time_nearest_MT
-        # + postcode_nearest_MT
-        # + ssnap_name_nearest_MT
-        # + time_nearest_MSU
-        # + postcode_nearest_MSU
-        # + ssnap_name_nearest_MSU
-
-        # Limit to just the LSOAs for the selected model type.
-        if self.destination_decision_type == 0:
-            # Drip and ship.
-            col = 'postcode_nearest_IVT'
-        elif self.destination_decision_type == 1:
-            # Mothership.
-            col = 'postcode_nearest_MT'
-        else:
-            # MSU / other.
-            col = 'postcode_nearest_MSU'
-
-        mask = self._find_lsoa_catchment_mask(df_travel, col)
-
-        # Limit the data to just these LSOAs:
-        lsoas_to_include = df_travel['LSOA11NM'][mask]
-
-        return lsoas_to_include
-
-    def _select_lsoas_by_region(self):
-        """
-        Limit LSOAs to those in the same region as stroke units.
-
-        TO DO - new function - limit big LSOA list to only those in the requested regions.
-        And set all other stroke unit services to zero?
-        """
-        # Column:
-        col = self.region_column_for_lsoa_selection
-        # List of hospitals selected and the regions containing them:
-        hospitals = self.hospitals
-
-        # Pick out the region names with repeats:
-        regions = hospitals[col].copy()
-        # Remove missing values:
-        regions = regions.dropna()
-        # Remove repeats:
-        regions = list(set(regions))
-
-        # Load data on LSOA names, codes, regions...
-        dir_input = self.setup.dir_data
-        file_input = self.setup.file_input_lsoa_regions
-        path_to_file = os.path.join(dir_input, file_input)
-        df_regions = pd.read_csv(path_to_file)
-        # Each row is a different LSOA and the columns include
-        # LSOA11NM, LSOA11CD, longitude and latitude, and larger
-        # regional groupings (e.g. Clinical Care Group names).
-
-        # Which LSOAs are in the selected regions?
-        # For each region, make a long list of True/False for
-        # whether each LSOA is in this region.
-        # List of LSOAs:
-        lsoa_bool = [
-            df_regions[col].str.contains(s)
-            for s in regions
-            ]
-        # Sometimes get missing values, not True or False,
-        # e.g. when comparing Welsh LSOAs with England-only region types.
-        # Change any missing values to False:
-        lsoa_bool = [s.fillna(False) for s in lsoa_bool]
-        # Mask is True for any LSOA that is True in any of the
-        # lists in lsoa_bool.
-        mask = np.any(lsoa_bool, axis=0)
-        # Limit the data to just these LSOAs:
-        lsoas_to_include = df_regions['LSOA11NM'][mask]
-
-        # TO DO ---------------------------------------------------------------------------
-        # Need to make sure that LSOAs within the region but closer
-        # to a stroke unit outside the region are forced to travel to
-        # a stroke unit within the region.
-        # Maybe just set all other stroke unit services to 0?
-        return lsoas_to_include
-
-    def _link_lsoa_to_regions(self):
-        """
-        write me
-        new file, link LSOA names to regions containing them
-        - just do a subset of the input file and save it
-
-        # TO DO - new regions file. region / type / contains selected unit / LSOA
-        # so that can mask by type column to get a list of regions used.
-        # Also save this to file.
-        """
-        # Load data on LSOA names, codes, regions...
-        dir_input = self.setup.dir_data
-        file_input = self.setup.file_input_lsoa_regions
-        path_to_file = os.path.join(dir_input, file_input)
-        df_lsoa_regions = pd.read_csv(path_to_file)
-
-        # TO DO - pick out which LSOA will be included in the model. Two model types:
-        # either limit to the exact boundaries of the selected regions,
-        # or use the catchment areas of all stroke units that were selected.
-
-        # Save to self:
-        self.region_choice = df
-
-        # Save to file:
-        dir_output = self.setup.dir_output
-        file_name = self.setup.file_selected_regions
-        path_to_file = os.path.join(dir_output, file_name)
-        df.to_csv(path_to_file)#, index=False)
 
     def _load_admissions(self):
         """
