@@ -961,14 +961,12 @@ class Map(object):
 
     def get_selected_area_extent(
             self,
-            gdf_boundaries_regions,
+            gdf_selected,
             leeway=20000,
             ):
         """
         # What is the extent of the selected regions?
         """
-        gdf_selected = gdf_boundaries_regions[
-            gdf_boundaries_regions['selected'] == 1]
         minx, miny, maxx, maxy = gdf_selected.geometry.total_bounds
         # Give this some leeway:
         minx -= leeway
@@ -1132,7 +1130,7 @@ class Map(object):
             gdf_points_units = self.gdf_points_units.copy()
 
         box, map_extent = self.get_selected_area_extent(
-            gdf_boundaries_regions,
+            gdf_boundaries_regions[gdf_boundaries_regions['selected'] == 1],
             leeway=20000,
             )
 
@@ -1292,7 +1290,7 @@ class Map(object):
             gdf_lines_transfer = self.gdf_lines_transfer.copy()
 
         box, map_extent = self.get_selected_area_extent(
-            gdf_boundaries_regions,
+            gdf_boundaries_regions[gdf_boundaries_regions['selected'] == 1],
             leeway=20000,
             )
 
@@ -1488,8 +1486,28 @@ class Map(object):
             g = 'geometry'
             gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_geometry(g)
 
+
+        # Combine LSOA geometry - from separate polygon per LSOA to one
+        # big polygon for all LSOAs in catchment area.
+        gdf_boundaries_lsoa = gdf_boundaries_lsoa.reset_index()
+        #  TO DO - might not always be called _IVT in following column:
+        gdf_boundaries_lsoa_glob = gdf_boundaries_lsoa[['postcode_nearest_IVT', 'geometry']].dissolve(by='postcode_nearest_IVT')
+        # Overwrite existing name:
+        gdf_boundaries_lsoa = gdf_boundaries_lsoa_glob
+        # ^ check if above name fudge is still necessary - TO DO -----------------------------
+
+        gdf_combo = pd.concat(
+            (gdf_boundaries_regions[gdf_boundaries_regions['selected'] == 1].reset_index()['geometry'],
+             gdf_boundaries_lsoa.reset_index()['geometry']),
+            axis='rows'
+        )
+
+        # TO DO - currently this means that stroke units get different labels between 
+        # this map and the other stroke unit selection map. Fix it! ------------------------
+
+        # Take map extent from the combined LSOA and region geometry.
         box, map_extent = self.get_selected_area_extent(
-            gdf_boundaries_regions,
+            gdf_combo,
             leeway=20000,
             )
 
@@ -1559,17 +1577,6 @@ class Map(object):
 
         # TO DO - make gdf_boundaries_regions contains_selected_lsoa column.
 
-        # Combine LSOA geometry - from separate polygon per LSOA to one
-        # big polygon for all LSOAs in catchment area.
-        gdf_boundaries_lsoa = gdf_boundaries_lsoa.reset_index()
-        #  TO DO - might not always be called _IVT in following column:
-        gdf_boundaries_lsoa_glob = gdf_boundaries_lsoa[['postcode_nearest_IVT', 'geometry']].dissolve(by='postcode_nearest_IVT')
-        # Overwrite existing name:
-        gdf_boundaries_lsoa = gdf_boundaries_lsoa_glob
-
-        print(gdf_boundaries_lsoa.columns)
-        print(gdf_boundaries_lsoa)
-
         # Reduce the DataFrames to just the needed parts:
         gdf_boundaries_lsoa = gdf_boundaries_lsoa[[
             'geometry',                             # shapes
@@ -1627,6 +1634,7 @@ class Map(object):
             )
         map_kwargs = dict(
             lsoa_boundary_kwargs=lsoa_boundary_kwargs,
+            map_extent=map_extent,
             path_to_file=path_to_file
         )
         return map_args, map_kwargs
