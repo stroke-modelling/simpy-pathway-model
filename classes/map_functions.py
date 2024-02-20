@@ -502,6 +502,46 @@ def draw_labels_short(ax, points, map_labels, leg_labels, **kwargs):
     return ax, markers_for_legend, labels_for_legend
 
 
+def plot_dummy_axis(fig, ax, leg, side='left'):
+    """
+    Add dummy invisible axis to the side of an existing axis.
+
+    So that extra_artists are not cut off when plt.show() crops.
+
+    For now this assumes that the new axis should be anchored to
+    "upper right" for new axis on left-hand-side and
+    "upper left" for new axis on right-hand-side.
+    For other options, make new if/else settings below.
+    """
+    # Current axis:
+    abox = ax.get_window_extent().transformed(
+        ax.figure.transFigure.inverted())
+    x0 = abox.x0
+    y0 = abox.y0
+    width = abox.width
+    height = abox.height
+
+    # The size of the legend or other thing to make a dummy of:
+    tbox = leg.get_window_extent().transformed(
+        ax.figure.transFigure.inverted())
+
+    new_width = tbox.width
+    new_height = tbox.height
+    if side == 'left':
+        # Left-hand-side:
+        new_x0 = x0 - tbox.width
+        new_y0 = (y0 + height) - (tbox.height)
+    else:
+        # Right-hand-side:
+        new_x0 = x0 + width
+        new_y0 = (y0 + height) - (tbox.height)
+
+    # Axes: [x0, y0, width, height].
+    c = fig.add_axes([new_x0, new_y0, new_width, new_height])
+    c.set_axis_off()
+    return fig
+
+
 # ######################
 # ##### MAIN PLOTS #####
 # ######################

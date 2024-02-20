@@ -1497,6 +1497,7 @@ class Map(object):
         # big polygon for all LSOAs in catchment area.
         gdf_boundaries_lsoa = gdf_boundaries_lsoa.reset_index()
         #  TO DO - might not always be called _ivt in following column:
+        # TO DO - save this output file as .geojson for future use.
         gdf_boundaries_lsoa = gdf_boundaries_lsoa[['postcode_nearest_ivt', 'geometry']].dissolve(by='postcode_nearest_ivt')
 
         if catchment_type == 'island':
@@ -1981,6 +1982,10 @@ class Map(object):
         else:
             pass
         if show:
+            # Add dummy axis to the sides so that
+            # extra_artists are not cut off when plt.show() crops.
+            fig = maps.plot_dummy_axis(fig, ax, extra_artists[1], side='left')
+            fig = maps.plot_dummy_axis(fig, ax, extra_artists[0], side='right')
             plt.show()
         else:
             plt.close()
@@ -1995,7 +2000,7 @@ class Map(object):
             save=True,
             show=False
             ):
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=(6, 5))
 
         ax, extra_artists = maps.plot_map_selected_units(
             gdf_boundaries_regions,
@@ -2014,6 +2019,9 @@ class Map(object):
         else:
             pass
         if show:
+            # Add dummy axis to the sides so that
+            # extra_artists are not cut off when plt.show() crops.
+            fig = maps.plot_dummy_axis(fig, ax, extra_artists[0], side='left')
             plt.show()
         else:
             plt.close()
@@ -2032,7 +2040,7 @@ class Map(object):
             show=False,
             path_to_file=''
             ):
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=(6, 5))
         ax.set_title(title)
 
         ax, extra_artists = maps.plot_map_catchment(
@@ -2054,6 +2062,9 @@ class Map(object):
         else:
             pass
         if show:
+            # Add dummy axis to the sides so that
+            # extra_artists are not cut off when plt.show() crops.
+            fig = maps.plot_dummy_axis(fig, ax, extra_artists[0], side='left')
             plt.show()
         else:
             plt.close()
@@ -2069,7 +2080,7 @@ class Map(object):
             show=False,
             path_to_file=None
             ):
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=(7, 5))
         ax.set_title(title)
 
         ax, extra_artists = maps.plot_map_outcome(
@@ -2088,6 +2099,9 @@ class Map(object):
         else:
             pass
         if show:
+            # Add dummy axis to the sides so that
+            # extra_artists are not cut off when plt.show() crops.
+            fig = maps.plot_dummy_axis(fig, ax, extra_artists[0], side='left')
             plt.show()
         else:
             plt.close()
