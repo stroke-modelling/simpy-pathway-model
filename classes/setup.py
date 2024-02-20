@@ -54,7 +54,7 @@ class Setup(object):
         self.file_selected_stroke_units = 'selected_stroke_units.csv'
         self.file_selected_transfer_units = 'selected_transfer_units.csv'
         # self.file_selected_unit_regions = 'selected_unit_regions.csv'
-        self.file_selected_lsoas = 'selected_lsoa_by_catchment.csv'  # UPDATE ME
+        self.file_selected_lsoas = None  # This gets updated later.
         # self.file_selected_lsoa_regions = 'selected_lsoa_regions.csv'
         self.file_selected_lsoa_by_catchment = 'selected_lsoa_by_catchment.csv'
         self.file_selected_lsoa_by_region_island = 'selected_lsoa_by_region_island.csv'

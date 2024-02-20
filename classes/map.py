@@ -1031,6 +1031,7 @@ class Map(object):
     def plot_map_catchment(
             self,
             scenario: str,
+            catchment_type='',
             save=True,
             show=False
             ):
@@ -1039,11 +1040,13 @@ class Map(object):
         """
         map_args, map_kwargs = self._setup_plot_map_catchment(
             scenario,
+            catchment_type=catchment_type,
             save=save
             )
         self._plt_plot_map_catchment(
             *map_args,
             **map_kwargs,
+            # catchment_type=catchment_type,
             save=save,
             show=show
         )
@@ -1410,6 +1413,7 @@ class Map(object):
     def _setup_plot_map_catchment(
             self,
             scenario: str,
+            catchment_type: str = '',
             boundary_kwargs={},
             save=True
             ):
@@ -1486,38 +1490,51 @@ class Map(object):
             g = 'geometry'
             gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_geometry(g)
 
-
         # Combine LSOA geometry - from separate polygon per LSOA to one
         # big polygon for all LSOAs in catchment area.
         gdf_boundaries_lsoa = gdf_boundaries_lsoa.reset_index()
         #  TO DO - might not always be called _IVT in following column:
-        gdf_boundaries_lsoa_glob = gdf_boundaries_lsoa[['postcode_nearest_IVT', 'geometry']].dissolve(by='postcode_nearest_IVT')
-        # Overwrite existing name:
-        gdf_boundaries_lsoa = gdf_boundaries_lsoa_glob
-        # ^ check if above name fudge is still necessary - TO DO -----------------------------
+        gdf_boundaries_lsoa = gdf_boundaries_lsoa[['postcode_nearest_IVT', 'geometry']].dissolve(by='postcode_nearest_IVT')
 
-        gdf_combo = pd.concat(
-            (gdf_boundaries_regions[gdf_boundaries_regions['selected'] == 1].reset_index()['geometry'],
-             gdf_boundaries_lsoa.reset_index()['geometry']),
-            axis='rows'
-        )
+        if catchment_type == 'island':
+            # TO DO - currently this means that stroke units get different labels between 
+            # this map and the other stroke unit selection map. Fix it! ------------------------
 
-        # TO DO - currently this means that stroke units get different labels between 
-        # this map and the other stroke unit selection map. Fix it! ------------------------
+            # Only keep selected regions.
+            mask = (gdf_boundaries_regions['selected'] == 1)
+            gdf_boundaries_regions = gdf_boundaries_regions[mask]
+            # Which stroke units are contained in this bounding box?
+            mask = (gdf_points_units['selected'] == 1)
+            gdf_points_units = gdf_points_units[mask]
 
-        # Take map extent from the combined LSOA and region geometry.
-        box, map_extent = self.get_selected_area_extent(
-            gdf_combo,
-            leeway=20000,
+            # Take map extent from the region geometry
+            # *after* removing unwanted regions.
+            box, map_extent = self.get_selected_area_extent(
+                gdf_boundaries_regions,
+                leeway=20000,
+                )
+        else:
+            gdf_combo = pd.concat(
+                (gdf_boundaries_regions[gdf_boundaries_regions['selected'] == 1].reset_index()['geometry'],
+                gdf_boundaries_lsoa.reset_index()['geometry']),
+                axis='rows'
             )
 
-        # TO DO - function this --------------------------------------------------------?
-        # Which other regions are contained in this bounding box?
-        mask = gdf_boundaries_regions.geometry.intersects(box)
-        gdf_boundaries_regions = gdf_boundaries_regions[mask]
-        # Which stroke units are contained in this bounding box?
-        mask = gdf_points_units.geometry.intersects(box)
-        gdf_points_units = gdf_points_units[mask]
+            # TO DO - currently this means that stroke units get different labels between 
+            # this map and the other stroke unit selection map. Fix it! ------------------------
+
+            # Take map extent from the combined LSOA and region geometry.
+            box, map_extent = self.get_selected_area_extent(
+                gdf_combo,
+                leeway=20000,
+                )
+            # TO DO - function this --------------------------------------------------------?
+            # Which other regions are contained in this bounding box?
+            mask = gdf_boundaries_regions.geometry.intersects(box)
+            gdf_boundaries_regions = gdf_boundaries_regions[mask]
+            # Which stroke units are contained in this bounding box?
+            mask = gdf_points_units.geometry.intersects(box)
+            gdf_points_units = gdf_points_units[mask]
 
         # TO DO - function this --------------------------------------------------------?
         # Restrict polygon geometry to the edges of the box.
@@ -1620,7 +1637,10 @@ class Map(object):
                     # Setup is not defined.
                     pass
 
-            file_name = f'map_catchment_{scenario}.jpg'
+            file_name = f'map_catchment_{scenario}'
+            if len(catchment_type) > 0:
+                file_name += f'_{catchment_type}'
+            file_name += '.jpg'
 
             path_to_file = os.path.join(dir_output, file_name)
         else:
@@ -1872,12 +1892,13 @@ class Map(object):
                 bbox_extra_artists=extra_artists,
                 dpi=300, bbox_inches='tight'
                 )
-            plt.close()
-        elif show:
+        else:
+            pass
+        if show:
             plt.show()
         else:
-            # Don't do anything.
             plt.close()
+
 
     def _plt_plot_map_selected_units(
             self,
@@ -1905,12 +1926,13 @@ class Map(object):
                 bbox_extra_artists=extra_artists,
                 dpi=300, bbox_inches='tight'
                 )
-            plt.close()
-        elif show:
+        else:
+            pass
+        if show:
             plt.show()
         else:
-            # Don't do anything.
             plt.close()
+
 
     def _plt_plot_map_catchment(
             self,
@@ -1921,6 +1943,7 @@ class Map(object):
             title='',
             lsoa_boundary_kwargs={},
             map_extent=[],
+            # catchment_type='',
             save=True,
             show=False,
             path_to_file=''
@@ -1935,7 +1958,8 @@ class Map(object):
             gdf_lines_transfer,
             ax=ax,
             map_extent=map_extent,
-            boundary_kwargs=lsoa_boundary_kwargs
+            boundary_kwargs=lsoa_boundary_kwargs,
+            # catchment_type=catchment_type
         )
 
         if save:
@@ -1943,9 +1967,13 @@ class Map(object):
                 path_to_file,
                 bbox_extra_artists=extra_artists,
                 dpi=300, bbox_inches='tight')
-            plt.close()
         else:
+            pass
+        if show:
             plt.show()
+        else:
+            plt.close()
+
 
     def _plt_plot_map_outcome(
             self,
@@ -1955,6 +1983,7 @@ class Map(object):
             title='',
             lsoa_boundary_kwargs={},
             save=True,
+            show=False,
             path_to_file=None
             ):
         fig, ax = plt.subplots(figsize=(10, 10))
@@ -1970,6 +1999,9 @@ class Map(object):
 
         if save:
             plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
-            plt.close()
         else:
+            pass
+        if show:
             plt.show()
+        else:
+            plt.close()

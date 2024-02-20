@@ -834,7 +834,8 @@ def plot_map_catchment(
         gdf_lines_transfer,
         ax=None,
         map_extent=[],
-        boundary_kwargs={}
+        boundary_kwargs={},
+        # catchment_type=''
         ):
     """
     Map the selected units, containing regions, and catchment areas.
@@ -911,12 +912,19 @@ def plot_map_catchment(
         'linewidth': 0.5,
         'facecolor': 'none'
         }
+    # if catchment_type == 'island':
+    #     # Make these regions invisible.
+    #     kwargs_region_with_lsoa = {
+    #         'edgecolor': 'none',
+    #         'facecolor': 'none'
+    #         }
+    # else:
     kwargs_region_with_lsoa = {
         'edgecolor': 'silver',
         'linewidth': 0.5,
         'facecolor': 'none'
         }
-    kwargs_region_with_nowt = kwargs_region_with_lsoa # {
+    kwargs_region_with_nowt = kwargs_region_with_lsoa  # {
         # 'edgecolor': 'silver',
         # 'linewidth': 0.5,
         # 'facecolor': 'WhiteSmoke'
