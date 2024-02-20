@@ -2072,7 +2072,7 @@ class Map(object):
         fig, ax = plt.subplots(figsize=(10, 10))
         ax.set_title(title)
 
-        ax = maps.plot_map_outcome(
+        ax, extra_artists = maps.plot_map_outcome(
             gdf_boundaries_lsoa,
             gdf_boundaries_regions,
             gdf_points_units,
@@ -2081,7 +2081,10 @@ class Map(object):
         )
 
         if save:
-            plt.savefig(path_to_file, dpi=300, bbox_inches='tight')
+            plt.savefig(
+                path_to_file,
+                bbox_extra_artists=extra_artists,
+                dpi=300, bbox_inches='tight')
         else:
             pass
         if show:
