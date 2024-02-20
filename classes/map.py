@@ -139,7 +139,7 @@ class Map(object):
             'df_results_by_lsoa': {
                 'file': self.setup.file_combined_results_summary_by_lsoa,
                 'header': [0, 1, 2],
-                'index_col': 0,
+                'index_col': 1,
                 },
         }
         # Setup for individual run's files:
@@ -174,7 +174,7 @@ class Map(object):
             'df_results_by_lsoa': {
                 'file': self.setup.file_results_summary_by_lsoa,
                 'header': [0, 1],
-                'index_col': 0,
+                'index_col': 1,
                 },
         }
         if dir_data is None:
@@ -210,7 +210,7 @@ class Map(object):
                     # Add another column to the index.
                     iname = df.index.name
                     df = df.reset_index()
-                    df = df.set_index([iname, 'name_nearest_MT'])
+                    df = df.set_index([iname, 'name_nearest_mt'])
                 # Save to self:
                 setattr(self, label, df)
             except FileNotFoundError:
@@ -356,6 +356,12 @@ class Map(object):
         gdf_boundaries_lsoa = self.import_geojson('LSOA11NM')
         # Index column: LSOA11CD.
         # Always has only one unnamed column index level.
+
+        # TO DO - shorten LSOA geojson load time by separating big file into multiple smaller ones,
+        # e.g. one file per region of the UK (South West, West Midlands...)
+        # or one file per SICBL / LHB (too many files?)
+        # then work out which ones should be loaded and only load those ones.
+        # Will almost never want to load in Newcastle LSOA when we're looking at Cornwall.
 
         # Results by LSOA.
         results_exist = False
@@ -652,7 +658,7 @@ class Map(object):
             self.load_run_data(['df_transfer'])
             df_transfer = self.df_transfer
         # Index column:
-        #   - combined: ['Postcode', 'name_nearest_MT']
+        #   - combined: ['Postcode', 'name_nearest_mt']
         #   - separate: 'Postcode'
         # Expected column MultiIndex levels:
         #   - combined: ['scenario', 'property']
@@ -1055,31 +1061,28 @@ class Map(object):
             self,
             scenario: str,
             outcome: str,
+            catchment_type='',
             save=True,
+            show=False,
             region=None,
             boundary_kwargs={},
             ):
         """
         Wrangle data and plot a map of LSOA outcomes.
         """
-        if region is None:
-            pass
-        else:
-            # Reload the region data.
-            self.region_type = region
-            self.load_geometry_regions(region)
-
         map_args, map_kwargs = self._setup_plot_map_outcome(
             scenario,
             outcome,
             boundary_kwargs=boundary_kwargs,
+            catchment_type=catchment_type,
             save=save
             )
         self._plt_plot_map_outcome(
             *map_args,
             **map_kwargs,
             title=f'{scenario}\n{outcome}',
-            save=save
+            save=save,
+            show=show
         )
 
     # ###########################
@@ -1200,7 +1203,7 @@ class Map(object):
             ]]
         gdf_points_units = gdf_points_units[[
             'geometry',                             # locations
-            'Use_IVT', 'Use_MT', 'Use_MSU',         # point selection
+            'use_ivt', 'use_mt', 'use_msu',         # point selection
             'Hospital_name',                        # labels
             'label',                                # label annotation
             'region_selected'                       # label kwargs
@@ -1353,12 +1356,12 @@ class Map(object):
         gdf_lines_transfer = pd.merge(
             gdf_lines_transfer,
             df_units_rs[['Postcode', 'region_selected']],
-            left_on='name_nearest_MT', right_on='Postcode', how='left',
-            suffixes=(None, '_MT')
+            left_on='name_nearest_mt', right_on='Postcode', how='left',
+            suffixes=(None, '_mt')
         )
         gdf_lines_transfer['Use'][(
             (gdf_lines_transfer['region_selected'] == 1) |
-            (gdf_lines_transfer['region_selected_MT'] == 1)
+            (gdf_lines_transfer['region_selected_mt'] == 1)
             )] = 1
 
         # Reduce the DataFrames to just the needed parts:
@@ -1369,7 +1372,7 @@ class Map(object):
             ]]
         gdf_points_units = gdf_points_units[[
             'geometry',                             # locations
-            'Use_IVT', 'Use_MT', 'Use_MSU',         # point selection
+            'use_ivt', 'use_mt', 'use_msu',         # point selection
             'Hospital_name',                        # labels
             'label',                                # label annotation
             'region_selected'                       # label kwargs
@@ -1493,8 +1496,8 @@ class Map(object):
         # Combine LSOA geometry - from separate polygon per LSOA to one
         # big polygon for all LSOAs in catchment area.
         gdf_boundaries_lsoa = gdf_boundaries_lsoa.reset_index()
-        #  TO DO - might not always be called _IVT in following column:
-        gdf_boundaries_lsoa = gdf_boundaries_lsoa[['postcode_nearest_IVT', 'geometry']].dissolve(by='postcode_nearest_IVT')
+        #  TO DO - might not always be called _ivt in following column:
+        gdf_boundaries_lsoa = gdf_boundaries_lsoa[['postcode_nearest_ivt', 'geometry']].dissolve(by='postcode_nearest_ivt')
 
         if catchment_type == 'island':
             # TO DO - currently this means that stroke units get different labels between 
@@ -1584,12 +1587,12 @@ class Map(object):
         gdf_lines_transfer = pd.merge(
             gdf_lines_transfer,
             df_units_rs[['Postcode', 'region_selected']],
-            left_on='name_nearest_MT', right_on='Postcode', how='left',
-            suffixes=(None, '_MT')
+            left_on='name_nearest_mt', right_on='Postcode', how='left',
+            suffixes=(None, '_mt')
         )
         gdf_lines_transfer['Use'][(
             (gdf_lines_transfer['region_selected'] == 1) |
-            (gdf_lines_transfer['region_selected_MT'] == 1)
+            (gdf_lines_transfer['region_selected_mt'] == 1)
             )] = 1
 
         # TO DO - make gdf_boundaries_regions contains_selected_lsoa column.
@@ -1605,7 +1608,7 @@ class Map(object):
             ]]
         gdf_points_units = gdf_points_units[[
             'geometry',                             # locations
-            'Use_IVT', 'Use_MT', 'Use_MSU',# 'Use',  # point selection
+            'use_ivt', 'use_mt', 'use_msu',# 'Use',  # point selection
             'Hospital_name',                        # labels
             'label',                                # label annotation
             'region_selected'                       # label kwargs
@@ -1616,7 +1619,7 @@ class Map(object):
         ]]
 
         lsoa_boundary_kwargs = {
-            # 'column': 'postcode_nearest_IVT', # TEMP - TO DO - might change column name
+            # 'column': 'postcode_nearest_ivt', # TEMP - TO DO - might change column name
             'cmap': 'Blues',
             'edgecolor': 'face'
         }
@@ -1664,11 +1667,19 @@ class Map(object):
             scenario: str,
             outcome: str,
             boundary_kwargs={},
+            catchment_type='',
             save=True
             ):
         """
 
         """
+        # Load in reference data for this scenario
+        # (always ignore "combined"):
+        # TO DO - for now! set up combined. ---------------------------------------
+        self.load_run_data(
+            ['df_lsoa', 'df_results_by_lsoa', 'df_regions', 'df_units'],
+            dir_data=scenario
+            )
         # If the geometry data doesn't exist, load it in:
         data_dict = {
             'gdf_boundaries_regions': self.load_geometry_regions,
@@ -1786,20 +1797,95 @@ class Map(object):
             # heading, so update which column is geometry:
             gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_geometry('geometry')
 
+        if catchment_type == 'island':
+            # TO DO - currently this means that stroke units get different labels between 
+            # this map and the other stroke unit selection map. Fix it! ------------------------
+
+            # Only keep selected regions.
+            mask = (gdf_boundaries_regions['selected'] == 1)
+            gdf_boundaries_regions = gdf_boundaries_regions[mask]
+
+            # Take map extent from the region geometry
+            # *after* removing unwanted regions.
+            box, map_extent = self.get_selected_area_extent(
+                gdf_boundaries_regions,
+                leeway=20000,
+                )
+        else:
+            gdf_combo = pd.concat(
+                (gdf_boundaries_regions[gdf_boundaries_regions['selected'] == 1].reset_index()['geometry'],
+                gdf_boundaries_lsoa.reset_index()['geometry']),
+                axis='rows'
+            )
+
+            # TO DO - currently this means that stroke units get different labels between 
+            # this map and the other stroke unit selection map. Fix it! ------------------------
+
+            # Take map extent from the combined LSOA and region geometry.
+            box, map_extent = self.get_selected_area_extent(
+                gdf_combo,
+                leeway=20000,
+                )
+
+            # TO DO - function this --------------------------------------------------------?
+            # Which other regions are contained in this bounding box?
+            mask = gdf_boundaries_regions.geometry.intersects(box)
+            gdf_boundaries_regions = gdf_boundaries_regions[mask]
+
+        # Only keep selected stroke units.
+        mask = (gdf_points_units['selected'] == 1)
+        gdf_points_units = gdf_points_units[mask]
+
+        # TO DO - function this --------------------------------------------------------?
+        # Restrict polygon geometry to the edges of the box.
+        gdf_boundaries_regions['geometry'] = (
+            gdf_boundaries_regions.geometry.intersection(box))
+
+        # TO DO - function this --------------------------------------------------------
+        # Which stroke units are in the selected regions?
+        regions_selected = gdf_boundaries_regions['region'][
+            gdf_boundaries_regions['selected'] == 1]
+        mask = gdf_points_units['region'].isin(regions_selected)
+        gdf_points_units['region_selected'] = 0
+        gdf_points_units.loc[mask, 'region_selected'] = 1
+        # Add a label letter for each unit.
+        gdf_points_units = gdf_points_units.sort_values(
+            ['region_selected', 'Northing'], ascending=False
+        )
+        import string
+        # List ['A', 'B', 'C', ..., 'Z']:
+        str_labels = list(string.ascii_uppercase)
+        if len(str_labels) < len(gdf_points_units):
+            # Add more letters at the end starting with
+            # ['AA', 'AB', 'AC', ... 'AZ'].
+            i = 0
+            str_labels_orig = list(string.ascii_uppercase)
+            while len(str_labels) < len(gdf_points_units):
+                str_labels2 = [f'{str_labels[i]}{s}' for s in str_labels_orig]
+                str_labels += str_labels2
+                i += 1
+        else:
+            pass
+        gdf_points_units['label'] = str_labels[:len(gdf_points_units)]
+
+        # TO DO - make gdf_boundaries_regions contains_selected_lsoa column.
+
         # Reduce the DataFrames to just the needed parts:
         gdf_boundaries_lsoa = gdf_boundaries_lsoa[[
-            'geometry',  # shapes
-            outcome      # colours
+            'geometry',                             # shapes
+            outcome                                 # colours
             ]]
         gdf_boundaries_regions = gdf_boundaries_regions[[
-            'geometry',                # shapes
-            'contains_selected_unit',  # line type selection
-            'contains_selected_lsoa',  # line type selection
+            'geometry',                             # shapes
+            'selected',                             # line type selection
+            # 'contains_selected_lsoa',               # line type selection
             ]]
         gdf_points_units = gdf_points_units[[
             'geometry',                             # locations
-            'Use_IVT', 'Use_MT', 'Use_MSU', #'Use',  # point selection
-            'Hospital_name'                         # labels
+            'use_ivt', 'use_mt', 'use_msu',# 'Use',  # point selection
+            'Hospital_name',                        # labels
+            'label',                                # label annotation
+            'region_selected'                       # label kwargs
             ]]
 
         lsoa_boundary_kwargs = {
@@ -1845,7 +1931,7 @@ class Map(object):
                     # Setup is not defined.
                     pass
 
-            file_name = f'map_{outcome}_{scenario}_{self.region_type}.jpg'
+            file_name = f'map_{outcome}_{scenario}.jpg'
             path_to_file = os.path.join(dir_output, file_name)
         else:
             path_to_file = None
@@ -1899,7 +1985,6 @@ class Map(object):
         else:
             plt.close()
 
-
     def _plt_plot_map_selected_units(
             self,
             gdf_boundaries_regions,
@@ -1932,7 +2017,6 @@ class Map(object):
             plt.show()
         else:
             plt.close()
-
 
     def _plt_plot_map_catchment(
             self,
@@ -1973,7 +2057,6 @@ class Map(object):
             plt.show()
         else:
             plt.close()
-
 
     def _plt_plot_map_outcome(
             self,

@@ -158,11 +158,13 @@ class Model(object):
         path_to_file = os.path.join(dir_output, file_name)
         self.results_summary_by_admitting_unit.to_csv(
             path_to_file)#, index=False)
+
         # Group the results by LSOA.
+        # TO DO - include LSOA11CD in the columns. -------------------------------------------------
         # Group by LSOA, then take only the columns relating to time,
         # then take only their means and standard deviations.
         self.results_summary_by_lsoa = self.results_all.copy().groupby(
-            by='lsoa')[aggregate_cols].agg(['mean', 'std'])
+            by=['lsoa', 'LSOA11CD'])[aggregate_cols].agg(['mean', 'std'])
         # self.results_summary_by_lsoa = self.results_summary_by_lsoa.reset_index()
         # Rename the MultiIndex column names:
         self.results_summary_by_lsoa.columns = self.results_summary_by_lsoa.columns.set_names(['property', 'subtype'])

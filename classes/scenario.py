@@ -138,12 +138,12 @@ class Scenario(object):
 
         # Stroke unit services updates.
         # Change which units provide IVT, MT, and MSU by changing
-        # their 'Use_IVT' flags in the services dataframe.
+        # their 'use_ivt' flags in the services dataframe.
         # Example:
         # self.services_updates = {
-        #     'hospital_name1': {'Use_MT': 0},
-        #     'hospital_name2': {'Use_IVT': 0, 'Use_MSU': None},
-        #     'hospital_name3': {'Nearest_MT': 'EX25DW'},
+        #     'hospital_name1': {'use_mt': 0},
+        #     'hospital_name2': {'use_ivt': 0, 'use_msu': None},
+        #     'hospital_name3': {'Nearest_mt': 'EX25DW'},
         #     }
         self.services_updates = {}
 
@@ -368,11 +368,11 @@ class Scenario(object):
         hospital_coords = hospital_coords[[
             'Easting', 'Northing', 'long_x', 'lat_x']]  # TO DO - Fix this annoying suffix
 
-        transfer = transfer.drop(['time_nearest_MT'], axis='columns')
+        transfer = transfer.drop(['time_nearest_mt'], axis='columns')
         # Merge in the transfer unit coordinates:
         transfer = pd.merge(
             transfer, hospital_coords,
-            left_on='name_nearest_MT', right_index=True,
+            left_on='name_nearest_mt', right_index=True,
             how='left', suffixes=('_mt', None)
             )
 
@@ -404,7 +404,7 @@ class Scenario(object):
         df_results = self.units.find_lsoa_by_catchment(
             self.unit_services,
             self,
-            treatment='IVT',
+            treatment='ivt',
         )
 
         # Save output to output folder.
@@ -423,7 +423,7 @@ class Scenario(object):
         df_results = self.units.find_lsoa_by_region_island(
             self.unit_services,
             self,
-            treatment='IVT',
+            treatment='ivt',
         )
 
         # Save output to output folder.
@@ -443,21 +443,21 @@ class Scenario(object):
 
         if lsoa_catchment_type == 'island':
             try:
-                self.lsoa_names = self.lsoa_travel_by_region_island
+                self.df_lsoa = self.lsoa_travel_by_region_island
             except AttributeError:
                 # If that data doesn't exist yet, make it now:
                 self.find_lsoa_by_region_island()
-                self.lsoa_names = self.lsoa_travel_by_region_island
+                self.df_lsoa = self.lsoa_travel_by_region_island
             # Which LSOA selection file should be used?
             self.setup.file_selected_lsoas = (
                 self.setup.file_selected_lsoa_by_region_island)
         else:
             try:
-                self.lsoa_names = self.lsoa_travel_by_catchment
+                self.df_lsoa = self.lsoa_travel_by_catchment
             except AttributeError:
                 # If that data doesn't exist yet, make it now:
                 self.find_lsoa_by_catchment()
-                self.lsoa_names = self.lsoa_travel_by_catchment
+                self.df_lsoa = self.lsoa_travel_by_catchment
             # Which LSOA selection file should be used?
             self.setup.file_selected_lsoas = (
                 self.setup.file_selected_lsoa_by_catchment)
@@ -469,10 +469,10 @@ class Scenario(object):
         Convert LSOA travel time dataframe into separate dicts.
         """
         # Now create dictionaries of the LSOA travel times.
-        df_travel = self.lsoa_names
+        df_travel = self.df_lsoa
         # TO DO - make this updateable for MT, MSU -------------------------------------
         # ..?
-        treatments = ['IVT']
+        treatments = ['ivt']
 
         # Separate out the columns and store in self:
         for treatment in treatments:
@@ -521,7 +521,7 @@ class Scenario(object):
         # Keep only these LSOAs in the admissions data:
         admissions = pd.merge(
             left=admissions,
-            right=self.lsoa_names,
+            right=self.df_lsoa,
             left_on='area',
             right_on='LSOA11NM',
             how='inner'
@@ -536,6 +536,6 @@ class Scenario(object):
         )
         # Overwrite this to make sure the LSOA names are in the
         # same order as the LSOA relative frequency array.
-        self.lsoa_names = list(admissions["area"])
+        self.lsoa_names = admissions[['area', 'LSOA11CD']].values
         # Average time between admissions to these hospitals in a year:
         self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions

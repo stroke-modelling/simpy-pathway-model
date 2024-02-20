@@ -24,12 +24,12 @@ class Units(object):
 
         # Stroke unit services updates.
         # Change which units provide IVT, MT, and MSU by changing
-        # their 'Use_IVT' flags in the services dataframe.
+        # their 'use_ivt' flags in the services dataframe.
         # Example:
         # self.services_updates = {
-        #     'hospital_name1': {'Use_MT': 0},
-        #     'hospital_name2': {'Use_IVT': 0, 'Use_MSU': None},
-        #     'hospital_name3': {'Nearest_MT': 'EX25DW'},
+        #     'hospital_name1': {'use_mt': 0},
+        #     'hospital_name2': {'use_ivt': 0, 'use_msu': None},
+        #     'hospital_name3': {'Nearest_mt': 'EX25DW'},
         #     }
         # self.services_updates = {}
 
@@ -114,9 +114,9 @@ class Units(object):
         Make table of which stroke units provide which treatments.
 
         Each stroke unit has a flag in this table for each of:
-        + Use_IVT
-        + Use_MT
-        + Use_MSU
+        + use_ivt
+        + use_mt
+        + use_msu
         The value is set to either 0 (not provided) or 1 (provided).
 
         Most of the values are stored in a reference file but
@@ -140,7 +140,7 @@ class Units(object):
         path_to_file = os.path.join(dir_input, file_input)
         services = pd.read_csv(path_to_file)
         # Each row is a stroke unit. The columns are 'Postcode' and
-        # 'SSNAP name' (str), and 'Use_IVT', 'Use_MT', and 'Use_MSU'
+        # 'SSNAP name' (str), and 'use_ivt', 'use_mt', and 'use_msu'
         # (int | bool).
 
         # Store national hospitals and their services in self.
@@ -163,7 +163,7 @@ class Units(object):
         """
         # Find list of stroke units catching these LSOA.
         # Limit to units offering IVT:
-        df_units = df_units[df_units[f'Use_{treatment}'] == 1]
+        df_units = df_units[df_units[f'use_{treatment}'] == 1]
         # List of teams to use:
         teams = df_units['Postcode'].values
 
@@ -247,7 +247,7 @@ class Units(object):
         # each row is an LSOA name (LSOA11NM).
 
         # Limit units to those offering IVT:
-        df_units = df_units[df_units[f'Use_{treatment}'] == 1]
+        df_units = df_units[df_units[f'use_{treatment}'] == 1]
         # Limit to selected units:
         df_units = df_units[df_units['selected'] == 1]
         # List of teams to use:
@@ -342,13 +342,13 @@ class Units(object):
     #     # Get list of services that each stroke team provides:
     #     df_stroke_teams = self.national_hospital_services
     #     # Each row is a different stroke team and the columns are
-    #     # 'Postcode', 'SSNAP name', 'Use_IVT', 'Use_MT', 'Use_MSU'
-    #     # where the "Use_" columns contain 0 (False) or 1 (True).
+    #     # 'Postcode', 'SSNAP name', 'use_ivt', 'use_mt', 'use_msu'
+    #     # where the "use_" columns contain 0 (False) or 1 (True).
 
     #     # Make masks of units offering each service:
-    #     mask_ivt = df_stroke_teams['Use_IVT'] == 1
-    #     mask_mt = df_stroke_teams['Use_MT'] == 1
-    #     mask_msu = df_stroke_teams['Use_MSU'] == 1
+    #     mask_ivt = df_stroke_teams['use_ivt'] == 1
+    #     mask_mt = df_stroke_teams['use_mt'] == 1
+    #     mask_msu = df_stroke_teams['use_msu'] == 1
     #     # Make lists of units offering each service:
     #     teams_ivt = df_stroke_teams['Postcode'][mask_ivt].values
     #     teams_mt = df_stroke_teams['Postcode'][mask_mt].values
@@ -518,11 +518,11 @@ class Units(object):
         # Get list of services that each stroke team provides:
         df_stroke_teams = self.national_hospital_services
         # Each row is a different stroke team and the columns are
-        # 'Postcode', 'SSNAP name', 'Use_IVT', 'Use_MT', 'Use_MSU'
-        # where the "Use_" columns contain 0 (False) or 1 (True).
+        # 'Postcode', 'SSNAP name', 'use_ivt', 'use_mt', 'use_msu'
+        # where the "use_" columns contain 0 (False) or 1 (True).
 
         # Pick out the names of hospitals offering MT:
-        mask_mt = (df_stroke_teams['Use_MT'] == 1)
+        mask_mt = (df_stroke_teams['use_mt'] == 1)
         mt_hospital_names = df_stroke_teams['Postcode'][mask_mt].values
 
         # Firstly, determine MT feeder units based on travel time.
@@ -545,19 +545,19 @@ class Units(object):
         # Store the results in this DataFrame:
         df_nearest_mt = pd.DataFrame(index=df_time_inter_hospital.index)
         # The smallest time in each row:
-        df_nearest_mt['time_nearest_MT'] = (
+        df_nearest_mt['time_nearest_mt'] = (
             df_time_inter_hospital.min(axis='columns'))
         # The name of the column containing the smallest time in each row:
-        df_nearest_mt['name_nearest_MT'] = (
+        df_nearest_mt['name_nearest_mt'] = (
             df_time_inter_hospital.idxmin(axis='columns'))
 
         # Update the feeder units list with anything specified
         # by the user.
         df_services = self.national_hospital_services
         df_services_to_update = df_services[
-            df_services['Chosen_MT'] != 'nearest']
+            df_services['chosen_mt'] != 'nearest']
         units_to_update = df_services_to_update['Postcode'].values
-        transfer_units_to_update = df_services_to_update['Chosen_MT'].values
+        transfer_units_to_update = df_services_to_update['chosen_mt'].values
         for u, unit in units_to_update:
             transfer_unit = transfer_units_to_update[u]
 
@@ -565,8 +565,8 @@ class Units(object):
             mt_time = df_time_inter_hospital.loc[unit][transfer_unit]
 
             # Update the chosen nearest MT unit name and time.
-            df_nearest_mt.at[unit, 'name_nearest_MT'] = transfer_unit
-            df_nearest_mt.at[unit, 'time_nearest_MT'] = mt_time
+            df_nearest_mt.at[unit, 'name_nearest_mt'] = transfer_unit
+            df_nearest_mt.at[unit, 'time_nearest_mt'] = mt_time
 
         # Store in self:
         self.national_ivt_feeder_units = df_nearest_mt
@@ -595,6 +595,6 @@ class Units(object):
         inter_hospital_time = self.national_ivt_feeder_units
 
         self.national_mt_transfer_time = dict(
-            inter_hospital_time['time_nearest_MT'])
+            inter_hospital_time['time_nearest_mt'])
         self.national_mt_transfer_unit = dict(
-            inter_hospital_time['name_nearest_MT'])
+            inter_hospital_time['name_nearest_mt'])

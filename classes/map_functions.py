@@ -334,7 +334,7 @@ def scatter_units(
 #     ax - pyplot axis. Same as input but with scatter markers.
 #     """
 #     # Scatter marker star for MT units:
-#     mask = gdf['Use_MT'] == 1
+#     mask = gdf['use_mt'] == 1
 #     MT = gdf[mask]
 #     MT.plot(
 #         ax=ax,
@@ -361,7 +361,7 @@ def scatter_units(
 #     ax - pyplot axis. Same as input but with scatter markers.
 #     """
 #     # Scatter marker star for MT/MSU units:
-#     mask = gdf['Use_MSU'] == 1
+#     mask = gdf['use_msu'] == 1
 #     MSU = gdf[mask]
 #     MSU.plot(
 #         ax=ax,
@@ -623,8 +623,8 @@ def plot_map_selected_regions(
     # Create the legend from the lists:
     leg1 = ax.add_artist(plt.legend(
         handles_r, labels_r, fontsize=6,
-        bbox_to_anchor=[0.0, 1.0],
-        loc='upper right'
+        bbox_to_anchor=[1.0, 1.0],
+        loc='upper left'
         ))
     leg1 = set_legend_section_labels_to_bold(
         leg1, section_labels, labels_r)
@@ -643,8 +643,8 @@ def plot_map_selected_regions(
         labels_lists,
         section_labels,
         fontsize=6,
-        bbox_to_anchor=[1.0, 1.0],
-        loc='upper left'
+        bbox_to_anchor=[0.0, 1.0],
+        loc='upper right'
         )
 
     if len(map_extent) > 0:
@@ -695,7 +695,7 @@ def plot_map_selected_units(
     + Postcode
         - for unit name matching.
         - for labels on the map.
-    + Use_MT
+    + use_mt
         - for scatter marker choice.
     + [region]
         - region names to match the geojson file, for limiting the
@@ -706,7 +706,7 @@ def plot_map_selected_units(
     Output from Units.
     + from_postcode
         - for unit name matching.
-    + name_nearest_MT
+    + name_nearest_mt
         - for setting up lines drawn between each stroke unit and
         its nearest MT unit.
 
@@ -743,7 +743,7 @@ def plot_map_selected_units(
     # Set everything to the IVT marker:
     markers = np.full(len(gdf_points_units), 'o')
     # Update MT units:
-    mask_mt = (gdf_points_units['Use_MT'] == 1)
+    mask_mt = (gdf_points_units['use_mt'] == 1)
     markers[mask_mt] = '*'
     # Store in the DataFrame:
     gdf_points_units['marker'] = markers
@@ -802,8 +802,8 @@ def plot_map_selected_units(
         labels_lists,
         section_labels,
         fontsize=6,
-        bbox_to_anchor=[1.0, 1.0],
-        loc='upper left'
+        bbox_to_anchor=[0.0, 1.0],
+        loc='upper right'
         )
 
     ax = plot_lines_between_units(
@@ -864,7 +864,7 @@ def plot_map_catchment(
     + Postcode
         - for unit name matching.
         - for labels on the map.
-    + Use_MT
+    + use_mt
         - for scatter marker choice.
     + [region]
         - region names to match the geojson file, for limiting the
@@ -875,7 +875,7 @@ def plot_map_catchment(
     Output from Units.
     + from_postcode
         - for unit name matching.
-    + name_nearest_MT
+    + name_nearest_mt
         - for setting up lines drawn between each stroke unit and
         its nearest MT unit.
     + geojson file of LSOA boundaries.
@@ -887,9 +887,9 @@ def plot_map_catchment(
     + national LSOA travel data.
     Must contain:
     + column LSOA11CD for name matching.
-    + postcode_nearest_IVT
-    + postcode_nearest_MT
-    + postcode_nearest_MSU
+    + postcode_nearest_ivt
+    + postcode_nearest_mt
+    + postcode_nearest_msu
 
     Result is saved as the name given in setup class:
     + file_drip_ship_map
@@ -912,23 +912,12 @@ def plot_map_catchment(
         'linewidth': 0.5,
         'facecolor': 'none'
         }
-    # if catchment_type == 'island':
-    #     # Make these regions invisible.
-    #     kwargs_region_with_lsoa = {
-    #         'edgecolor': 'none',
-    #         'facecolor': 'none'
-    #         }
-    # else:
     kwargs_region_with_lsoa = {
         'edgecolor': 'silver',
         'linewidth': 0.5,
         'facecolor': 'none'
         }
-    kwargs_region_with_nowt = kwargs_region_with_lsoa  # {
-        # 'edgecolor': 'silver',
-        # 'linewidth': 0.5,
-        # 'facecolor': 'WhiteSmoke'
-        # }
+    kwargs_region_with_nowt = kwargs_region_with_lsoa
 
     ax = draw_boundaries_by_contents(
         ax,
@@ -942,7 +931,7 @@ def plot_map_catchment(
     # Set everything to the IVT marker:
     markers = np.full(len(gdf_points_units), 'o')
     # Update MT units:
-    mask_mt = (gdf_points_units['Use_MT'] == 1)
+    mask_mt = (gdf_points_units['use_mt'] == 1)
     markers[mask_mt] = '*'
     # Store in the DataFrame:
     gdf_points_units['marker'] = markers
@@ -1002,8 +991,8 @@ def plot_map_catchment(
         labels_lists,
         section_labels,
         fontsize=6,
-        bbox_to_anchor=[1.0, 1.0],
-        loc='upper left'
+        bbox_to_anchor=[0.0, 1.0],
+        loc='upper right'
         )
 
     ax = plot_lines_between_units(
@@ -1032,7 +1021,8 @@ def plot_map_outcome(
         gdf_boundaries_regions,  # TO DO - make this optional
         gdf_points_units,
         ax=None,
-        boundary_kwargs={}
+        boundary_kwargs={},
+        map_extent=[]
         ):
     """
     Map the selected units, containing regions, and catchment areas.
@@ -1063,7 +1053,7 @@ def plot_map_outcome(
     + Postcode
         - for unit name matching.
         - for labels on the map.
-    + Use_MT
+    + use_mt
         - for scatter marker choice.
     + [region]
         - region names to match the geojson file, for limiting the
@@ -1074,7 +1064,7 @@ def plot_map_outcome(
     Output from Units.
     + from_postcode
         - for unit name matching.
-    + name_nearest_MT
+    + name_nearest_mt
         - for setting up lines drawn between each stroke unit and
         its nearest MT unit.
     + geojson file of LSOA boundaries.
@@ -1086,9 +1076,9 @@ def plot_map_outcome(
     + national LSOA travel data.
     Must contain:
     + column LSOA11CD for name matching.
-    + postcode_nearest_IVT
-    + postcode_nearest_MT
-    + postcode_nearest_MSU
+    + postcode_nearest_ivt
+    + postcode_nearest_mt
+    + postcode_nearest_msu
 
     Result is saved as the name given in setup class:
     + file_drip_ship_map
@@ -1105,21 +1095,83 @@ def plot_map_outcome(
         **boundary_kwargs
         )
 
-    # Background regions:
-    ax = draw_boundaries_by_contents(ax, gdf_boundaries_regions)
+    # Region boundaries:
+    kwargs_region_with_unit = {
+        'edgecolor': 'DimGray',
+        'linewidth': 0.5,
+        'facecolor': 'none'
+        }
+    kwargs_region_with_lsoa = {
+        'edgecolor': 'silver',
+        'linewidth': 0.5,
+        'facecolor': 'none'
+        }
+    kwargs_region_with_nowt = kwargs_region_with_lsoa
 
-    # Stroke unit markers.
-    ax = scatter_ivt_units(ax, gdf_points_units)
-    ax = scatter_mt_units(ax, gdf_points_units)
-    # ax = scatter_msu_units(ax, gdf_points_units)  # Not for Optimist
-    # Keep track of which units to label in here:
-    gdf_points_units['labels_mask'] = False
-    gdf_points_units.loc[
-        gdf_points_units['Use'] == 1, 'labels_mask'] = True
+    ax = draw_boundaries_by_contents(
+        ax,
+        gdf_boundaries_regions,
+        kwargs_with_nowt=kwargs_region_with_nowt,
+        kwargs_with_lsoa=kwargs_region_with_lsoa,
+        kwargs_with_unit=kwargs_region_with_unit,
+        )
 
-    # # Stroke unit labels.
-    # ax = annotate_unit_labels(ax, gdf_points_units)
+    # Set up markers using a new column in DataFrame.
+    # Set everything to the IVT marker:
+    markers = np.full(len(gdf_points_units), 'o')
+    # Update MT units:
+    mask_mt = (gdf_points_units['use_mt'] == 1)
+    markers[mask_mt] = '*'
+    # Store in the DataFrame:
+    gdf_points_units['marker'] = markers
+
+    # In selected regions:
+    mask = gdf_points_units['region_selected'] == 1
+    ax, handles_scatter_us = scatter_units(
+        ax,
+        gdf_points_units[mask],
+        # marker=gdf_points_units[mask]['marker'].to_list(),
+        facecolor='Gainsboro',
+        return_handle=True
+        )
+
+    # Label units:
+    # In selected regions:
+    mask = gdf_points_units['region_selected'] == 1
+    ax, handles_us, labels_us = draw_labels_short(
+        ax,
+        gdf_points_units[mask].geometry,
+        gdf_points_units[mask].label,
+        gdf_points_units[mask].Hospital_name,
+        s=20,
+        color='k'
+    )
+
+    # Units:
+    section_labels = ['Stroke units']
+    handles_lists = [[handles_scatter_us, handles_us]]
+    labels_lists = [labels_us]
+
+    leg = create_units_legend(
+        ax,
+        handles_lists,
+        labels_lists,
+        section_labels,
+        fontsize=6,
+        bbox_to_anchor=[0.0, 1.0],
+        loc='upper right'
+        )
+
+    if len(map_extent) > 0:
+        # Limit to given extent:
+        ax.set_xlim(map_extent[0], map_extent[1])
+        ax.set_ylim(map_extent[2], map_extent[3])
+    else:
+        # Use default axis limits.
+        pass
 
     ax.set_axis_off()  # Turn off axis line and numbers
 
-    return ax
+    extra_artists = (leg, )  # Has to be a tuple.
+
+    return ax, extra_artists

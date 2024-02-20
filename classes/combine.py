@@ -60,7 +60,7 @@ class Combine(object):
 
         Each file input:
         +------+-----+---------+--------------+
-        | Unit | ... | Use_IVT |    coords    |   property
+        | Unit | ... | use_IVT |    coords    |   property
         +------+-----+---------+--------------+
         |    1 | ... |       1 | -x.xx, yy.yy |
         |    2 | ... |       1 | -x.xx, yy.yy |
@@ -73,7 +73,7 @@ class Combine(object):
                                     +------------+------------+
                                     | scenario_1 | scenario_2 |    scenario
         +------+-----+--------------+------------+------------+
-        | Unit | ... |    coords    |   Use_IVT  |   Use_IVT  |    property
+        | Unit | ... |    coords    |   use_IVT  |   use_IVT  |    property
         +------+-----+--------------+------------+------------+
         |    1 | ... | -x.xx, yy.yy |          1 |          0 |
         |    2 | ... | -x.xx, yy.yy |          1 |          0 |
@@ -88,9 +88,9 @@ class Combine(object):
             df = self._hstack_multiple_dataframes(
                 file_to_merge,
                 cols_for_scenario=[
-                    'Use_IVT',
-                    'Use_MT',
-                    'Use_MSU',
+                    'use_IVT',
+                    'use_MT',
+                    'use_MSU',
                     'Use'
                 ])
         except FileNotFoundError:
@@ -291,6 +291,7 @@ class Combine(object):
             data = self._hstack_multiple_dataframes(
                 file_to_merge,
                 csv_header=[0, 1],
+                csv_index=[0, 1],
                 cols_for_scenario=':'
                 )
         except FileNotFoundError:

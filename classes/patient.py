@@ -114,7 +114,7 @@ class Patient():
         self.id = id
 
         # Choose LSOA based on admission numbers
-        self.lsoa = self.choose_lsoa(scenario)
+        self.lsoa, self.LSOA11CD = self.choose_lsoa(scenario)
 
         # Select stroke type:
         self.stroke_type = self.generate_stroke_type()
@@ -124,10 +124,13 @@ class Patient():
         self.closest_ivt_travel_duration = (
             scenario.lsoa_ivt_travel_time[self.lsoa])
 
-        self.closest_mt_unit = scenario.lsoa_mt_unit[self.lsoa]
+        # TO DO - currently piggybacking off transfer units.
+        # Change to separate MT unit?
+        self.closest_mt_unit = scenario.national_dict['mt_transfer_unit'][self.closest_ivt_unit]
         self.closest_mt_travel_duration = (
-            scenario.lsoa_mt_travel_time[self.lsoa])
+            scenario.national_dict['mt_transfer_time'][self.closest_ivt_unit])
 
+        # TO DO - move this calculation to scenario? ----------------------------------
         self.mt_transfer_unit = (
             scenario.national_dict['mt_transfer_unit'][self.closest_ivt_unit])
         self.mt_transfer_travel_duration = (
@@ -167,8 +170,8 @@ class Patient():
         # ... and the frequency of each LSOA in the admission numbers...
         frequencies = scenario.lsoa_relative_frequency
         # ... and make a weighted selection of LSOA.
-        lsoa = random.choices(elements, weights=frequencies)[0]
-        return lsoa
+        lsoa, lsoa_code = random.choices(elements, weights=frequencies)[0]
+        return lsoa, lsoa_code
 
     def generate_stroke_type(self):
         """
