@@ -46,7 +46,7 @@ class Setup(object):
         # Output file names:
         # Units():
         # self.file_national_unit_services = 'national_unit_services.csv'
-        self.file_national_lsoa_travel = 'national_lsoa_travel_units.csv'
+        # self.file_national_lsoa_travel = 'national_lsoa_travel_units.csv'
         self.file_national_transfer_units = 'national_transfer_units.csv'
         # Scenario():
         self.file_selected_regions = 'selected_regions.csv'

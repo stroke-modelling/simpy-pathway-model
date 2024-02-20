@@ -584,7 +584,7 @@ def plot_map_selected_regions(
         )
 
     # In selected regions:
-    mask = gdf_points_units['region_selected'] == 1
+    mask = gdf_points_units['selected'] == 1
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
@@ -601,7 +601,7 @@ def plot_map_selected_regions(
 
     # Label units:
     # In selected regions:
-    mask = gdf_points_units['region_selected'] == 1
+    mask = gdf_points_units['selected'] == 1
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
@@ -670,12 +670,19 @@ def plot_map_selected_regions(
         leg1, section_labels, labels_r)
 
     # Units:
-    section_labels = ['Units in selected regions', 'Other units']
-    handles_lists = [
-        [handles_scatter_us, handles_us],
-        [handles_scatter_uns, handles_uns]
-    ]
-    labels_lists = [labels_us, labels_uns]
+    if len(labels_uns) > 0:
+        section_labels = ['Selected units', 'Other units']
+        handles_lists = [
+            [handles_scatter_us, handles_us],
+            [handles_scatter_uns, handles_uns]
+        ]
+        labels_lists = [labels_us, labels_uns]
+    else:
+        section_labels = ['Selected units']
+        handles_lists = [
+            [handles_scatter_us, handles_us]
+        ]
+        labels_lists = [labels_us]
 
     leg2 = create_units_legend(
         ax,
@@ -789,7 +796,7 @@ def plot_map_selected_units(
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    mask = gdf_points_units['region_selected'] == 1
+    mask = gdf_points_units['selected'] == 1
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
@@ -797,7 +804,7 @@ def plot_map_selected_units(
         return_handle=True
         )
     # Outside selected regions:
-    mask = gdf_points_units['region_selected'] == 0
+    mask = gdf_points_units['selected'] == 0
     ax, handles_scatter_uns = scatter_units(
         ax,
         gdf_points_units[mask],
@@ -808,7 +815,7 @@ def plot_map_selected_units(
 
     # Label units:
     # In selected regions:
-    mask = gdf_points_units['region_selected'] == 1
+    mask = gdf_points_units['selected'] == 1
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
@@ -829,12 +836,19 @@ def plot_map_selected_units(
     )
 
     # Units:
-    section_labels = ['Units in selected regions', 'Other units']
-    handles_lists = [
-        [handles_scatter_us, handles_us],
-        [handles_scatter_uns, handles_uns]
-    ]
-    labels_lists = [labels_us, labels_uns]
+    if len(labels_uns) > 0:
+        section_labels = ['Selected units', 'Other units']
+        handles_lists = [
+            [handles_scatter_us, handles_us],
+            [handles_scatter_uns, handles_uns]
+        ]
+        labels_lists = [labels_us, labels_uns]
+    else:
+        section_labels = ['Selected units']
+        handles_lists = [
+            [handles_scatter_us, handles_us]
+        ]
+        labels_lists = [labels_us]
 
     leg = create_units_legend(
         ax,
@@ -977,7 +991,7 @@ def plot_map_catchment(
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    mask = gdf_points_units['region_selected'] == 1
+    mask = gdf_points_units['selected'] == 1
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
@@ -986,7 +1000,7 @@ def plot_map_catchment(
         return_handle=True
         )
     # Outside selected regions:
-    mask = gdf_points_units['region_selected'] == 0
+    mask = gdf_points_units['selected'] == 0
     ax, handles_scatter_uns = scatter_units(
         ax,
         gdf_points_units[mask],
@@ -997,7 +1011,7 @@ def plot_map_catchment(
 
     # Label units:
     # In selected regions:
-    mask = gdf_points_units['region_selected'] == 1
+    mask = gdf_points_units['selected'] == 1
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
@@ -1018,12 +1032,19 @@ def plot_map_catchment(
     )
 
     # Units:
-    section_labels = ['Units in selected regions', 'Other units']
-    handles_lists = [
-        [handles_scatter_us, handles_us],
-        [handles_scatter_uns, handles_uns]
-    ]
-    labels_lists = [labels_us, labels_uns]
+    if len(labels_uns) > 0:
+        section_labels = ['Selected units', 'Other units']
+        handles_lists = [
+            [handles_scatter_us, handles_us],
+            [handles_scatter_uns, handles_uns]
+        ]
+        labels_lists = [labels_us, labels_uns]
+    else:
+        section_labels = ['Selected units']
+        handles_lists = [
+            [handles_scatter_us, handles_us]
+        ]
+        labels_lists = [labels_us]
 
     leg = create_units_legend(
         ax,
@@ -1166,7 +1187,7 @@ def plot_map_outcome(
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    mask = gdf_points_units['region_selected'] == 1
+    mask = gdf_points_units['selected'] == 1
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
@@ -1177,7 +1198,7 @@ def plot_map_outcome(
 
     # Label units:
     # In selected regions:
-    mask = gdf_points_units['region_selected'] == 1
+    mask = gdf_points_units['selected'] == 1
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
