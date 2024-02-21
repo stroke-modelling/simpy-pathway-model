@@ -802,7 +802,7 @@ class Map(object):
     def _find_use_column_for_transfer_lines(self, gdf_transfer, df_units):
         # Work out which lines should be used.
         index_cols = gdf_transfer.index.names
-        gdf_transfer = gdf_transfer.reset_index().copy()
+        gdf_transfer = gdf_transfer.copy().reset_index()
         # Set 'Use' to 1 when either the start or end unit
         # is in 'selected'.
         gdf_transfer['Use'] = 0
@@ -1093,35 +1093,81 @@ class Map(object):
     def _assign_labels_and_points_to_units(
             self,
             gdf_points_units,
-            regions_selected,
-            col_region,
-            col_unit_selected,
             cols_to_sort,
-            col_unit_label
+            make_new_list=False
             ):
-        # Which stroke units are in the selected regions?
-        mask = gdf_points_units[col_region].isin(regions_selected)
-        gdf_points_units[col_unit_selected] = 0
-        gdf_points_units.loc[mask, col_unit_selected] = 1
-        # Add a label letter for each unit.
-        gdf_points_units = gdf_points_units.sort_values(
+        if make_new_list:
+            pass
+        else:
+            try:
+                # If it exists, load in the existing labels DataFrame.
+                df_unit_labels = self.df_unit_labels
+                # Are there enough labels?
+                gdf_points_units = pd.merge(
+                    gdf_points_units, df_unit_labels['label'],
+                    left_index=True, right_index=True, how='left')
+                mask_missing = gdf_points_units['label'].isna()
+                if mask_missing.any():
+                    # Missing some labels, so make more.
+                    used_labels = gdf_points_units['label'][~mask_missing].values
+                    units_without_labels = gdf_points_units.index[mask_missing].values
+                    # Remove the "labels" column again.
+                    gdf_points_units = gdf_points_units.drop('label', axis='columns')
+                else:
+                    # Nothing to do here.
+                    return gdf_points_units
+            except AttributeError:
+                # Make new labels instead.
+                make_new_list = True
+
+        if make_new_list:
+            df_unit_labels = gdf_points_units[cols_to_sort].copy()
+            df_unit_labels['label'] = pd.NA
+            used_labels = []
+            units_without_labels = df_unit_labels.index.values
+
+        df_unit_labels = df_unit_labels.sort_values(
             cols_to_sort, ascending=False
         )
+
+        new_labels = []
+        # Do we need any extra labels?
+        # Add a label letter for each unit.
         # List ['A', 'B', 'C', ..., 'Z']:
-        str_labels = list(string.ascii_uppercase)
-        if len(str_labels) < len(gdf_points_units):
+        new_labels = list(string.ascii_uppercase)
+        # Remove anything already used:
+        new_labels = [n for n in new_labels if n not in used_labels]
+
+        if len(new_labels) < len(units_without_labels):
             # Add more letters at the end starting with
             # ['AA', 'AB', 'AC', ... 'AZ'].
             i = 0
             str_labels_orig = list(string.ascii_uppercase)
-            while len(str_labels) < len(gdf_points_units):
-                str_labels2 = [f'{str_labels[i]}{s}' for s in str_labels_orig]
-                str_labels += str_labels2
+            while len(new_labels) < len(units_without_labels):
+                str_labels2 = [f'{str_labels_orig[i]}{s}' for s in str_labels_orig]
+                new_labels += str_labels2
+                # Remove anything already used:
+                new_labels = [n for n in new_labels if n not in used_labels]
                 i += 1
         else:
             pass
-        gdf_points_units[col_unit_label] = str_labels[:len(gdf_points_units)]
-        return gdf_points_units
+        # Make a DataFrame of the new labels.
+        new_labels = new_labels[:len(units_without_labels)]
+        df_new_labels = pd.DataFrame(
+            np.array([units_without_labels, new_labels]).T,
+            columns=['Postcode', 'label'])
+        df_new_labels = df_new_labels.set_index('Postcode')
+
+        # Merge in these new labels:
+        df_unit_labels = df_unit_labels.combine_first(df_new_labels)
+
+        # Merge in to the starting DataFrame:
+        gdf_units = pd.merge(
+            gdf_points_units, df_unit_labels['label'],
+            left_index=True, right_index=True, how='left')
+        self.df_unit_labels = df_unit_labels
+        print(gdf_units[['label']])
+        return gdf_units
 
     def _combine_lsoa_into_catchment_shapes(self, gdf, col_to_dissolve):
         """
@@ -1290,16 +1336,8 @@ class Map(object):
             gdf_boundaries_regions,
             ['selected', 'BNG_N'], 'label', 'point_label')
 
-        regions_selected = gdf_boundaries_regions['region'][
-            gdf_boundaries_regions['selected'] == 1]
         gdf_points_units = self._assign_labels_and_points_to_units(
-            gdf_points_units,
-            regions_selected,
-            'region',
-            'selected',
-            ['selected', 'Northing'],
-            'label'
-            )
+            gdf_points_units, ['selected', 'Northing'])
 
         # Reduce the DataFrames to just the needed parts:
         gdf_boundaries_regions = gdf_boundaries_regions[[
@@ -1381,16 +1419,8 @@ class Map(object):
         # extent and restricting the regions to the edges of the box.
         # Otherwise labels could appear outside the plot and
         # all the good labels would be assigned to places not shown.
-        regions_selected = gdf_boundaries_regions['region'][
-            gdf_boundaries_regions['selected'] == 1]
         gdf_points_units = self._assign_labels_and_points_to_units(
-            gdf_points_units,
-            regions_selected,
-            'region',
-            'selected',
-            ['selected', 'Northing'],
-            'label'
-            )
+            gdf_points_units, ['selected', 'Northing'])
 
         gdf_lines_transfer = self._find_use_column_for_transfer_lines(
             gdf_lines_transfer, gdf_points_units)
@@ -1529,16 +1559,8 @@ class Map(object):
         # extent and restricting the regions to the edges of the box.
         # Otherwise labels could appear outside the plot and
         # all the good labels would be assigned to places not shown.
-        regions_selected = gdf_boundaries_regions['region'][
-            gdf_boundaries_regions['selected'] == 1]
         gdf_points_units = self._assign_labels_and_points_to_units(
-            gdf_points_units,
-            regions_selected,
-            'region',
-            'selected',
-            ['selected', 'Northing'],
-            'label'
-            )
+            gdf_points_units, ['selected', 'Northing'])
 
         gdf_lines_transfer = self._find_use_column_for_transfer_lines(
             gdf_lines_transfer, gdf_points_units)
@@ -1740,16 +1762,8 @@ class Map(object):
         # extent and restricting the regions to the edges of the box.
         # Otherwise labels could appear outside the plot and
         # all the good labels would be assigned to places not shown.
-        regions_selected = gdf_boundaries_regions['region'][
-            gdf_boundaries_regions['selected'] == 1]
         gdf_points_units = self._assign_labels_and_points_to_units(
-            gdf_points_units,
-            regions_selected,
-            'region',
-            'selected',
-            ['selected', 'Northing'],
-            'label'
-            )
+            gdf_points_units, ['selected', 'Northing'])
 
         # TO DO - make gdf_boundaries_regions contains_selected_lsoa column.
 
