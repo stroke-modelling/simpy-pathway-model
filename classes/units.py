@@ -189,11 +189,6 @@ class Units(object):
         df_results[f'postcode_nearest_{treatment}'] = (
             df_time_lsoa_hospital[teams].idxmin(axis='columns'))
 
-        # Separate out LSOA caught by selected units.
-        selected_units = df_units['Postcode'][df_units['selected']  == 1]
-        mask = df_results[f'postcode_nearest_{treatment}'].isin(selected_units)
-        df_results = df_results.loc[mask]
-
         # Load in all LSOA names, codes, regions...
         dir_input = self.setup.dir_data
         file_input = self.setup.file_input_lsoa_regions
@@ -209,13 +204,37 @@ class Units(object):
         elif scenario.limit_to_wales:
             df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LHB20NM']
 
+        # Find selected regions:
+        # Columns [region, region_code, region_type,
+        #          ICB22CD, ICB22NM, ISDN, selected]
+        df_regions = scenario.selected_regions
+        region_list = sorted(list(set(
+            df_regions['region_code'][df_regions['selected'] == 1])))
+        # Find all LSOA within selected regions.
+        df_lsoa_in_regions = df_lsoa[df_lsoa['region_code'].isin(region_list)].copy()
+        # Find list of units catching any LSOA in selected regions.
+        mask = df_results.index.isin(df_lsoa_in_regions['LSOA11NM'])
+        df_results_in_regions = df_results.loc[mask]
+        units_catching_lsoa = list(set(
+            df_results_in_regions[f'postcode_nearest_{treatment}']))
+
+        # Separate out LSOA caught by selected units.
+        selected_units = df_units['Postcode'][df_units['selected']  == 1]
+        mask = df_results[f'postcode_nearest_{treatment}'].isin(selected_units)
+        df_results = df_results.loc[mask]
+
         # Limit to just these LSOA:
         df_results = df_results.reset_index()
         df_results = pd.merge(
-            df_results, df_lsoa[['LSOA11NM', 'LSOA11CD']],
+            df_results, df_lsoa[['LSOA11NM', 'LSOA11CD', 'region_code']],
             left_on='LSOA', right_on='LSOA11NM', how='inner'
             )
-        df_results = df_results.drop('LSOA', axis='columns')
+
+        # Find regions containing LSOA:
+        region_codes_containing_lsoa = list(set(
+            df_results['region_code']))
+
+        df_results = df_results.drop(['LSOA', 'region_code'], axis='columns')
         df_results = df_results.set_index('LSOA11NM')
 
         # Reorder columns:
@@ -224,7 +243,8 @@ class Units(object):
             f'postcode_nearest_{treatment}',
             f'time_nearest_{treatment}'
             ]]
-        return df_results
+
+        return df_results, region_codes_containing_lsoa, units_catching_lsoa
 
     def find_lsoa_by_region_island(
             self,

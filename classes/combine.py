@@ -43,10 +43,10 @@ class Combine(object):
             self.setup.dir_output_combined, combined=True)
 
     def combine_files(self):
+        self.combine_selected_regions()
         self.combine_selected_units()
         self.combine_selected_transfer()
         self.combine_selected_lsoa()
-        self.combine_selected_regions()
         self.combine_results_summary_by_lsoa()
         self.combine_results_summary_by_admitting_unit()
 
@@ -60,7 +60,7 @@ class Combine(object):
 
         Each file input:
         +------+-----+---------+--------------+
-        | Unit | ... | use_IVT |    coords    |   property
+        | Unit | ... | use_ivt |    coords    |   property
         +------+-----+---------+--------------+
         |    1 | ... |       1 | -x.xx, yy.yy |
         |    2 | ... |       1 | -x.xx, yy.yy |
@@ -73,7 +73,7 @@ class Combine(object):
                                     +------------+------------+
                                     | scenario_1 | scenario_2 |    scenario
         +------+-----+--------------+------------+------------+
-        | Unit | ... |    coords    |   use_IVT  |   use_IVT  |    property
+        | Unit | ... |    coords    |   use_ivt  |   use_ivt  |    property
         +------+-----+--------------+------------+------------+
         |    1 | ... | -x.xx, yy.yy |          1 |          0 |
         |    2 | ... | -x.xx, yy.yy |          1 |          0 |
@@ -88,10 +88,10 @@ class Combine(object):
             df = self._hstack_multiple_dataframes(
                 file_to_merge,
                 cols_for_scenario=[
-                    'use_IVT',
-                    'use_MT',
-                    'use_MSU',
-                    'Use'
+                    'use_ivt',
+                    'use_mt',
+                    'use_msu',
+                    # 'Use'
                 ])
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
@@ -142,7 +142,7 @@ class Combine(object):
             df = self._hstack_multiple_dataframes(
                 file_to_merge,
                 add_use_column=True,
-                extra_cols_for_index=['name_nearest_MT'])
+                extra_cols_for_index=['name_nearest_mt'])
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
             pass
@@ -187,8 +187,8 @@ class Combine(object):
         file_to_merge = self.setup.file_selected_lsoas
 
         try:
-            df = self._hstack_multiple_dataframes(
-                file_to_merge, add_use_column=True, cols_for_scenario=['postcode_nearest'])
+            df = self._hstack_multiple_dataframes( # TO DO - column name here might change
+                file_to_merge, add_use_column=True, cols_for_scenario=['postcode_nearest_ivt'])
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
             pass
@@ -237,7 +237,9 @@ class Combine(object):
                 file_to_merge,
                 csv_index=[0, 1],
                 cols_for_scenario=[
-                    'contains_selected_unit', 'contains_selected_lsoa'])
+                    'selected',
+                    'contains_selected_lsoa'
+                    ])
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
             pass

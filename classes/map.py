@@ -411,13 +411,14 @@ class Map(object):
         """
         # ----- Gather data -----
         # Selected regions names and usage.
-        # ['{region type}', 'contains_selected_unit', 'contains_selected_lsoa']
+        # ['{region type}', 'selected', 'contains_selected_lsoa']
         df_regions = self.df_regions
         # Index column: 'region'.
         # Expected column MultiIndex levels:
         #   - combined: ['scenario', 'property']
         #   - separate: ['{unnamed level}']
 
+        # TO DO - implement limit to England, limit to Wales here ----------------------
         # All region polygons:
         gdf_boundaries_regions_e = self.import_geojson('SICBL22NM')
         gdf_boundaries_regions_w = self.import_geojson('LHB20NM')
@@ -1543,8 +1544,10 @@ class Map(object):
             gdf_boundaries_lsoa, 'postcode_nearest_ivt')
 
         if catchment_type == 'island':
-            # TO DO - currently this means that stroke units get different labels between 
-            # this map and the other stroke unit selection map. Fix it! ------------------------
+            # Drop the 'contains_selected_lsoa' and
+            # 'catches_lsoa_in_selected_region' columns.
+            cols_to_keep_regions = []
+            cols_to_keep_units = []
 
             # Only keep selected regions.
             mask = (gdf_boundaries_regions['selected'] == 1)
@@ -1558,6 +1561,11 @@ class Map(object):
             box, map_extent = self.get_selected_area_extent(
                 gdf_boundaries_regions)
         else:
+            # Keep the 'contains_selected_lsoa' and
+            # 'catches_lsoa_in_selected_region' columns.
+            cols_to_keep_regions = ['contains_selected_lsoa']
+            cols_to_keep_units = ['catches_lsoa_in_selected_region']
+
             # Take map extent from the combined LSOA and region geometry.
             gdf_regions_reduced = gdf_boundaries_regions.copy()[
                 gdf_boundaries_regions['selected'] == 1
@@ -1567,14 +1575,12 @@ class Map(object):
             gdf_combo = pd.concat(
                 (gdf_regions_reduced, gdf_lsoa_reduced), axis='rows')
 
-            # TO DO - currently this means that stroke units get different labels between 
-            # this map and the other stroke unit selection map. Fix it! ------------------------
-
             box, map_extent = self.get_selected_area_extent(gdf_combo)
             gdf_boundaries_regions = self._keep_only_geometry_in_box(
                 gdf_boundaries_regions, box)
-            gdf_points_units = self._keep_only_geometry_in_box(
-                gdf_points_units, box)
+            # Only keep stroke teams that contain LSOA in selected region.
+            mask = gdf_points_units['catches_lsoa_in_selected_region'] == 1
+            gdf_points_units = gdf_points_units[mask]
 
         # Restrict polygon geometry to the edges of the box.
         gdf_boundaries_regions = self._restrict_geometry_edges_to_box(
@@ -1590,8 +1596,6 @@ class Map(object):
         gdf_lines_transfer = self._find_use_column_for_transfer_lines(
             gdf_lines_transfer, gdf_points_units)
 
-        # TO DO - make gdf_boundaries_regions contains_selected_lsoa column.
-
         # Reduce the DataFrames to just the needed parts:
         gdf_boundaries_lsoa = gdf_boundaries_lsoa[[
             'geometry',                             # shapes
@@ -1599,19 +1603,20 @@ class Map(object):
         gdf_boundaries_regions = gdf_boundaries_regions[[
             'geometry',                             # shapes
             'selected',                             # line type selection
-            # 'contains_selected_lsoa',               # line type selection
-            ]]
-        gdf_points_units = gdf_points_units[[
+            ] + cols_to_keep_regions                # line type selection
+            ]
+        gdf_points_units = gdf_points_units[[                  
             'geometry',                             # locations
             'use_ivt', 'use_mt', 'use_msu',  # 'Use',  # point selection
             'Hospital_name',                        # labels
             'label',                                # label annotation
-            'selected'                              # label kwargs
-            ]]
+            'selected',                             # label kwargs
+            ] + cols_to_keep_units                  # point selection
+            ]
         gdf_lines_transfer = gdf_lines_transfer[[
             'geometry',                             # line end points
             'Use'                                   # line selection
-        ]]
+            ]]
 
         lsoa_boundary_kwargs = {
             'cmap': 'Blues',
@@ -1743,8 +1748,9 @@ class Map(object):
                 gdf_boundaries_lsoa, 1, 'geometry')
 
         if catchment_type == 'island':
-            # TO DO - currently this means that stroke units get different labels between 
-            # this map and the other stroke unit selection map. Fix it! ------------------------
+            # Drop the 'contains_selected_lsoa' and
+            # 'catches_lsoa_in_selected_region' columns.
+            cols_to_keep_regions = []
 
             # Only keep selected regions.
             mask = (gdf_boundaries_regions['selected'] == 1)
@@ -1757,6 +1763,10 @@ class Map(object):
                 leeway=20000,
                 )
         else:
+            # Keep the 'contains_selected_lsoa' and
+            # 'catches_lsoa_in_selected_region' columns.
+            cols_to_keep_regions = ['contains_selected_lsoa']
+
             # Take map extent from the combined LSOA and region geometry.
             gdf_regions_reduced = gdf_boundaries_regions.copy()[
                 gdf_boundaries_regions['selected'] == 1
@@ -1765,9 +1775,6 @@ class Map(object):
                 ).reset_index()['geometry']
             gdf_combo = pd.concat(
                 (gdf_regions_reduced, gdf_lsoa_reduced), axis='rows')
-
-            # TO DO - currently this means that stroke units get different labels between 
-            # this map and the other stroke unit selection map. Fix it! ------------------------
 
             box, map_extent = self.get_selected_area_extent(
                 gdf_combo,
@@ -1790,8 +1797,6 @@ class Map(object):
         gdf_points_units = self._assign_labels_and_points_to_units(
             gdf_points_units, ['selected', 'Northing'])
 
-        # TO DO - make gdf_boundaries_regions contains_selected_lsoa column.
-
         # Reduce the DataFrames to just the needed parts:
         gdf_boundaries_lsoa = gdf_boundaries_lsoa[[
             'geometry',                             # shapes
@@ -1800,14 +1805,14 @@ class Map(object):
         gdf_boundaries_regions = gdf_boundaries_regions[[
             'geometry',                             # shapes
             'selected',                             # line type selection
-            # 'contains_selected_lsoa',               # line type selection
-            ]]
+            ] + cols_to_keep_regions                # line type selection
+            ]
         gdf_points_units = gdf_points_units[[
             'geometry',                             # locations
             'use_ivt', 'use_mt', 'use_msu',# 'Use',  # point selection
             'Hospital_name',                        # labels
             'label',                                # label annotation
-            'selected'                       # label kwargs
+            'selected'                              # label kwargs
             ]]
 
         lsoa_boundary_kwargs = {
@@ -1840,7 +1845,7 @@ class Map(object):
         lsoa_boundary_kwargs = lsoa_boundary_kwargs | boundary_kwargs
 
         if save:
-            file_name = f'map_{outcome}_{scenario}.jpg'
+            file_name = f'map_outcome_{outcome}_{scenario}.jpg'
             path_to_file = os.path.join(self.dir_data, file_name)
         else:
             path_to_file = None

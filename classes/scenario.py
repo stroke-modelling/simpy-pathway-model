@@ -401,11 +401,12 @@ class Scenario(object):
         """
         TO DO - write me
         """
-        df_results = self.units.find_lsoa_by_catchment(
-            self.unit_services,
-            self,
-            treatment='ivt',
-        )
+        df_results, region_codes_containing_lsoa, units_catching_lsoa = (
+            self.units.find_lsoa_by_catchment(
+                self.unit_services,
+                self,
+                treatment='ivt',
+            ))
 
         # Save output to output folder.
         dir_output = self.setup.dir_output
@@ -415,6 +416,20 @@ class Scenario(object):
 
         # Save to self.
         self.lsoa_travel_by_catchment = df_results
+
+        # Update regions data with whether contain LSOA.
+        df_regions = self.selected_regions
+        df_regions['contains_selected_lsoa'] = 0
+        mask = df_regions['region_code'].isin(region_codes_containing_lsoa)
+        df_regions.loc[mask, 'contains_selected_lsoa'] = 1
+        self.set_model_areas(df_regions)
+
+        # Update units data with whether catch LSOA in selected regions.
+        df_units = self.unit_services
+        df_units['catches_lsoa_in_selected_region'] = 0
+        mask = df_units['Postcode'].isin(units_catching_lsoa)
+        df_units.loc[mask, 'catches_lsoa_in_selected_region'] = 1
+        self.set_unit_services(df_units)
 
     def find_lsoa_by_region_island(self):
         """

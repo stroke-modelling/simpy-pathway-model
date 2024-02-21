@@ -32,6 +32,7 @@ def set_legend_section_labels_to_bold(leg, section_labels, all_labels):
         leg1_list[i] = leg1_list[i].set_weight('heavy')
     return leg
 
+
 def create_units_legend(
         ax,
         handles_lists,
@@ -62,6 +63,7 @@ def create_units_legend(
     leg2 = set_legend_section_labels_to_bold(
         leg2, section_labels, labels_u)
     return leg2
+
 
 # ####################
 # ##### PLOTTING #####
@@ -148,54 +150,6 @@ def draw_boundaries_by_contents(
     else:
         pass
     return ax
-
-
-# def draw_boundaries_by_selected(
-#         ax,
-#         gdf_boundaries_regions,
-#         kwargs_selected={},
-#         kwargs_not_selected={}
-#         ):
-#     # Set up kwargs.
-#     kwargs_selected_defaults = {
-#         'edgecolor': 'k',
-#         'facecolor': 'none',
-#         'linewidth': 0.5
-#     }
-#     kwargs_not_selected_defaults = {
-#         'edgecolor': 'silver',
-#         'facecolor': 'none',
-#         'linewidth': 0.5,
-#         'linestyle': '--'
-#     }
-#     # Update these with anything from the input dicts:
-#     kwargs_selected = kwargs_selected_defaults | kwargs_selected
-#     kwargs_not_selected = kwargs_not_selected_defaults | kwargs_not_selected
-
-#     # Regions not selected:
-#     mask = (gdf_boundaries_regions['selected'] == 0)
-#     gdf_boundaries_not_selected = gdf_boundaries_regions.loc[mask]
-#     if len(gdf_boundaries_not_selected) > 0:
-#         ax = draw_boundaries(
-#             ax, gdf_boundaries_not_selected,
-#             **kwargs_not_selected
-#             )
-#     else:
-#         pass
-
-#     # Regions selected:
-#     mask = (gdf_boundaries_regions['selected'] == 1)
-#     gdf_boundaries_selected = gdf_boundaries_regions.loc[mask]
-#     if len(gdf_boundaries_selected) > 0:
-#         ax = draw_boundaries(
-#             ax, gdf_boundaries_selected,
-#             **kwargs_selected
-#             )
-#     else:
-#         pass
-
-#     return ax
-
 
 def draw_boundaries(ax, gdf, **kwargs):
     """
@@ -318,60 +272,6 @@ def scatter_units(
             **kwargs_dict
             )
         return ax
-
-
-# def scatter_mt_units(ax, gdf):
-#     """
-#     Draw scatter markers for MT stroke units.
-
-#     Inputs
-#     ------
-#     ax     - pyplot axis. Where to draw the scatter markers.
-#     gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
-
-#     Returns
-#     -------
-#     ax - pyplot axis. Same as input but with scatter markers.
-#     """
-#     # Scatter marker star for MT units:
-#     mask = gdf['use_mt'] == 1
-#     MT = gdf[mask]
-#     MT.plot(
-#         ax=ax,
-#         edgecolor='k',
-#         facecolor='y',
-#         markersize=300,
-#         marker='*',
-#         zorder=2
-#         )
-#     return ax
-
-
-# def scatter_msu_units(ax, gdf):
-#     """
-#     Draw scatter markers for MSU stroke units.
-
-#     Inputs
-#     ------
-#     ax     - pyplot axis. Where to draw the scatter markers.
-#     gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
-
-#     Returns
-#     -------
-#     ax - pyplot axis. Same as input but with scatter markers.
-#     """
-#     # Scatter marker star for MT/MSU units:
-#     mask = gdf['use_msu'] == 1
-#     MSU = gdf[mask]
-#     MSU.plot(
-#         ax=ax,
-#         edgecolor='k',
-#         facecolor='orange',
-#         markersize=50,
-#         marker='s',
-#         zorder=2
-#         )
-#     return ax
 
 
 def plot_lines_between_units(ax, gdf, **line_kwargs):
@@ -962,7 +862,7 @@ def plot_map_catchment(
 
     # Region boundaries:
     kwargs_region_with_unit = {
-        'edgecolor': 'DimGray',
+        'edgecolor': 'k',
         'linewidth': 0.5,
         'facecolor': 'none'
         }
@@ -971,7 +871,10 @@ def plot_map_catchment(
         'linewidth': 0.5,
         'facecolor': 'none'
         }
-    kwargs_region_with_nowt = kwargs_region_with_lsoa
+    kwargs_region_with_nowt = {
+        'edgecolor': 'none',
+        'facecolor': 'none'
+        }
 
     ax = draw_boundaries_by_contents(
         ax,
@@ -996,7 +899,7 @@ def plot_map_catchment(
         ax,
         gdf_points_units[mask],
         # marker=gdf_points_units[mask]['marker'].to_list(),
-        facecolor='Gainsboro',
+        facecolor='k',
         return_handle=True
         )
     # Outside selected regions:
@@ -1005,7 +908,7 @@ def plot_map_catchment(
         ax,
         gdf_points_units[mask],
         # marker=gdf_points_units[mask]['marker'].to_list(),
-        facecolor='WhiteSmoke',
+        facecolor='DimGray',
         return_handle=True
         )
 
@@ -1018,7 +921,7 @@ def plot_map_catchment(
         gdf_points_units[mask].label,
         gdf_points_units[mask].Hospital_name,
         s=20,
-        color='k'
+        color='Gainsboro'
     )
     # Outside selected regions:
     mask = ~mask
@@ -1028,12 +931,13 @@ def plot_map_catchment(
         gdf_points_units[mask].label,
         gdf_points_units[mask].Hospital_name,
         s=20,
-        color='DimGray'
+        color='WhiteSmoke'
     )
 
     # Units:
     if len(labels_uns) > 0:
-        section_labels = ['Selected units', 'Other units']
+        section_labels = ['Selected units',
+                          'Units catching LSOA in selected regions']
         handles_lists = [
             [handles_scatter_us, handles_us],
             [handles_scatter_uns, handles_uns]
@@ -1167,7 +1071,10 @@ def plot_map_outcome(
         'linewidth': 0.5,
         'facecolor': 'none'
         }
-    kwargs_region_with_nowt = kwargs_region_with_lsoa
+    kwargs_region_with_nowt = {
+        'edgecolor': 'none',
+        'facecolor': 'none'
+        }
 
     ax = draw_boundaries_by_contents(
         ax,
