@@ -1096,6 +1096,12 @@ class Map(object):
             cols_to_sort,
             make_new_list=False
             ):
+        """
+        TO DO - write me.
+
+        TO DO - add option to import this list from file
+        or otherwise set custom labels.
+        """
         if make_new_list:
             pass
         else:
@@ -1104,17 +1110,21 @@ class Map(object):
                 df_unit_labels = self.df_unit_labels
                 # Are there enough labels?
                 gdf_points_units = pd.merge(
-                    gdf_points_units, df_unit_labels['label'],
+                    gdf_points_units,
+                    df_unit_labels[['label', 'legend_order']],
                     left_index=True, right_index=True, how='left')
                 mask_missing = gdf_points_units['label'].isna()
                 if mask_missing.any():
                     # Missing some labels, so make more.
                     used_labels = gdf_points_units['label'][~mask_missing].values
                     units_without_labels = gdf_points_units.index[mask_missing].values
-                    # Remove the "labels" column again.
-                    gdf_points_units = gdf_points_units.drop('label', axis='columns')
+                    # Remove the "labels" columns again.
+                    gdf_points_units = gdf_points_units.drop(
+                        ['label', 'legend_order'], axis='columns')
                 else:
-                    # Nothing to do here.
+                    # Just sort the order of units:
+                    gdf_points_units = gdf_points_units.sort_values(
+                        'legend_order')
                     return gdf_points_units
             except AttributeError:
                 # Make new labels instead.
@@ -1122,13 +1132,13 @@ class Map(object):
 
         if make_new_list:
             df_unit_labels = gdf_points_units[cols_to_sort].copy()
+            df_unit_labels = df_unit_labels.sort_values(
+                cols_to_sort, ascending=False
+            )
             df_unit_labels['label'] = pd.NA
+            df_unit_labels['legend_order'] = pd.NA
             used_labels = []
             units_without_labels = df_unit_labels.index.values
-
-        df_unit_labels = df_unit_labels.sort_values(
-            cols_to_sort, ascending=False
-        )
 
         new_labels = []
         # Do we need any extra labels?
@@ -1151,11 +1161,17 @@ class Map(object):
                 i += 1
         else:
             pass
+
         # Make a DataFrame of the new labels.
         new_labels = new_labels[:len(units_without_labels)]
+        if df_unit_labels['legend_order'].isna().all():
+            legend_order = np.arange(len(new_labels), dtype=int)
+        else:
+            start = 1 + df_unit_labels['legend_order'].max()
+            legend_order = np.arange(start, start + len(new_labels), dtype=int)
         df_new_labels = pd.DataFrame(
-            np.array([units_without_labels, new_labels]).T,
-            columns=['Postcode', 'label'])
+            np.array([units_without_labels, new_labels, legend_order]).T,
+            columns=['Postcode', 'label', 'legend_order'])
         df_new_labels = df_new_labels.set_index('Postcode')
 
         # Merge in these new labels:
@@ -1163,10 +1179,11 @@ class Map(object):
 
         # Merge in to the starting DataFrame:
         gdf_units = pd.merge(
-            gdf_points_units, df_unit_labels['label'],
+            gdf_points_units, df_unit_labels[['label', 'legend_order']],
             left_index=True, right_index=True, how='left')
+        # Sort the order of units so the legend is alphabetical:
+        gdf_units = gdf_units.sort_values('legend_order')
         self.df_unit_labels = df_unit_labels
-        print(gdf_units[['label']])
         return gdf_units
 
     def _combine_lsoa_into_catchment_shapes(self, gdf, col_to_dissolve):
@@ -1336,8 +1353,16 @@ class Map(object):
             gdf_boundaries_regions,
             ['selected', 'BNG_N'], 'label', 'point_label')
 
+        # Make a new column for whether stroke unit is in a selected
+        # region.
+        regions_selected = gdf_boundaries_regions['region'][
+            gdf_boundaries_regions['selected'] == 1]
+        mask = gdf_points_units['region'].isin(regions_selected)
+        gdf_points_units['region_selected'] = 0
+        gdf_points_units.loc[mask, 'region_selected'] = 1
+
         gdf_points_units = self._assign_labels_and_points_to_units(
-            gdf_points_units, ['selected', 'Northing'])
+            gdf_points_units, ['selected', 'region_selected', 'Northing'])
 
         # Reduce the DataFrames to just the needed parts:
         gdf_boundaries_regions = gdf_boundaries_regions[[
