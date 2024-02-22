@@ -35,7 +35,7 @@ class Setup(object):
         self.file_input_travel_times_inter_unit = (
             'inter_hospital_time_calibrated.csv')
         self.file_input_lsoa_regions = 'regions_lsoa_ew.csv'
-        self.file_input_hospital_info = 'stroke_hospitals_2022_regions.csv'
+        self.file_input_hospital_coords = 'unit_postcodes_coords.csv'
         self.file_input_admissions = 'admissions_2017-2019.csv'
         # Geojson files:
         self.file_geojson_lsoa = 'LSOA_(Dec_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson'

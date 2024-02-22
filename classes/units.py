@@ -139,7 +139,7 @@ class Units(object):
         file_input = self.setup.file_selected_stroke_units
         path_to_file = os.path.join(dir_input, file_input)
         services = pd.read_csv(path_to_file)
-        # Each row is a stroke unit. The columns are 'Postcode' and
+        # Each row is a stroke unit. The columns are 'postcode' and
         # 'SSNAP name' (str), and 'use_ivt', 'use_mt', and 'use_msu'
         # (int | bool).
 
@@ -165,7 +165,7 @@ class Units(object):
         # Limit to units offering IVT:
         df_units = df_units[df_units[f'use_{treatment}'] == 1]
         # List of teams to use:
-        teams = df_units['Postcode'].values
+        teams = df_units['postcode'].values
 
         # Load travel time matrix:
         dir_input = self.setup.dir_data
@@ -200,9 +200,9 @@ class Units(object):
 
         # If requested, limit to England or Wales.
         if scenario.limit_to_england:
-            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LOC22NM']
+            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'SICBL']
         elif scenario.limit_to_wales:
-            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LHB20NM']
+            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LHB']
 
         # Find selected regions:
         # Columns [region, region_code, region_type,
@@ -213,21 +213,27 @@ class Units(object):
         # Find all LSOA within selected regions.
         df_lsoa_in_regions = df_lsoa[df_lsoa['region_code'].isin(region_list)].copy()
         # Find list of units catching any LSOA in selected regions.
-        mask = df_results.index.isin(df_lsoa_in_regions['LSOA11NM'])
+        mask = df_results.index.isin(df_lsoa_in_regions['lsoa'])
         df_results_in_regions = df_results.loc[mask]
         units_catching_lsoa = list(set(
             df_results_in_regions[f'postcode_nearest_{treatment}']))
+        # Find regions containing these units:
+        mask = df_units['postcode'].isin(units_catching_lsoa)
+        region_codes_containing_units = list(set(
+            df_units.loc[mask, 'region_code']))
 
         # Separate out LSOA caught by selected units.
-        selected_units = df_units['Postcode'][df_units['selected']  == 1]
+        # Limit units to those offering IVT:
+        df_units = df_units[df_units[f'use_{treatment}'] == 1]
+        selected_units = df_units['postcode'][df_units['selected']  == 1]
         mask = df_results[f'postcode_nearest_{treatment}'].isin(selected_units)
         df_results = df_results.loc[mask]
 
         # Limit to just these LSOA:
         df_results = df_results.reset_index()
         df_results = pd.merge(
-            df_results, df_lsoa[['LSOA11NM', 'LSOA11CD', 'region_code']],
-            left_on='LSOA', right_on='LSOA11NM', how='inner'
+            df_results, df_lsoa[['lsoa', 'lsoa_code', 'region_code']],
+            left_on='LSOA', right_on='lsoa', how='inner'
             )
 
         # Find regions containing LSOA:
@@ -235,16 +241,17 @@ class Units(object):
             df_results['region_code']))
 
         df_results = df_results.drop(['LSOA', 'region_code'], axis='columns')
-        df_results = df_results.set_index('LSOA11NM')
+        df_results = df_results.set_index('lsoa')
 
         # Reorder columns:
         df_results = df_results[[
-            'LSOA11CD',
+            'lsoa_code',
             f'postcode_nearest_{treatment}',
             f'time_nearest_{treatment}'
             ]]
 
-        return df_results, region_codes_containing_lsoa, units_catching_lsoa
+        return (df_results, region_codes_containing_lsoa,
+                region_codes_containing_units, units_catching_lsoa)
 
     def find_lsoa_by_region_island(
             self,
@@ -271,7 +278,7 @@ class Units(object):
         # Limit to selected units:
         df_units = df_units[df_units['selected'] == 1]
         # List of teams to use:
-        teams = df_units['Postcode'].values
+        teams = df_units['postcode'].values
         # Limit the travel time list to only selected units.
         df_time_lsoa_hospital = df_time_lsoa_hospital[teams]
 
@@ -297,14 +304,14 @@ class Units(object):
         #  ICB22CD, ICB22NM, ISDN]
         # Only keep LSOA name and code and region name and code:
         cols_to_keep = [
-            'LSOA11NM', 'LSOA11CD', 'region', 'region_code', 'region_type']
+            'lsoa', 'lsoa_code', 'region', 'region_code', 'region_type']
         df_lsoa = df_lsoa[cols_to_keep]
 
         # If requested, limit to England or Wales.
         if scenario.limit_to_england:
-            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LOC22NM']
+            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'SICBL']
         elif scenario.limit_to_wales:
-            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LHB20NM']
+            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LHB']
 
         # Find selected regions:
         # Columns [region, region_code, region_type,
@@ -319,205 +326,19 @@ class Units(object):
         # Limit the results list to only selected LSOA.
         df_results = df_results.reset_index()
         df_results = pd.merge(
-            df_results, df_lsoa_in_regions[['LSOA11NM', 'LSOA11CD']],
-            left_on='LSOA', right_on='LSOA11NM', how='right'
+            df_results, df_lsoa_in_regions[['lsoa', 'lsoa_code']],
+            left_on='LSOA', right_on='lsoa', how='right'
             )
         df_results = df_results.drop('LSOA', axis='columns')
-        df_results = df_results.set_index('LSOA11NM')
+        df_results = df_results.set_index('lsoa')
 
         # Reorder columns:
         df_results = df_results[[
-            'LSOA11CD',
+            'lsoa_code',
             f'postcode_nearest_{treatment}',
             f'time_nearest_{treatment}'
             ]]
         return df_results
-
-    # def _find_national_lsoa_nearest_units(self):
-    #     """
-    #     Find each LSOA's nearest stroke units providing each service.
-
-    #     Find the name, postcode and travel time to the nearest
-    #     stroke unit providing each of IVT, MT, and an MSU.
-
-    #     Stores
-    #     ------
-
-    #     national_lsoa_nearest_units:
-    #         pd.DataFrame. One row for each LSOA nationally
-    #         and columns containing the nearest units providing
-    #         IVT, MT, and MSU for each LSOA and the travel times.
-    #     """
-    #     # Load travel time matrix:
-    #     dir_input = self.setup.dir_data
-    #     file_input = self.setup.file_input_travel_times
-    #     path_to_file = os.path.join(dir_input, file_input)
-    #     df_time_lsoa_hospital = pd.read_csv(
-    #         path_to_file,
-    #         index_col='LSOA'
-    #         )
-    #     # Each column is a postcode of a stroke team and
-    #     # each row is an LSOA name (LSOA11NM).
-
-    #     # Get list of services that each stroke team provides:
-    #     df_stroke_teams = self.national_hospital_services
-    #     # Each row is a different stroke team and the columns are
-    #     # 'Postcode', 'SSNAP name', 'use_ivt', 'use_mt', 'use_msu'
-    #     # where the "use_" columns contain 0 (False) or 1 (True).
-
-    #     # Make masks of units offering each service:
-    #     mask_ivt = df_stroke_teams['use_ivt'] == 1
-    #     mask_mt = df_stroke_teams['use_mt'] == 1
-    #     mask_msu = df_stroke_teams['use_msu'] == 1
-    #     # Make lists of units offering each service:
-    #     teams_ivt = df_stroke_teams['Postcode'][mask_ivt].values
-    #     teams_mt = df_stroke_teams['Postcode'][mask_mt].values
-    #     teams_msu = df_stroke_teams['Postcode'][mask_msu].values
-    #     # Store these in a dict:
-    #     teams_dict = dict(
-    #         IVT=teams_ivt,
-    #         MT=teams_mt,
-    #         MSU=teams_msu,
-    #     )
-
-    #     # Define functions for finding the nearest stroke team
-    #     # to each LSOA and copying over the useful information.
-    #     # These functions will be called once for each of the
-    #     # list of teams in the teams_dict.
-    #     def _find_nearest_units(
-    #             df_time_lsoa_hospital: pd.DataFrame,
-    #             teams: list,
-    #             label: str,
-    #             df_results: pd.DataFrame = pd.DataFrame()
-    #             ):
-    #         """
-    #         Find the nearest units from the travel time matrix.
-
-    #         Index must be LSOA names.
-
-    #         Inputs
-    #         ------
-    #         df_time_lsoa_hospital:
-    #             pd.DataFrame. Travel time matrix between LSOAs
-    #             and stroke units.
-    #         teams:
-    #             list. List of teams for slicing the travel time
-    #             DataFrame, only consider a subset of teams.
-    #         label:
-    #             str. A label for the resulting columns.
-    #         df_results:
-    #             pd.DataFrame. The DataFrame to store results in.
-    #             If none is given, a new one is created.
-
-    #         Result
-    #         ------
-    #         Add these columns to the DataFrame:
-    #         time_nearest_{label}
-    #         postcode_nearest_{label}
-    #         """
-    #         # The smallest time in each row:
-    #         df_results[f'time_nearest_{label}'] = (
-    #             df_time_lsoa_hospital[teams].min(axis='columns'))
-    #         # The name of the column containing the smallest
-    #         # time in each row:
-    #         df_results[f'postcode_nearest_{label}'] = (
-    #             df_time_lsoa_hospital[teams].idxmin(axis='columns'))
-
-    #         return df_results
-
-    #     def _merge_unit_info(
-    #             df_results: pd.DataFrame,
-    #             df_stroke_teams: pd.DataFrame,
-    #             label: str
-    #             ):
-    #         """
-    #         WIP
-
-    #         Index must be LSOA name
-
-    #         Inputs
-    #         ------
-    #         df_results:
-    #             pd.DataFrame. Contains columns for nearest stroke unit
-    #             and travel time from each LSOA. New results here will
-    #             be stored in this DataFrame.
-    #         df_stroke_teams:
-    #             pd.DataFrame. Contains information on the stroke units
-    #             such as their region and SSNAP name.
-    #         label:
-    #             str. A label for the resulting columns.
-
-    #         Result
-    #         ------
-    #         Add these columns to the DataFrame:
-    #         ssnap_name_nearest_{label}
-    #         """
-    #         df_results['lsoa'] = df_results.index
-
-    #         # Merge in other info about the nearest units:
-    #         df_results = pd.merge(
-    #             df_results,
-    #             df_stroke_teams[['Postcode', 'SSNAP name']],
-    #             left_on=f'postcode_nearest_{label}',
-    #             right_on='Postcode'
-    #         )
-    #         # Remove the repeat column:
-    #         df_results = df_results.drop('Postcode', axis=1)
-    #         # Rename columns:
-    #         df_results = df_results.rename(columns={
-    #             'SSNAP name': f'ssnap_name_nearest_{label}',
-    #         })
-
-    #         df_results = df_results.set_index('lsoa')
-    #         return df_results
-
-    #     # Run these functions for the groups of stroke units.
-    #     # Put the results in this dataframe where each row
-    #     # is a different LSOA:
-    #     df_results = pd.DataFrame(index=df_time_lsoa_hospital.index)
-    #     # Fill in the nearest stroke unit info:
-    #     for label, teams in teams_dict.items():
-    #         df_results = _find_nearest_units(
-    #             df_time_lsoa_hospital.copy(), teams, label, df_results)
-    #         df_results = _merge_unit_info(
-    #             df_results, df_stroke_teams, label)
-
-    #     # Load data on LSOA names, codes, regions...
-    #     dir_input = self.setup.dir_data
-    #     file_input = self.setup.file_input_lsoa_regions
-    #     path_to_file = os.path.join(dir_input, file_input)
-    #     df_regions = pd.read_csv(path_to_file)
-    #     # Each row is a different LSOA and the columns include
-    #     # LSOA11NM, LSOA11CD, longitude and latitude, and larger
-    #     # regional groupings (e.g. Clinical Care Group names).
-
-    #     # Add in extra identifiers - LSOA11CD from ONS data.
-    #     df_results = pd.merge(
-    #         df_results,
-    #         df_regions[['LSOA11NM', 'LSOA11CD']],
-    #         left_on='lsoa',
-    #         right_on='LSOA11NM',
-    #         how='left'
-    #     )
-    #     # Reorder columns:
-    #     cols_order = ['LSOA11NM', 'LSOA11CD']
-    #     for label in list(teams_dict.keys()):
-    #         cols_order += [
-    #             f'time_nearest_{label}',
-    #             f'postcode_nearest_{label}',
-    #             f'ssnap_name_nearest_{label}'
-    #             ]
-    #     df_results = df_results[cols_order]
-
-    #     # Save this to self.
-    #     # df_results = df_results.reset_index()
-    #     self.national_lsoa_nearest_units = df_results
-
-    #     # Save output to output folder.
-    #     dir_output = self.setup.dir_output
-    #     file_name = self.setup.file_national_lsoa_travel
-    #     path_to_file = os.path.join(dir_output, file_name)
-    #     df_results.to_csv(path_to_file, index=False)
 
     def _find_national_mt_feeder_units(self):
         """
@@ -538,12 +359,15 @@ class Units(object):
         # Get list of services that each stroke team provides:
         df_stroke_teams = self.national_hospital_services
         # Each row is a different stroke team and the columns are
-        # 'Postcode', 'SSNAP name', 'use_ivt', 'use_mt', 'use_msu'
+        # 'postcode', 'SSNAP name', 'use_ivt', 'use_mt', 'use_msu'
         # where the "use_" columns contain 0 (False) or 1 (True).
 
+        # Pick out the names of hospitals offering IVT:
+        mask_ivt = (df_stroke_teams['use_ivt'] == 1)
+        ivt_hospital_names = df_stroke_teams['postcode'][mask_ivt].values
         # Pick out the names of hospitals offering MT:
         mask_mt = (df_stroke_teams['use_mt'] == 1)
-        mt_hospital_names = df_stroke_teams['Postcode'][mask_mt].values
+        mt_hospital_names = df_stroke_teams['postcode'][mask_mt].values
 
         # Firstly, determine MT feeder units based on travel time.
         # Each stroke unit will be assigned the MT unit that it is
@@ -575,9 +399,9 @@ class Units(object):
         # by the user.
         df_services = self.national_hospital_services
         df_services_to_update = df_services[
-            df_services['chosen_mt'] != 'nearest']
-        units_to_update = df_services_to_update['Postcode'].values
-        transfer_units_to_update = df_services_to_update['chosen_mt'].values
+            df_services['transfer_unit_postcode'] != 'nearest']
+        units_to_update = df_services_to_update['postcode'].values
+        transfer_units_to_update = df_services_to_update['transfer_unit_postcode'].values
         for u, unit in units_to_update:
             transfer_unit = transfer_units_to_update[u]
 
@@ -587,6 +411,10 @@ class Units(object):
             # Update the chosen nearest MT unit name and time.
             df_nearest_mt.at[unit, 'name_nearest_mt'] = transfer_unit
             df_nearest_mt.at[unit, 'time_nearest_mt'] = mt_time
+
+        # Only keep units offering IVT.
+        mask = df_nearest_mt.index.isin(ivt_hospital_names)
+        df_nearest_mt = df_nearest_mt[mask]
 
         # Store in self:
         self.national_ivt_feeder_units = df_nearest_mt

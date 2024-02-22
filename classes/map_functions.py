@@ -103,7 +103,8 @@ def draw_boundaries_by_contents(
     try:
         mask = (
             (gdf_boundaries_regions['selected'] == 0) &
-            (gdf_boundaries_regions['contains_selected_lsoa'] == 0)
+            (gdf_boundaries_regions['contains_selected_lsoa'] == 0) &
+            (gdf_boundaries_regions['contains_unit_catching_lsoa'] == 0)
         )
     except KeyError:
         # Assume the LSOA column doesn't exist.
@@ -121,11 +122,14 @@ def draw_boundaries_by_contents(
     else:
         pass
 
-    # Regions containing LSOAs but not stroke units:
+    # Regions containing LSOAs but not selected stroke units:
+    # For now, treat extra regions the same regardless of whether
+    # they contain an extra stroke unit or catch the LSOA.
     try:
         mask = (
             (gdf_boundaries_regions['selected'] == 0) &
-            (gdf_boundaries_regions['contains_selected_lsoa'] == 1)
+            ((gdf_boundaries_regions['contains_selected_lsoa'] == 1) |
+             (gdf_boundaries_regions['contains_unit_catching_lsoa'] == 1))
         )
     except KeyError:
         # Assume the LSOA column doesn't exist. Don't plot this.
@@ -139,7 +143,7 @@ def draw_boundaries_by_contents(
     else:
         pass
 
-    # Regions containing stroke units:
+    # Regions containing selected stroke units:
     mask = (gdf_boundaries_regions['selected'] == 1)
     gdf_boundaries_with_units = gdf_boundaries_regions.loc[mask]
     if len(gdf_boundaries_with_units) > 0:
@@ -150,6 +154,7 @@ def draw_boundaries_by_contents(
     else:
         pass
     return ax
+
 
 def draw_boundaries(ax, gdf, **kwargs):
     """
@@ -334,7 +339,7 @@ def annotate_unit_labels(ax, gdf):
     z = zip(
         gdf_labels.geometry.x,
         gdf_labels.geometry.y,
-        gdf_labels.Hospital_name
+        gdf_labels.stroke_team
         )
     for x, y, label in z:
         # Edit the label to put a space in the postcode when displayed:
@@ -506,7 +511,7 @@ def plot_map_selected_regions(
         ax,
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].label,
-        gdf_points_units[mask].Hospital_name,
+        gdf_points_units[mask].stroke_team,
         s=20,
         color='k',
         # bbox=dict(facecolor='WhiteSmoke', edgecolor='r'),
@@ -517,7 +522,7 @@ def plot_map_selected_regions(
         ax,
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].label,
-        gdf_points_units[mask].Hospital_name,
+        gdf_points_units[mask].stroke_team,
         s=20,
         color='DimGray',
         # bbox=dict(facecolor='GhostWhite', edgecolor='DimGray'),
@@ -639,7 +644,7 @@ def plot_map_selected_units(
     + selected stroke unit file
     Output from Scenario.
     Must contain:
-    + Postcode
+    + postcode
         - for unit name matching.
         - for labels on the map.
     + use_mt
@@ -720,7 +725,7 @@ def plot_map_selected_units(
         ax,
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].label,
-        gdf_points_units[mask].Hospital_name,
+        gdf_points_units[mask].stroke_team,
         s=20,
         color='k'
     )
@@ -730,7 +735,7 @@ def plot_map_selected_units(
         ax,
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].label,
-        gdf_points_units[mask].Hospital_name,
+        gdf_points_units[mask].stroke_team,
         s=20,
         color='DimGray'
     )
@@ -815,7 +820,7 @@ def plot_map_catchment(
     + selected stroke unit file
     Output from Scenario.
     Must contain:
-    + Postcode
+    + postcode
         - for unit name matching.
         - for labels on the map.
     + use_mt
@@ -919,7 +924,7 @@ def plot_map_catchment(
         ax,
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].label,
-        gdf_points_units[mask].Hospital_name,
+        gdf_points_units[mask].stroke_team,
         s=20,
         color='Gainsboro'
     )
@@ -929,7 +934,7 @@ def plot_map_catchment(
         ax,
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].label,
-        gdf_points_units[mask].Hospital_name,
+        gdf_points_units[mask].stroke_team,
         s=20,
         color='WhiteSmoke'
     )
@@ -1015,7 +1020,7 @@ def plot_map_outcome(
     + selected stroke unit file
     Output from Scenario.
     Must contain:
-    + Postcode
+    + postcode
         - for unit name matching.
         - for labels on the map.
     + use_mt
@@ -1110,7 +1115,7 @@ def plot_map_outcome(
         ax,
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].label,
-        gdf_points_units[mask].Hospital_name,
+        gdf_points_units[mask].stroke_team,
         s=20,
         color='k'
     )

@@ -285,7 +285,7 @@ class Scenario(object):
             df = pd.read_csv(path_to_file)
 
             # Drop the LSOA column.
-            df = df.drop('LSOA11NM', axis='columns')
+            df = df.drop('lsoa', axis='columns')
             # Add a "selected" column for user input.
             df['selected'] = 0
 
@@ -299,6 +299,9 @@ class Scenario(object):
                 # Set "selected" to 1 for any unit in the
                 # selected areas.
                 mask = df['region'].isin(selected)
+                # Also only select units offering IVT.
+                # TO DO - might not always be IVT? -----------------------------
+                mask = mask & (df['use_ivt'] == 1)
                 df.loc[mask, 'selected'] = 1
             except AttributeError:
                 # self.selected_regions has not yet been set.
@@ -308,8 +311,10 @@ class Scenario(object):
     def set_unit_services(self, df):
         # TO DO - run sanity checks
 
+        # TO DO - move to Maps() - don't need coords in the pathway
+        # (also fix the column names please)
         try:
-            df[['Easting', 'Northing', 'long_x', 'lat_x']]
+            df[['BNG_E', 'BNG_N', 'Longitude', 'Latitude']]
         except KeyError:
             # Merge in geometry.
             # TO DO - just store this somewhere else:
@@ -317,13 +322,13 @@ class Scenario(object):
             # geometry columns and suffixes. FIX ME! ----------------------------------------------
             # Load and parse geometry data
             dir_input = self.setup.dir_data
-            file_input = self.setup.file_input_hospital_info
+            file_input = self.setup.file_input_hospital_coords
             path_to_file = os.path.join(dir_input, file_input)
             df_info = pd.read_csv(path_to_file)
             # Merge:
             df = pd.merge(
-                df, df_info[['Postcode', 'Easting', 'Northing', 'long_x', 'lat_x']],
-                left_on='Postcode', right_on='Postcode', how='left')
+                df, df_info[['Postcode', 'BNG_E', 'BNG_N', 'Longitude', 'Latitude']],
+                left_on='postcode', right_on='Postcode', how='left')
 
         # TO DO - add an option to load this from a custom file.
         self.unit_services = df
@@ -356,34 +361,46 @@ class Scenario(object):
         dir_input = self.setup.dir_output
         file_input = self.setup.file_national_transfer_units
         path_to_file = os.path.join(dir_input, file_input)
-        transfer = pd.read_csv(path_to_file, index_col=0)
+        transfer = pd.read_csv(path_to_file)
+        # transfer = transfer.rename(columns={'from_postcode': 'Postcode'})
+        transfer = transfer.drop(['time_nearest_mt'], axis='columns')
+        # Index: 'Postcode'
+        # Columns: 'name_nearest_mt'
 
         dir_input = self.setup.dir_output
         file_input = self.setup.file_selected_stroke_units
         path_to_file = os.path.join(dir_input, file_input)
-        hospitals = pd.read_csv(path_to_file, index_col=0)
+        hospitals = pd.read_csv(path_to_file)
+        # Index: 'Postcode'
+        # Columns: names, services, regions etc. ...
+
+        # TO DO - move coords to Maps() - don't need them for pathway
 
         # Keep a copy of the coordinates:
         hospital_coords = hospitals.copy()
         hospital_coords = hospital_coords[[
-            'Easting', 'Northing', 'long_x', 'lat_x']]  # TO DO - Fix this annoying suffix
+            'Postcode', 'BNG_E', 'BNG_N', 'Longitude', 'Latitude']]  # TO DO - Fix this annoying suffix
 
-        transfer = transfer.drop(['time_nearest_mt'], axis='columns')
-        # Merge in the transfer unit coordinates:
-        transfer = pd.merge(
+        m1 = pd.merge(
             transfer, hospital_coords,
-            left_on='name_nearest_mt', right_index=True,
-            how='left', suffixes=('_mt', None)
+            left_on='from_postcode', right_on='Postcode',
+            how='right'
             )
+        m2 = pd.merge(
+            m1, hospital_coords,
+            left_on='name_nearest_mt', right_on='Postcode',
+            how='right', suffixes=(None, '_mt')
+            )
+        transfer_hospitals = m2.drop(['Postcode', 'Postcode_mt'], axis='columns')
 
-        transfer_hospitals = pd.merge(
-            hospital_coords,
-            transfer,
-            left_index=True,
-            right_index=True,
-            how='left', suffixes=(None, '_mt')
-        )
         # TO DO - tidy up the excess columns in hospitals ---------------------------
+
+        # Limit to selected stroke units.
+        selected_units = hospitals['postcode'][hospitals['selected'] == 1]
+        mask = transfer_hospitals['from_postcode'].isin(selected_units)
+        transfer_hospitals = transfer_hospitals[mask]
+
+        transfer_hospitals = transfer_hospitals.set_index('from_postcode')
 
         # transfer_hospitals = transfer_hospitals.set_index('Postcode')
         self.transfer_hospitals = transfer_hospitals
@@ -401,7 +418,8 @@ class Scenario(object):
         """
         TO DO - write me
         """
-        df_results, region_codes_containing_lsoa, units_catching_lsoa = (
+        (df_results, region_codes_containing_lsoa,
+         region_codes_containing_units, units_catching_lsoa) = (
             self.units.find_lsoa_by_catchment(
                 self.unit_services,
                 self,
@@ -417,17 +435,22 @@ class Scenario(object):
         # Save to self.
         self.lsoa_travel_by_catchment = df_results
 
-        # Update regions data with whether contain LSOA.
+        # Update regions data with whether contain LSOA...
         df_regions = self.selected_regions
         df_regions['contains_selected_lsoa'] = 0
         mask = df_regions['region_code'].isin(region_codes_containing_lsoa)
         df_regions.loc[mask, 'contains_selected_lsoa'] = 1
+        # ... and units.
+        df_regions['contains_unit_catching_lsoa'] = 0
+        mask = df_regions['region_code'].isin(region_codes_containing_units)
+        df_regions.loc[mask, 'contains_unit_catching_lsoa'] = 1
+        # Save to self:
         self.set_model_areas(df_regions)
 
         # Update units data with whether catch LSOA in selected regions.
         df_units = self.unit_services
         df_units['catches_lsoa_in_selected_region'] = 0
-        mask = df_units['Postcode'].isin(units_catching_lsoa)
+        mask = df_units['postcode'].isin(units_catching_lsoa)
         df_units.loc[mask, 'catches_lsoa_in_selected_region'] = 1
         self.set_unit_services(df_units)
 
@@ -449,6 +472,35 @@ class Scenario(object):
 
         # Save to self.
         self.lsoa_travel_by_region_island = df_results
+
+        # Don't need the following columns for island mode,
+        # but Combine and Map classes are expecting to find them.
+        # Update regions data with whether contain LSOA.
+        df_regions = self.selected_regions
+        save_file = False
+        if 'contains_selected_lsoa' in df_regions.columns:
+            # Don't overwrite the existing data.
+            pass
+        else:
+            df_regions['contains_selected_lsoa'] = pd.NA
+            save_file = True
+        if 'contains_unit_catching_lsoa' in df_regions.columns:
+            # Don't overwrite the existing data.
+            pass
+        else:
+            df_regions['contains_unit_catching_lsoa'] = pd.NA
+            save_file = True
+        if save_file:
+            self.set_model_areas(df_regions)
+
+        # Update units data with whether catch LSOA in selected regions.
+        df_units = self.unit_services
+        if 'catches_lsoa_in_selected_region' in df_units.columns:
+            # Don't overwrite the existing data.
+            pass
+        else:
+            df_units['catches_lsoa_in_selected_region'] = pd.NA
+            self.set_unit_services(df_units)
 
     def set_lsoa_catchment_type(self, lsoa_catchment_type):
         """
@@ -538,7 +590,7 @@ class Scenario(object):
             left=admissions,
             right=self.df_lsoa,
             left_on='area',
-            right_on='LSOA11NM',
+            right_on='lsoa',
             how='inner'
         )
 
@@ -551,6 +603,6 @@ class Scenario(object):
         )
         # Overwrite this to make sure the LSOA names are in the
         # same order as the LSOA relative frequency array.
-        self.lsoa_names = admissions[['area', 'LSOA11CD']].values
+        self.lsoa_names = admissions[['area', 'lsoa_code']].values
         # Average time between admissions to these hospitals in a year:
         self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions

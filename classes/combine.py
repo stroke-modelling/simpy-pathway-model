@@ -91,7 +91,10 @@ class Combine(object):
                     'use_ivt',
                     'use_mt',
                     'use_msu',
-                    # 'Use'
+                    # 'Use',
+                    'selected',
+                    'chosen_mt',
+                    'catches_lsoa_in_selected_region'
                 ])
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
@@ -142,7 +145,8 @@ class Combine(object):
             df = self._hstack_multiple_dataframes(
                 file_to_merge,
                 add_use_column=True,
-                extra_cols_for_index=['name_nearest_mt'])
+                extra_cols_for_index=['name_nearest_mt']
+                )
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
             pass
@@ -247,7 +251,7 @@ class Combine(object):
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
         # Replace missing values with 0:
-        df = df.fillna(value=0)
+        # df = df.fillna(value=0)
 
         if save_to_file:
             output_dir = self.setup.dir_output_combined
@@ -487,12 +491,8 @@ class Combine(object):
             file_input = file_to_merge
             path_to_file = os.path.join(dir_output, file_input)
 
-            # if csv_header is None:
-                
-            df = pd.read_csv(path_to_file, index_col=csv_index, header=csv_header)
-            # else:
-            #     # Specify header to import as a multiindex DataFrame.
-            #     df = pd.read_csv(path_to_file, header=csv_header, index_col=0)
+            df = pd.read_csv(
+                path_to_file, index_col=csv_index, header=csv_header)
 
             if len(extra_cols_for_index) > 0:
                 index_col = df.index.name
@@ -566,7 +566,7 @@ class Combine(object):
 
         return data
 
-    def _merge_multiple_dataframes(self, file_to_merge, merge_col='LSOA11CD'):
+    def _merge_multiple_dataframes(self, file_to_merge, merge_col='lsoa_code'):
         # Combine multiple DataFrames from different scenarios into here.
         # Stacks all DataFrames one on top of the other with no other
         # change in columns.
