@@ -7,7 +7,7 @@ import os  # For checking directory existence
 from classes.setup import Setup
 
 
-class Units(object):
+class Units(object):  # TO DO - rename me to something more like "calculations for pathway"?
     """
     Links between stroke units.
     """

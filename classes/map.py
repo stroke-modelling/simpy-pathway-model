@@ -239,20 +239,11 @@ class Map(object):
                 # Save to self:
                 setattr(self, label, df)
             except FileNotFoundError:
-                pass
-                # if data_dict['file'] is None:
-                #     # Hit this on purpose. Carry on.
-                #     pass
-                # else:
-                #     # Don't raise an error.
-                #     # Can reach this condition when the file doesn't
-                #     # exist yet and isn't needed yet. Just print info.
-                #     # print(f'Cannot import {label} from {data_dict["file"]}')
-                #     # raise FileNotFoundError(
-                #     #     f'Cannot import {label} from {data_dict["file"]}'
-                #     #     ) from None
+                raise FileNotFoundError(
+                    f'Cannot import {label} from {data_dict["file"]}'
+                    ) from None
 
-    def process_data(self):
+    def process_data(self, load_list=[]):
         """
         Load it in mmkay  TO DO - write me
         """
@@ -264,21 +255,22 @@ class Map(object):
                 # Something is missing so can't load the data.
                 pass
 
-        func = self._load_geometry_regions
-        prereqs = ['df_regions']
-        _check_prereqs_and_load(prereqs, func)
-
-        func = self._load_geometry_stroke_units
-        prereqs = ['df_regions', 'df_units']
-        _check_prereqs_and_load(prereqs, func)
-
-        func = self._load_geometry_transfer_units
-        prereqs = ['df_regions', 'df_units', 'df_transfer']
-        _check_prereqs_and_load(prereqs, func)
-
-        func = self._load_geometry_lsoa
-        prereqs = ['df_regions', 'df_lsoa']
-        _check_prereqs_and_load(prereqs, func)
+        if 'gdf_boundaries_regions' in load_list:
+            func = self._load_geometry_regions
+            prereqs = ['df_regions']
+            _check_prereqs_and_load(prereqs, func)
+        if 'gdf_points_units' in load_list:
+            func = self._load_geometry_stroke_units
+            prereqs = ['df_regions', 'df_units']
+            _check_prereqs_and_load(prereqs, func)
+        if 'gdf_lines_transfer' in load_list:
+            func = self._load_geometry_transfer_units
+            prereqs = ['df_regions', 'df_units', 'df_transfer']
+            _check_prereqs_and_load(prereqs, func)
+        if 'gdf_boundaries_lsoa' in load_list:
+            func = self._load_geometry_lsoa
+            prereqs = ['df_regions', 'df_lsoa']
+            _check_prereqs_and_load(prereqs, func)
 
     def _check_prereqs_exist(self, prereqs):
         """
@@ -291,9 +283,12 @@ class Map(object):
             else:
                 missing_attrs.append(attr)
         if len(missing_attrs) > 0:
-            print('Missing some information: ', missing_attrs)
-            print('Try reloading: self.load_run_data() and self.process_data()')
-            return
+            err = ''.join([
+                f'Missing some information: {missing_attrs}\n',
+                'Try reloading: self.load_run_data() and ',
+                'self.process_data()'
+            ])
+            raise Exception(err) from None
         else:
             pass
 
@@ -317,19 +312,10 @@ class Map(object):
         gdf_boundaries - GeoDataFrame. One row per region shape in the
                         file. Expect columns for region name and geometry.
         """
-        # # Convert short code to actual region type:
-        # region_dict = {
-        #     'lsoa': 'LSOA11NM',
-        #     'SICBL': 'SICBL11NM',
-        #     'LHB': 'LHB20NM'
-        # }
-        # region_type = region_dict[region_type]
-
         # Select geojson file based on input region type:
         geojson_file_dict = {
             'LSOA11NM': self.setup.file_geojson_lsoa,
             'SICBL22NM': self.setup.file_geojson_sibcl,
-            # 'ICB22NM': self.setup.file_geojson_icb,
             'LHB20NM': self.setup.file_geojson_lhb,
         }
 
@@ -413,7 +399,8 @@ class Map(object):
     # ##########################
     # ##### DATA WRANGLING #####
     # ##########################
-    def _load_geometry_regions(self):
+    def _load_geometry_regions(
+            self, limit_to_england=False, limit_to_wales=False):
         """
         Create GeoDataFrames of new geometry and existing DataFrames.
         """
@@ -426,15 +413,23 @@ class Map(object):
         #   - combined: ['scenario', 'property']
         #   - separate: ['{unnamed level}']
 
-        # TO DO - implement limit to England, limit to Wales here ----------------------
         # All region polygons:
-        gdf_boundaries_regions_e = self.import_geojson('SICBL22NM')
-        gdf_boundaries_regions_w = self.import_geojson('LHB20NM')
-        # Combine:
-        gdf_boundaries_regions = pd.concat(
-            (gdf_boundaries_regions_e, gdf_boundaries_regions_w),
-            axis='rows'
-        )
+        gdf_list = []
+        if limit_to_wales is False:
+            gdf_boundaries_regions_e = self.import_geojson('SICBL22NM')
+            gdf_list.append(gdf_boundaries_regions_e)
+        if limit_to_england is False:
+            gdf_boundaries_regions_w = self.import_geojson('LHB20NM')
+            gdf_list.append(gdf_boundaries_regions_w)
+        if len(gdf_list) > 1:
+            # Combine:
+            gdf_boundaries_regions = pd.concat(gdf_list, axis='rows')
+        elif len(gdf_list) == 0:
+            # Haven't loaded any boundaries.
+            # Probably don't want this to happen...
+            err = 'No boundaries loaded - England and Wales both excluded.'
+            raise Exception(err) from None
+
         # Index column: 'region'.
         # Always has only one unnamed column index level.
 
@@ -502,6 +497,12 @@ class Map(object):
         # ----- Save to self -----
         self.gdf_boundaries_regions = gdf_boundaries_regions
 
+        # Save output to output folder.
+        dir_output = self.dir_data
+        file_name = self.setup.file_gdf_boundaries_regions
+        path_to_file = os.path.join(dir_output, file_name)
+        gdf_boundaries_regions.to_csv(path_to_file)
+
     def _load_geometry_stroke_units(self):
         """
         Create GeoDataFrames of new geometry and existing DataFrames.
@@ -526,12 +527,34 @@ class Map(object):
         gdf_units - GeoDataFrame. One row per selected stroke unit in
                     the file. Columns include unit name and geometry.
         """
-        # Selected stroke units names, coordinates, and services.
+        # Selected stroke units names, services, and regions.
         df_units = self.df_units
         # Index column: Postcode.
         # Expected column MultiIndex levels:
         #   - combined: ['scenario', 'property']
         #   - separate: ['{unnamed level}']
+
+        # Load and parse geometry data
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_hospital_coords
+        path_to_file = os.path.join(dir_input, file_input)
+        df_coords = pd.read_csv(path_to_file, index_col='postcode')
+        # Index: postcode.
+        # Columns: BNG_E, BNG_N, Longitude, Latitude.
+        if self.data_type == 'combined':
+            # Add another column level to the coordinates.
+            cols_df_coords = [
+                ['any'] * len(df_coords.columns),  # scenario
+                df_coords.columns,                 # property
+            ]
+            df_coords = pd.DataFrame(
+                df_coords.values,
+                index=df_coords.index,
+                columns=cols_df_coords
+            )
+        # Merge:
+        df_units = pd.merge(
+            df_units, df_coords, left_index=True, right_index=True, how='left')
 
         if self.data_type == 'combined':
             x_col = ('any', 'BNG_E')
@@ -560,6 +583,12 @@ class Map(object):
 
         self.gdf_points_units = gdf_units
 
+        # Save output to output folder.
+        dir_output = self.dir_data
+        file_name = self.setup.file_gdf_points_units
+        path_to_file = os.path.join(dir_output, file_name)
+        gdf_units.to_csv(path_to_file)
+
     def _load_geometry_transfer_units(self):
         """
         Create GeoDataFrames of new geometry and existing DataFrames.
@@ -570,6 +599,13 @@ class Map(object):
         # Expected column MultiIndex levels:
         #   - combined: ['scenario', 'property']
         #   - separate: ['{unnamed level}']
+
+        # Load and parse geometry data
+        dir_input = self.setup.dir_data
+        file_input = self.setup.file_input_hospital_coords
+        path_to_file = os.path.join(dir_input, file_input)
+        df_coords = pd.read_csv(path_to_file)
+        # Columns: postcode, BNG_E, BNG_N, Longitude, Latitude.
 
         if self.data_type == 'combined':
             # From the loaded file:
@@ -594,7 +630,51 @@ class Map(object):
             col_line_coords = 'line_coords'
             col_line_geometry = 'geometry'
 
-        # Convert to geometry (line):
+        # DataFrame of just the arrival and transfer units:
+        df_arrival_transfer = df_transfer.index.to_frame(index=False)
+        # If there are multiple column levels, only keep the lowest.
+        if df_arrival_transfer.columns.nlevels > 1:
+            # TO DO - drop by level name. --------------------------------------------------
+            df_arrival_transfer = (
+                df_arrival_transfer.droplevel(0, axis='columns'))
+        # Index: {generic numbers}
+        # Columns: 'from_postcode', 'name_nearest_mt'
+
+        # Merge in the arrival unit coordinates:
+        m1 = pd.merge(
+            df_arrival_transfer, df_coords,
+            left_on='postcode', right_on='postcode',
+            how='left'
+            )
+        m2 = pd.merge(
+            m1, df_coords,
+            left_on='name_nearest_mt', right_on='postcode',
+            how='left', suffixes=(None, '_mt')
+            )
+        df_arrival_transfer = m2.drop(['postcode_mt'], axis='columns')
+        # Set the index columns to match the main DataFrame's:
+        df_arrival_transfer = df_arrival_transfer.set_index(
+            ['postcode', 'name_nearest_mt'])
+        # Index: 'postcode', 'name_nearest_mt'
+        # Columns: BNG_E, BNG_N, Longitude, Latitude,
+        #          BNG_E_mt, BNG_N_mt, Longitude_mt, Latitude_mt
+
+        if self.data_type == 'combined':
+            # Add another column level to the coordinates.
+            cols_df_arrival_transfer = [
+                ['any'] * len(df_arrival_transfer.columns),  # scenario
+                df_arrival_transfer.columns,                 # property
+            ]
+            df_arrival_transfer = pd.DataFrame(
+                df_arrival_transfer.values,
+                index=df_arrival_transfer.index,
+                columns=cols_df_arrival_transfer
+            )
+
+        # Merge this into the main DataFrame:
+        df_transfer = pd.merge(
+            df_transfer, df_arrival_transfer,
+            left_index=True, right_index=True, how='left')
 
         # Make a column of coordinates [x, y]:
         xy = df_transfer[[x_col, y_col]]
@@ -603,6 +683,7 @@ class Map(object):
         xy_mt = df_transfer[[x_col_mt, y_col_mt]]
         df_transfer[col_tran] = xy_mt.values.tolist()
 
+        # Convert to geometry (line).
         gdf_transfer = self.create_lines_from_coords(
             df_transfer,
             [col_unit, col_tran],
@@ -611,6 +692,12 @@ class Map(object):
             )
 
         self.gdf_lines_transfer = gdf_transfer
+
+        # Save output to output folder.
+        dir_output = self.dir_data
+        file_name = self.setup.file_gdf_lines_transfer
+        path_to_file = os.path.join(dir_output, file_name)
+        gdf_transfer.to_csv(path_to_file)
 
     def _load_geometry_lsoa(self):
         """
@@ -746,6 +833,12 @@ class Map(object):
         # ----- Save to self -----
         self.gdf_boundaries_lsoa = gdf_boundaries_lsoa
 
+        # Save output to output folder.
+        dir_output = self.dir_data
+        file_name = self.setup.file_gdf_boundaries_lsoa
+        path_to_file = os.path.join(dir_output, file_name)
+        gdf_boundaries_lsoa.to_csv(path_to_file)
+
     def _remove_excess_heading_from_gdf(
             self, gdf, level_to_drop, col_geometry):
         """
@@ -799,7 +892,7 @@ class Map(object):
         df = df.drop_duplicates(col_coord)
 
         # Convert line coords to LineString objects:
-        df[col_geom] = [LineString(coords) for coords in df[col_coord]]
+        df[col_geom] = [LineString(coords) for coords in df[col_coord].values]
 
         # Convert to GeoDataFrame:
         gdf = geopandas.GeoDataFrame(df, geometry=col_geom)  #, crs="EPSG:4326"
@@ -807,34 +900,6 @@ class Map(object):
         #     gdf['geometry']
         # TO DO - implement CRS explicitly ---------------------------------------------
         return gdf
-
-    # def _find_use_column_for_transfer_lines(self, gdf_transfer, df_units):
-    #     # Work out which lines should be used.
-    #     index_cols = gdf_transfer.index.names
-    #     gdf_transfer = gdf_transfer.copy().reset_index()
-    #     # Set 'Use' to 1 when either the start or end unit
-    #     # is in 'selected'.
-    #     gdf_transfer['Use'] = 0
-    #     df_units_rs = df_units.copy().reset_index()
-    #     # Is start unit in selected?
-    #     gdf_transfer = pd.merge(
-    #         gdf_transfer,
-    #         df_units_rs[['postcode', 'selected']],
-    #         left_on='postcode', right_on='postcode', how='left'
-    #     )
-    #     # Is end unit in selected?
-    #     gdf_transfer = pd.merge(
-    #         gdf_transfer,
-    #         df_units_rs[['postcode', 'selected']],
-    #         left_on='name_nearest_mt', right_on='postcode', how='left',
-    #         suffixes=(None, '_mt')
-    #     )
-    #     gdf_transfer['Use'][(
-    #         (gdf_transfer['selected'] == 1) |
-    #         (gdf_transfer['selected_mt'] == 1)
-    #         )] = 1
-    #     gdf_transfer = gdf_transfer.set_index(index_cols)
-    #     return gdf_transfer
 
     def create_combo_cols(self, gdf, scenario):
         """
@@ -1219,8 +1284,12 @@ class Map(object):
         """
         Wrangle data and plot a map of selected units.
         """
-        self.load_run_data()
-        self.process_data()
+        # Check whether everything we need exists.
+        data_for_prereqs = ['df_regions', 'df_units']
+        self.load_run_data(data_for_prereqs)
+        prereqs = ['gdf_boundaries_regions', 'gdf_points_units']
+        self.process_data(prereqs)
+        self._check_prereqs_exist(prereqs)
 
         map_args, map_kwargs = self._setup_plot_map_selected_regions(
             scenario,
@@ -1242,8 +1311,13 @@ class Map(object):
         """
         Wrangle data and plot a map of selected units.
         """
-        self.load_run_data()
-        self.process_data()
+        # Check whether everything we need exists.
+        data_for_prereqs = ['df_regions', 'df_units', 'df_transfer']
+        self.load_run_data(data_for_prereqs)
+        prereqs = ['gdf_boundaries_regions', 'gdf_points_units',
+                   'gdf_lines_transfer']
+        self.process_data(prereqs)
+        self._check_prereqs_exist(prereqs)
 
         map_args, map_kwargs = self._setup_plot_map_selected_units(
             scenario,
@@ -1266,8 +1340,14 @@ class Map(object):
         """
         Wrangle data and plot a map of selected unit catchments.
         """
-        self.load_run_data()
-        self.process_data()
+        # Check whether everything we need exists.
+        data_for_prereqs = ['df_regions', 'df_units',
+                            'df_transfer', 'df_lsoa']
+        self.load_run_data(data_for_prereqs)
+        prereqs = ['gdf_boundaries_regions', 'gdf_points_units',
+                   'gdf_boundaries_lsoa', 'gdf_lines_transfer']
+        self.process_data(prereqs)
+        self._check_prereqs_exist(prereqs)
 
         map_args, map_kwargs = self._setup_plot_map_catchment(
             scenario,
@@ -1294,8 +1374,19 @@ class Map(object):
         """
         Wrangle data and plot a map of LSOA outcomes.
         """
-        self.load_run_data()
-        self.process_data()
+        # Check whether everything we need exists.
+        data_for_prereqs = [
+            'df_regions',
+            'df_units',
+            'df_transfer',
+            'df_lsoa',
+            'df_results_by_lsoa'
+            ]
+        self.load_run_data(data_for_prereqs)
+        prereqs = ['gdf_boundaries_regions', 'gdf_points_units',
+                   'gdf_boundaries_lsoa']
+        self.process_data(prereqs)
+        self._check_prereqs_exist(prereqs)
 
         map_args, map_kwargs = self._setup_plot_map_outcome(
             scenario,

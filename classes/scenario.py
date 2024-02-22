@@ -275,6 +275,10 @@ class Scenario(object):
     # ##### UNIT SERVICES #####   --> should this move to Units()?
     # #########################
     def get_unit_services(self):
+
+        # TO DO - make this show less stuff to the user.
+        # Remove region codes and stuff.
+
         try:
             df = self.unit_services
         except AttributeError:
@@ -310,27 +314,8 @@ class Scenario(object):
 
     def set_unit_services(self, df):
         # TO DO - run sanity checks
-
-        # TO DO - move to Maps() - don't need coords in the pathway
-        # (also fix the column names please)
-        try:
-            df[['BNG_E', 'BNG_N', 'Longitude', 'Latitude']]
-        except KeyError:
-            # Merge in geometry.
-            # TO DO - just store this somewhere else:
-            # - it's annoying when this runs twice accidentally and get loads of extra
-            # geometry columns and suffixes. FIX ME! ----------------------------------------------
-            # Load and parse geometry data
-            dir_input = self.setup.dir_data
-            file_input = self.setup.file_input_hospital_coords
-            path_to_file = os.path.join(dir_input, file_input)
-            df_info = pd.read_csv(path_to_file)
-            # Merge:
-            df = pd.merge(
-                df, df_info[['Postcode', 'BNG_E', 'BNG_N', 'Longitude', 'Latitude']],
-                left_on='postcode', right_on='Postcode', how='left')
-
         # TO DO - add an option to load this from a custom file.
+
         self.unit_services = df
 
         # Save output to output folder.
@@ -355,61 +340,37 @@ class Scenario(object):
         # WRITE ME TO DO -----------------------------------------------------------------
 
     def _load_transfer_units(self):
-
+        """
+        write me
+        """
         # Merge in transfer unit names.
         # Load and parse hospital transfer data
         dir_input = self.setup.dir_output
         file_input = self.setup.file_national_transfer_units
         path_to_file = os.path.join(dir_input, file_input)
         transfer = pd.read_csv(path_to_file)
-        # transfer = transfer.rename(columns={'from_postcode': 'Postcode'})
+        transfer = transfer.rename(columns={'from_postcode': 'postcode'})
         transfer = transfer.drop(['time_nearest_mt'], axis='columns')
         # Index: 'Postcode'
         # Columns: 'name_nearest_mt'
 
-        dir_input = self.setup.dir_output
-        file_input = self.setup.file_selected_stroke_units
-        path_to_file = os.path.join(dir_input, file_input)
-        hospitals = pd.read_csv(path_to_file)
+        units = self.unit_services
         # Index: 'Postcode'
         # Columns: names, services, regions etc. ...
 
-        # TO DO - move coords to Maps() - don't need them for pathway
-
-        # Keep a copy of the coordinates:
-        hospital_coords = hospitals.copy()
-        hospital_coords = hospital_coords[[
-            'Postcode', 'BNG_E', 'BNG_N', 'Longitude', 'Latitude']]  # TO DO - Fix this annoying suffix
-
-        m1 = pd.merge(
-            transfer, hospital_coords,
-            left_on='from_postcode', right_on='Postcode',
-            how='right'
-            )
-        m2 = pd.merge(
-            m1, hospital_coords,
-            left_on='name_nearest_mt', right_on='Postcode',
-            how='right', suffixes=(None, '_mt')
-            )
-        transfer_hospitals = m2.drop(['Postcode', 'Postcode_mt'], axis='columns')
-
-        # TO DO - tidy up the excess columns in hospitals ---------------------------
-
         # Limit to selected stroke units.
-        selected_units = hospitals['postcode'][hospitals['selected'] == 1]
-        mask = transfer_hospitals['from_postcode'].isin(selected_units)
-        transfer_hospitals = transfer_hospitals[mask]
+        selected_units = units['postcode'][units['selected'] == 1]
+        mask = transfer['postcode'].isin(selected_units)
+        transfer = transfer[mask]
+        transfer = transfer.set_index('postcode')
 
-        transfer_hospitals = transfer_hospitals.set_index('from_postcode')
-
-        # transfer_hospitals = transfer_hospitals.set_index('Postcode')
-        self.transfer_hospitals = transfer_hospitals
+        self.transfer_hospitals = transfer
 
         # Save output to output folder.
         dir_output = self.setup.dir_output
         file_name = self.setup.file_selected_transfer_units
         path_to_file = os.path.join(dir_output, file_name)
-        transfer_hospitals.to_csv(path_to_file)
+        transfer.to_csv(path_to_file)
 
     # #########################
     # ##### SELECTED LSOA #####

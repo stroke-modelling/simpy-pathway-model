@@ -66,7 +66,7 @@ class Setup(object):
             'results_summary_by_admitting_unit.csv')
         self.file_results_summary_by_lsoa = (
             'results_summary_by_lsoa.csv')
-        # Combined:
+        # Combine():
         self.file_combined_selected_regions = (
             'combined_selected_regions.csv')
         self.file_combined_selected_stroke_units = (
@@ -79,6 +79,11 @@ class Setup(object):
             'combined_results_summary_by_admitting_unit.csv')
         self.file_combined_results_summary_by_lsoa = (
             'combined_results_summary_by_lsoa.csv')
+        # Map():
+        self.file_gdf_boundaries_regions = 'gdf_boundaries_regions.csv'
+        self.file_gdf_points_units = 'gdf_points_units.csv'
+        self.file_gdf_lines_transfer = 'gdf_lines_transfer.csv'
+        self.file_gdf_boundaries_lsoa = 'gdf_boundaries_lsoa.csv'
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
