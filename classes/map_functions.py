@@ -239,6 +239,7 @@ def scatter_units(
     # Overwrite default dict with user inputs:
     for key, val in kwargs.items():
         kwargs_dict[key] = val
+    default_marker_size = kwargs_dict['s']
 
     # Only plot these units:
     if len(mask_col) > 0:
@@ -260,6 +261,12 @@ def scatter_units(
             try:
                 marker = gdf_m['marker']
                 kwargs_dict['marker'] = marker
+                if marker == '*':
+                    # Make the star bigger.
+                    kwargs_dict['s'] = 200
+                else:
+                    kwargs_dict['s'] = default_marker_size
+
             except KeyError:
                 pass
             handle = ax.scatter(
