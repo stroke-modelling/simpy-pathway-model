@@ -1698,7 +1698,7 @@ class Map(object):
             # Take only scenarios containing 'diff':
             mask = gdf_boundaries_lsoa.columns.get_level_values(
                     0).str.contains('diff')
-            if outcome.startswith('diff'):
+            if scenario.startswith('diff'):
                 pass
             else:
                 # Take the opposite condition, take only scenarios
@@ -1852,7 +1852,7 @@ class Map(object):
             'legend': True,
             }
 
-        cbar_diff = True if outcome.startswith('diff') else False
+        cbar_diff = True if scenario.startswith('diff') else False
         if cbar_diff:
             lsoa_boundary_kwargs['cmap'] = 'seismic'
             lsoa_boundary_kwargs['vmin'] = -vlim_abs
