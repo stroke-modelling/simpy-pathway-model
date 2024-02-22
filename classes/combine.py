@@ -93,7 +93,7 @@ class Combine(object):
                     'use_msu',
                     # 'Use',
                     'selected',
-                    'chosen_mt',
+                    'transfer_unit_postcode',
                     'catches_lsoa_in_selected_region'
                 ])
         except FileNotFoundError:
