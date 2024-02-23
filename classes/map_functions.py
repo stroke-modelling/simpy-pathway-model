@@ -1013,6 +1013,7 @@ def plot_map_outcome(
         gdf_points_units,
         ax=None,
         boundary_kwargs={},
+        draw_region_boundaries=True,
         map_extent=[]
         ):
     """
@@ -1102,13 +1103,14 @@ def plot_map_outcome(
         'facecolor': 'none'
         }
 
-    ax = draw_boundaries_by_contents(
-        ax,
-        gdf_boundaries_regions,
-        kwargs_with_nowt=kwargs_region_with_nowt,
-        kwargs_with_lsoa=kwargs_region_with_lsoa,
-        kwargs_with_unit=kwargs_region_with_unit,
-        )
+    if draw_region_boundaries:
+        ax = draw_boundaries_by_contents(
+            ax,
+            gdf_boundaries_regions,
+            kwargs_with_nowt=kwargs_region_with_nowt,
+            kwargs_with_lsoa=kwargs_region_with_lsoa,
+            kwargs_with_unit=kwargs_region_with_unit,
+            )
 
     # Set up markers using a new column in DataFrame.
     # Set everything to the IVT marker:

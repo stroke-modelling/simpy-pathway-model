@@ -1374,7 +1374,7 @@ class Map(object):
             lsoa_catchment_type='',
             save=True,
             show=False,
-            region=None,
+            draw_region_boundaries=True,
             boundary_kwargs={},
             ):
         """
@@ -1394,6 +1394,7 @@ class Map(object):
         self.process_data(prereqs)
         self._check_prereqs_exist(prereqs)
 
+        # TO DO - condense kwargs into dict. -----------------------------------------
         map_args, map_kwargs = self._setup_plot_map_outcome(
             scenario,
             outcome,
@@ -1404,6 +1405,7 @@ class Map(object):
         self._plt_plot_map_outcome(
             *map_args,
             **map_kwargs,
+            draw_region_boundaries=draw_region_boundaries,
             title=f'{scenario}\n{outcome}',
             save=save,
             show=show
@@ -2112,6 +2114,7 @@ class Map(object):
             gdf_points_units,
             title='',
             lsoa_boundary_kwargs={},
+            draw_region_boundaries=True,
             save=True,
             show=False,
             path_to_file=None
@@ -2124,7 +2127,8 @@ class Map(object):
             gdf_boundaries_regions,
             gdf_points_units,
             ax=ax,
-            boundary_kwargs=lsoa_boundary_kwargs
+            boundary_kwargs=lsoa_boundary_kwargs,
+            draw_region_boundaries=draw_region_boundaries,
         )
 
         if save:
