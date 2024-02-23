@@ -245,7 +245,7 @@ class Map(object):
 
     def process_data(self, load_list=[]):
         """
-        Load it in mmkay  TO DO - write me
+        Load everything in mmkay  TO DO - write me
         """
         def _check_prereqs_and_load(prereqs, func):
             data_loaded = [hasattr(self, df) for df in prereqs]

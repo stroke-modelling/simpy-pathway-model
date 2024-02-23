@@ -242,7 +242,8 @@ class Combine(object):
                 csv_index=[0, 1],
                 cols_for_scenario=[
                     'selected',
-                    'contains_selected_lsoa'
+                    'contains_selected_lsoa',
+                    'contains_unit_catching_lsoa'
                     ])
         except FileNotFoundError:
             # TO DO - set up proper error message ----------------------------------
