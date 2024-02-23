@@ -906,6 +906,12 @@ class Map(object):
         TO DO - write me
         When dataframe doesn't have the diff_this_minus_that columns,
         use this function to create that data and prevent KeyError later.
+
+        TO DO - currently the combo column takes the max of both.
+        This is good for stroke units (yes in drip and ship vs no in mothership)
+        but bad for regions catching LSOA (outcome diff is NaN when not in both,
+        so the regions contain no info).
+        Allow selection of min and max. (Or anything else?)
         """
         # Find out what diff what:
         scen_bits = scenario.split('_')
@@ -1884,9 +1890,12 @@ class Map(object):
             cols_to_keep_regions = ['contains_selected_lsoa']
 
             # Take map extent from the combined LSOA and region geometry.
+            mask_region = (
+                (gdf_boundaries_regions['selected'] == 1) |
+                (gdf_boundaries_regions['contains_selected_lsoa'] == 1)
+                )
             gdf_regions_reduced = gdf_boundaries_regions.copy()[
-                gdf_boundaries_regions['selected'] == 1
-                ].reset_index()['geometry']
+                mask_region].reset_index()['geometry']
             gdf_lsoa_reduced = gdf_boundaries_lsoa.copy(
                 ).reset_index()['geometry']
             gdf_combo = pd.concat(

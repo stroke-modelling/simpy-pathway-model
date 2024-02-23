@@ -103,9 +103,15 @@ def draw_boundaries_by_contents(
     try:
         mask = (
             (gdf_boundaries_regions['selected'] == 0) &
-            (gdf_boundaries_regions['contains_selected_lsoa'] == 0) &
-            (gdf_boundaries_regions['contains_unit_catching_lsoa'] == 0)
+            (gdf_boundaries_regions['contains_selected_lsoa'] == 0)
         )
+        try:
+            mask = mask & (
+                (gdf_boundaries_regions['contains_unit_catching_lsoa'] == 0)
+            )
+        except KeyError:
+            # The regions-containing-unit column doesn't exist.
+            pass
     except KeyError:
         # Assume the LSOA column doesn't exist.
         mask = (
@@ -132,8 +138,16 @@ def draw_boundaries_by_contents(
              (gdf_boundaries_regions['contains_unit_catching_lsoa'] == 1))
         )
     except KeyError:
-        # Assume the LSOA column doesn't exist. Don't plot this.
-        mask = [False] * len(gdf_boundaries_regions)
+        # Try again without the unit-catching column.
+        try:
+            mask = (
+                (gdf_boundaries_regions['selected'] == 0) &
+                (gdf_boundaries_regions['contains_selected_lsoa'] == 1)
+            )
+        except KeyError:
+            # Assume the LSOA column doesn't exist. Don't plot this.
+            mask = [False] * len(gdf_boundaries_regions)
+
     gdf_boundaries_with_lsoa = gdf_boundaries_regions.loc[mask]
     if len(gdf_boundaries_with_lsoa) > 0:
         ax = draw_boundaries(
