@@ -12,23 +12,72 @@ class Setup(object):
     All attributes are defined in __init__.
     The output directory attributes can be changed later using
     the method create_output_dir.
+
+    Directory setup:
+    > dir_output_this_setup
+        > dir_output_all_runs
+            > list_dir_output[0]
+                + file_selected_regions
+                + file_selected_stroke_units
+                > pathway
+                    + file_national_transfer_units
+                    + file_selected_transfer_units
+                    + file_selected_lsoas
+                    + file_selected_lsoa_by_catchment
+                    + file_selected_lsoa_by_region_island
+                    + file_results_all
+                    + file_results_summary_all
+                    + file_results_summary_by_admitting_unit
+                    + file_results_summary_by_lsoa
+                > maps
+                    + file_gdf_boundaries_regions
+                    + file_gdf_points_units
+                    + file_gdf_lines_transfer
+                    + file_gdf_boundaries_lsoa
+                    + {assorted map images.jpg}
+            > list_dir_output[1]
+                {same contents as list_dir_output[0]}
+            ...
+            {up to list_dir_output[n]}
+            ...
+            > dir_output_combined
+                + file_combined_selected_regions
+                + file_combined_selected_stroke_units
+                + file_combined_selected_transfer_units
+                + file_combined_selected_lsoas
+                + file_combined_selected_regions
+                + file_combined_results_summary_by_admitting_unit
+                + file_combined_results_summary_by_lsoa
+                > maps
+                    + file_gdf_boundaries_regions
+                    + file_gdf_points_units
+                    + file_gdf_lines_transfer
+                    + file_gdf_boundaries_lsoa
+                    + {assorted map images.jpg}
     """
 
     def __init__(self, *initial_data, **kwargs):
 
         # Directories:
         # (don't include slashes please)
+        # Reference data:
         self.dir_data = 'data'
         self.dir_data_geojson = 'data_geojson'
+        # Path to working directory:
         self.dir_output_this_setup = 'output'
         self.dir_output_all_runs = 'output_group'
-        self.dir_output_combined = 'combined'
-        self.dir_output = 'run'
-        # Keep a list of output directories, e.g. one directory for
+        # The current working directory:
+        self.dir_scenario = 'scenario'
+        # Keep a list of working directories, e.g. one directory for
         # each scenario:
         self.list_dir_output = []
+        # Subdirs of the working directory:
+        self.dir_output_pathway = 'pathway'
+        self.dir_output_maps = 'maps'
+        # Combined multiple scenarios:
+        self.dir_output_combined = 'combined'
 
-        # Input file names:
+        # Reference data file names:
         self.file_input_regions = 'regions_ew.csv'
         self.file_input_unit_services = 'stroke_units_regions.csv'
         self.file_input_travel_times = 'lsoa_travel_time_matrix_calibrated.csv'
@@ -40,50 +89,47 @@ class Setup(object):
         # Geojson files:
         self.file_geojson_lsoa = 'LSOA_(Dec_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson'
         self.file_geojson_sibcl = 'SICBL_JUL_2022_EN_BUC_4104971945004813003.geojson'
-        # self.file_geojson_icb = 'ICB_JUL_2022_EN_BGC_V3_7901616774526941461.geojson'
         self.file_geojson_lhb = 'Local_Health_Boards_April_2020_WA_BGC_2022_94310626700012506.geojson'
 
-        # Output file names:
-        # Units():
-        # self.file_national_unit_services = 'national_unit_services.csv'
-        # self.file_national_lsoa_travel = 'national_lsoa_travel_units.csv'
-        self.file_national_transfer_units = 'national_transfer_units.csv'
-        # Scenario():
-        self.file_selected_regions = 'selected_regions.csv'
-        # self.file_unit_services = 'unit_services.csv'
-        self.file_selected_stroke_units = 'selected_stroke_units.csv'
-        self.file_selected_transfer_units = 'selected_transfer_units.csv'
-        # self.file_selected_unit_regions = 'selected_unit_regions.csv'
-        self.file_selected_lsoas = None  # This gets updated later.
-        # self.file_selected_lsoa_regions = 'selected_lsoa_regions.csv'
-        self.file_selected_lsoa_by_catchment = 'selected_lsoa_by_catchment.csv'
-        self.file_selected_lsoa_by_region_island = 'selected_lsoa_by_region_island.csv'
-        self.file_selected_regions = 'selected_regions.csv'
-        # Model():
-        self.file_results_all = 'results_all.csv'
-        self.file_results_summary_all = 'results_summary_all.csv'
-        self.file_results_summary_by_admitting_unit = (
-            'results_summary_by_admitting_unit.csv')
-        self.file_results_summary_by_lsoa = (
-            'results_summary_by_lsoa.csv')
-        # Combine():
-        self.file_combined_selected_regions = (
-            'combined_selected_regions.csv')
-        self.file_combined_selected_stroke_units = (
-            'combined_selected_stroke_units.csv')
-        self.file_combined_selected_transfer_units = (
-            'combined_selected_transfer_units.csv')
-        self.file_combined_selected_lsoas = 'combined_selected_lsoas.csv'
-        self.file_combined_selected_regions = 'combined_selected_regions.csv'
-        self.file_combined_results_summary_by_admitting_unit = (
-            'combined_results_summary_by_admitting_unit.csv')
-        self.file_combined_results_summary_by_lsoa = (
-            'combined_results_summary_by_lsoa.csv')
-        # Map():
-        self.file_gdf_boundaries_regions = 'gdf_boundaries_regions.csv'
-        self.file_gdf_points_units = 'gdf_points_units.csv'
-        self.file_gdf_lines_transfer = 'gdf_lines_transfer.csv'
-        self.file_gdf_boundaries_lsoa = 'gdf_boundaries_lsoa.csv'
+        # File names that the pathway can save to:
+        filenames = [
+            # Input file names:
+            'selected_regions',
+            'selected_stroke_units',
+            # Output file names:
+            # Units():
+            'national_transfer_units',
+            # Scenario():
+            'selected_transfer_units',
+            'selected_lsoa_by_catchment',
+            'selected_lsoa_by_region_island',
+            # Model():
+            'results_all',
+            'results_summary_all',
+            'results_summary_by_admitting_unit',
+            'results_summary_by_lsoa',
+            # Combine():
+            'combined_selected_regions',
+            'combined_selected_stroke_units',
+            'combined_selected_transfer_units',
+            'combined_selected_lsoas',
+            'combined_selected_regions',
+            'combined_results_summary_by_admitting_unit',
+            'combined_results_summary_by_lsoa',
+            # Map():
+            'gdf_boundaries_regions',
+            'gdf_points_units',
+            'gdf_lines_transfer',
+            'gdf_boundaries_lsoa',
+        ]
+        for f in filenames:
+            setattr(self, f'file_{f}', f'{f}.csv')
+
+        # Which LSOA catchment type are we using?
+        # This gets updated later with either
+        # self.selected_lsoa_by_catchment or
+        # self.selected_lsoa_by_region_island.
+        self.file_selected_lsoas = None
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
