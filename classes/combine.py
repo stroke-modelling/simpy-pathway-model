@@ -97,8 +97,11 @@ class Combine(object):
                     'catches_lsoa_in_selected_region'
                 ])
         except FileNotFoundError:
-            # TO DO - set up proper error message ----------------------------------
-            pass
+            err = ''.join([
+                f'Could not find file {file_to_merge} ',
+                'for combine_selected_units().'
+            ])
+            raise FileNotFoundError(err) from None
 
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
@@ -107,7 +110,7 @@ class Combine(object):
             output_dir = self.setup.dir_output_combined
             output_filename = self.setup.file_combined_selected_stroke_units
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)#, index=False)
+            df.to_csv(path_to_file)
 
     def combine_selected_transfer(self, save_to_file=True):
         """
@@ -148,8 +151,11 @@ class Combine(object):
                 extra_cols_for_index=['name_nearest_mt']
                 )
         except FileNotFoundError:
-            # TO DO - set up proper error message ----------------------------------
-            pass
+            err = ''.join([
+                f'Could not find file {file_to_merge} ',
+                'for combine_selected_transfer().'
+            ])
+            raise FileNotFoundError(err) from None
 
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
@@ -158,7 +164,7 @@ class Combine(object):
             output_dir = self.setup.dir_output_combined
             output_filename = self.setup.file_combined_selected_transfer_units
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)#, index=False)
+            df.to_csv(path_to_file)
 
     def combine_selected_lsoa(self, save_to_file=True):
         """
@@ -194,8 +200,11 @@ class Combine(object):
             df = self._hstack_multiple_dataframes( # TO DO - column name here might change
                 file_to_merge, add_use_column=True, cols_for_scenario=['postcode_nearest_ivt'])
         except FileNotFoundError:
-            # TO DO - set up proper error message ----------------------------------
-            pass
+            err = ''.join([
+                f'Could not find file {file_to_merge} ',
+                'for combine_selected_lsoa().'
+            ])
+            raise FileNotFoundError(err) from None
 
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
@@ -204,7 +213,7 @@ class Combine(object):
             output_dir = self.setup.dir_output_combined
             output_filename = self.setup.file_combined_selected_lsoas
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)#, index=False)
+            df.to_csv(path_to_file)
 
     def combine_selected_regions(self, save_to_file=True):
         """
@@ -246,8 +255,11 @@ class Combine(object):
                     'contains_unit_catching_lsoa'
                     ])
         except FileNotFoundError:
-            # TO DO - set up proper error message ----------------------------------
-            pass
+            err = ''.join([
+                f'Could not find file {file_to_merge} ',
+                'for combine_selected_regions().'
+            ])
+            raise FileNotFoundError(err) from None
 
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
@@ -258,7 +270,7 @@ class Combine(object):
             output_dir = self.setup.dir_output_combined
             output_filename = self.setup.file_combined_selected_regions
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)#, index=False)
+            df.to_csv(path_to_file)
 
     def combine_results_summary_by_lsoa(self, save_to_file=True):
         """
@@ -302,8 +314,11 @@ class Combine(object):
                 cols_for_scenario=':'
                 )
         except FileNotFoundError:
-            # TO DO - set up proper error message ----------------------------------
-            pass
+            err = ''.join([
+                f'Could not find file {file_to_merge} ',
+                'for combine_results_summary_by_lsoa().'
+            ])
+            raise FileNotFoundError(err) from None
 
         # col_to_group = data.columns[0]
         cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
@@ -322,7 +337,7 @@ class Combine(object):
             output_dir = self.setup.dir_output_combined
             output_filename = self.setup.file_combined_results_summary_by_lsoa
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)#, index=False)
+            df.to_csv(path_to_file)
 
     def combine_results_summary_by_admitting_unit(self, save_to_file=True):
         """
@@ -365,8 +380,11 @@ class Combine(object):
                 cols_for_scenario=':'
                 )
         except FileNotFoundError:
-            # TO DO - set up proper error message ----------------------------------
-            pass
+            err = ''.join([
+                f'Could not find file {file_to_merge} ',
+                'for combine_results_summary_by_admitting_unit().'
+            ])
+            raise FileNotFoundError(err) from None
 
         # col_to_group = data.columns[0]
         cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
@@ -386,7 +404,62 @@ class Combine(object):
             output_filename = (
                 self.setup.file_combined_results_summary_by_admitting_unit)
             path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)#, index=False)
+            df.to_csv(path_to_file)
+
+    def combine_admissions(self, save_to_file=True):
+        """
+        Combine selected regions.
+
+        Each file input:
+        +------+------------+--------------------+
+        | lsoa | admissions | relative_frequency |    property
+        +------+------------+--------------------+
+        |    1 |         10 |               0.06 |
+        |    2 |          3 |               0.02 |
+        |    3 |          2 |               0.01 |
+        |  ... |        ... |                ... |
+        |    n |          1 |               0.00 |
+        +------+------------+--------------------+
+
+        Resulting DataFrame:
+               +------------------------+------------------------+
+               |       scenario_1       |       scenario_2       |    scenario
+        +------+------------+-----------+------------+-----------+
+        | lsoa | admissions | rel...ncy | admissions | rel...ncy |    property
+        +------+------------+-----------+------------+-----------+
+        |    1 |         10 |      0.06 |         10 |      0.06 |
+        |    2 |          3 |      0.02 |            |           |
+        |    3 |          2 |      0.01 |          2 |      0.01 |
+        |  ... |        ... |       ... |        ... |       ... |
+        |    n |          1 |      0.00 |            |           |
+        +------+------------+-----------+------------+-----------+
+        """
+        file_to_merge = self.setup.selected_lsoa_admissions
+
+        try:
+            df = self._hstack_multiple_dataframes(
+                file_to_merge,
+                cols_for_scenario=[
+                    'admissions',
+                    'relative_frequency',
+                    ])
+        except FileNotFoundError:
+            err = ''.join([
+                f'Could not find file {file_to_merge} ',
+                'for combine_admissions().'
+            ])
+            raise FileNotFoundError(err) from None
+
+        # Rename the MultiIndex column names:
+        df.columns = df.columns.set_names(['scenario', 'property'])
+        # Replace missing values with 0:
+        # df = df.fillna(value=0)
+
+        if save_to_file:
+            output_dir = self.setup.dir_output_combined
+            output_filename = self.setup.file_combined_selected_lsoa_admissions
+            path_to_file = os.path.join(output_dir, output_filename)
+            df.to_csv(path_to_file)
 
     # ############################
     # ##### HELPER FUNCTIONS #####
@@ -488,7 +561,7 @@ class Combine(object):
 
         dfs_to_merge = {}
 
-        for d, dir_output in enumerate(self.setup.list_dir_output):
+        for d, dir_output in enumerate(self.setup.list_dir_scenario):
             file_input = file_to_merge
             path_to_file = os.path.join(dir_output, file_input)
 
@@ -575,7 +648,7 @@ class Combine(object):
         scenario_cols_list = []
         scenario_series_list = []
 
-        for d, dir_output in enumerate(self.setup.list_dir_output):
+        for d, dir_output in enumerate(self.setup.list_dir_scenario):
             file_input = file_to_merge
             path_to_file = os.path.join(dir_output, file_input)
 
