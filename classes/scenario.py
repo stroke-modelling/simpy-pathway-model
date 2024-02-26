@@ -3,16 +3,23 @@ Scenario class with global parameters for the pathway model.
 
 TO DO -----------------------------------------------------------------------------
 - write this docstring
-- load national data from file
-- save vars to yml - what about dataframes? (repr?)
 - only save inputs to Scenario() for init?
+
+Usually the scenario.yml file should contain:
+
+'name'  # this scenario
+# Geography setup: for LSOA, region, units...
+'limit_to_england',  # bool
+'limit_to_wales',  # bool
+'lsoa_catchment_type',  # 'island' or 'nearest'
+
 """
 import numpy as np
 import pandas as pd
 import os
 import yaml
 
-from classes.units import Units
+from classes.calculations import Calculations
 from classes.setup import Setup
 
 
@@ -91,10 +98,25 @@ class Scenario(object):
         Loads data on travel times between stroke units.
     """
 
-    def __init__(self, *initial_data, **kwargs):
-        """Constructor method for model parameters"""
+    def __init__(
+            self,
+            *initial_data,
+            **kwargs
+            ):
+        """
+        Constructor method for model parameters
+
+        """
+        # ----- Directory setup -----
         # Name that will also be used for output directory:
         self.name = 'scenario'
+        # Load existing data from this dir:
+        self.load_dir = None
+        # Load existing parameters from this file:
+        self.scenario_yml = 'scenario.yml'
+        # Whether or not to make a new directory
+        # (if not, risk overwriting existing files):
+        self.make_new_output_dir = True
 
         # ----- Geography -----
         # Which LSOAs, stroke units, and regions will we use?
@@ -102,7 +124,7 @@ class Scenario(object):
         self.limit_to_wales = False
         self.lsoa_catchment_type = 'nearest'
 
-        # ----- Simpy parameters: -----
+        # ----- Simpy parameters -----
         # The following batch of parameters are not called anywhere
         # during Scenario() or associated setup classes.
         # They will be called during the Patient, Pathway, and Model
@@ -133,89 +155,182 @@ class Scenario(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-        # If no setup was given, create one now:
+        # ----- Load helper classes -----
+        # If no setup object was given, create one now:
         try:
             self.setup
         except AttributeError:
             self.setup = Setup()
+        # Create calculations object:
+        self.calculations = Calculations({'setup': self.setup})
 
-        # TO DO - overhaul dir creation and lookup bits --------------------------
-        # And create an output directory for this Scenario:
-        dir_output = self.name
-        # Return here because the output dir will be changed if
-        # a dir with the same name already exists.
-        dir_output = self.setup.create_output_dir(dir_output)
+        # ----- Load Scenario from files -----
+        self.load_scenario_from_files()
+
+        # ----- Make output directories -----
+        self.check_output_directories()
 
         # Convert run duration to minutes
         self.run_duration *= 1440
 
-        self.units = Units({'setup': self.setup})
+    def load_scenario_from_files(self):
+        if self.load_dir is None:
+            # Update path to scenario files:
+            self.setup.set_dir_name(
+                attr='dir_scenario',
+                val=self.name,
+                path_before_dir=self.setup.path_to_dir_output_all_scenarios
+            )
+        else:
+            # Update path to scenario files:
+            self.setup.set_dir_name(
+                attr='dir_scenario',
+                val=self.load_dir,
+                path_before_dir=self.setup.path_to_dir_output_all_scenarios
+            )
+            # Import the kwargs from provided yml file:
+            path_to_scenario_yml = os.path.join(
+                self.setup.dir_scenario, self.scenario_yml)
+            with open(path_to_scenario_yml, 'r') as f:
+                scenario_vars_imported = yaml.safe_load(f)
+            # Save the imported kwargs to self:
+            for key, val in scenario_vars_imported.items():
+                setattr(self, key, val)
 
-    def import_from_file(self, dir_scenario, scenario_yml='scenario.yml'):
+            # Load in any data files that are present:
+            self.import_dataframes_from_file()
+
+    def check_output_directories(self):
+        # Pass in a keyword for whether to make a new directory
+        # or keep the given name and overwrite anything in there.
+        if self.make_new_output_dir:
+            try:
+                os.mkdir(self.setup.path_to_dir_scenario)
+                rename_scenario = False
+            except FileExistsError:
+                # The directory already exists.
+                rename_scenario = True
+            if rename_scenario:
+                # Rename the scenario and create a new directory
+                # in the new name.
+                # Return here because the output dir will be changed if
+                # a dir with the same name already exists.
+                dir_scenario = self.setup.create_output_dir(
+                    self.setup.dir_scenario)
+                self.setup.set_dir_name(
+                    attr='dir_scenario',
+                    val=dir_scenario,
+                    path_before_dir=self.setup.path_to_dir_output_all_scenarios
+                )
+                os.mkdir(self.setup.path_to_dir_scenario)
+                self.setup.update_scenario_list()
+            else:
+                # Nothing to do here.
+                pass
+        else:
+            # Use the existing output directory.
+            pass
+
+        # Create a new pathway/ dir for outputs.
+        try:
+            os.mkdir(self.setup.path_to_dir_output_pathway)
+        except FileExistsError:
+            # The directory already exists.
+            pass
+
+    def import_dataframes_from_file(self):
         """
-        Import a .yml file and overwrite attributes here.
+        Load dataframes from file.
 
-        TO DO - don't want to store a .yml with a bunch of DataFrames in it.
+        TO DO - write me.
+
+        don't want to store a .yml with a bunch of DataFrames in it.
         Plan:
         Load Setup vars,
         look for each file in turn,
-        find file directory too, build path,
-        import data from file
         setattr(name here, data).
-        So need a list of var names here and the matching file name from setup.
-        If file doesn't exist, pass - might want to load Scenario with only input files e.g.
+        If file doesn't exist, pass -
+        might want to load Scenario with only input files e.g.
 
         # Expect the following to be set before running this:
         # + name  # (from directory name?)
         # + setup
         # + units
         """
-
-        # Import the following from a scenario.yml file:
-        scenario_vars_keys = [
-            # Geography setup: for LSOA, region, units...
-            'limit_to_england',  # bool
-            'limit_to_wales',  # bool
-            'lsoa_catchment_type',  # 'island' or 'nearest'
-            # TO DO - convert admissions stuff to DataFrame, save to file.
-            'total_admissions',         # float
-            'lsoa_relative_frequency',  # array
-            'lsoa_names',               # array. Names, codes in same order as lsoa_relative frequency.
-            'inter_arrival_time'        # float
-            # Pathway parameters:
-            'run_duration',
-            'warm_up',
-            'probability_ivt',
-            'probability_mt',
-            'process_time_call_ambulance',
-            'process_time_ambulance_response',
-            'process_ambulance_on_scene_duration',
-            'process_time_arrival_to_needle',
-            'process_time_arrival_to_puncture',
-            'transfer_time_delay',
-            'process_time_transfer_arrival_to_puncture',
-            ]
-
-        path_to_scenario_yml = os.path.join(dir_scenario, scenario_yml)
-        with open(path_to_scenario_yml, 'r') as f:
-            scenario_vars_imported = yaml.safe_load(f)
-
-        for key, val in scenario_vars_imported.items():
-            setattr(self, key, val)
-
-        # These can be loaded from file if they exist:
-        data_in_files = {
-            'df_selected_regions': self.setup.file_selected_regions,
-            'df_selected_units': self.setup.file_selected_units,
-            'df_transfer_units': self.setup.selected_transfer_units,
-            'df_lsoa_catchment_nearest': self.setup.selected_lsoa_catchment_nearest,
-            'df_lsoa_catchment_island': self.setup.selected_lsoa_catchment_island,
+        # These can be loaded from file if they exist.
+        # Set up csv contents (header and index columns):
+        data_dicts = {
+            'df_selected_regions': dict(
+                csv_header=0,
+                csv_index=None,
+                file='selected_regions',
+                func=self.set_model_areas
+            ),
+            'df_selected_units': dict(
+                csv_header=0,
+                csv_index=None,
+                file='selected_units',
+                func=self.set_unit_services
+            ),
+            'df_selected_transfer_units': dict(
+                csv_header=0,
+                csv_index=0,
+                file='selected_transfer_units',
+                func=self.set_transfer_units
+            ),
+            'df_selected_lsoa_catchment_nearest': dict(
+                csv_header=0,
+                csv_index=0,
+                file='selected_lsoa_catchment_nearest',
+                func=self.set_lsoa_catchment_nearest
+            ),
+            'df_selected_lsoa_catchment_island': dict(
+                csv_header=0,
+                csv_index=0,
+                file='selected_lsoa_catchment_island',
+                func=self.set_lsoa_catchment_island
+            ),
+            'df_selected_lsoa_admissions': dict(
+                csv_header=0,
+                csv_index=[0, 1],
+                file='selected_lsoa_admissions',
+                func=self.set_admissions
+            ),
         }
         # Expect to find each file in either the given dir_scenario
         # or a subdirectory of it.
-
-        # Which file names are they stored in?
-        # Which csv headers and indices do we need?
+        # Look first in the pathway/ subdirectory, then in the main
+        # directory, then give up.
+        for key, data_dict in data_dicts.items():
+            # Import from pathway subdirectory.
+            path_to_file = os.path.join(
+                self.setup.dir_pathway,
+                getattr(self.setup, data_dict['file'])
+            )
+            if os.path.exists(path_to_file):
+                pass
+            else:
+                # Import from main directory.
+                path_to_file = os.path.join(
+                    self.setup.dir_scenario,
+                    getattr(self.setup, data_dict['file'])
+                )
+                if os.path.exists(path_to_file):
+                    pass
+                else:
+                    # Give up.
+                    path_to_file = None
+            if path_to_file is None:
+                # Don't attempt to load.
+                pass
+            else:
+                df = pd.read_csv(
+                    path_to_file,
+                    index_col=data_dict['csv_index'],
+                    header=data_dict['csv_header']
+                )
+                # Run the function to set this:
+                data_dict['func'](df)
 
         # Set df_lsoa to whichever catchment type we selected.
         try:
@@ -225,61 +340,89 @@ class Scenario(object):
             pass
         if hasattr(self, 'df_lsoa'):
             # Load in the travel time and unit dicts.
-            self._create_lsoa_travel_dicts()
+            self.create_lsoa_travel_dicts()
+
+        # If admissions DataFrame exists, check that the related
+        # parameters exist too.
+        if hasattr(self, 'df_admissions'):
+            params_bool = (hasattr(self, 'total_admissions') &
+                           hasattr(self, 'inter_arrival_time'))
+            if params_bool:
+                # Don't need to do anything.
+                pass
+            else:
+                # Create those two parameters.
+                self._process_admissions()
 
     # ###############################
     # ##### MAIN SETUP FUNCTION #####
     # ###############################
-    def load_data(self):
+    def process_scenario(self):
         """
-        TO DO - update me ------------------------------------------------------
-
-        Load required data.
-
-        Stores the following in the Globvars object:
-        + hospitals
-        + lsoa_names
-        + total_admissions
-        + lsoa_relative_frequency
-        + inter_arrival_time
-        + lsoa_ivt_travel_time
-        + lsoa_ivt_unit
-        + lsoa_mt_travel_time
-        + lsoa_mt_unit
-        + lsoa_msu_travel_time
-        + lsoa_msu_unit
-        + mt_transfer_time
-        + mt_transfer_unit
-
-        More details on each attribute are given in the docstrings
-        of the methods that create them.
+        Some of the attributes might already exist depending on how
+        the data has been loaded in, so at each step check if it
+        already exists or not.
         """
-        # Find which LSOAs are in these stroke teams' catchment areas:
-        self._create_lsoa_travel_dicts()
+        if hasattr(self, 'df_selected_regions'):
+            pass
+        else:
+            regions = self.get_model_areas()
+            # ... probably want some user interaction here...
+            self.set_model_areas(regions)
+
+        if hasattr(self, 'df_selected_units'):
+            pass
+        else:
+            units = self.get_unit_services()
+            # ... probably want some user interaction here...
+            self.set_unit_services(units)
+
+        if hasattr(self, 'df_selected_transfer_units'):
+            pass
+        else:
+            transfer = self.get_transfer_units()
+            self.set_transfer_units(transfer)
+
+        if hasattr(self, 'df_lsoa'):
+            pass
+        else:
+            self.set_lsoa_catchment_type(self.lsoa_catchment_type)
+
+        self.create_lsoa_travel_dicts()
         # Stores:
-        # + self.lsoa_names
-        #   --> saves to: file_selected_lsoas
         # + self.lsoa_ivt_travel_time
         # + self.lsoa_ivt_unit
-        # + self.lsoa_mt_travel_time
-        # + self.lsoa_mt_unit
-        # + self.lsoa_msu_travel_time
-        # + self.lsoa_msu_unit
 
-        # Import admissions statistics for those hospitals:
-        self._load_admissions()
-        # Stores:
-        # + self.total_admissions
-        # + self.lsoa_relative_frequency
-        # + self.inter_arrival_time
+        if hasattr(self, 'df_selected_lsoa_admissions'):
+            pass
+        else:
+            admissions = self.get_admissions()
+            self.set_admissions(admissions)
+
+    def reset_scenario_data(self):
+        # Delete the DataFrames.
+        vars_to_delete = [
+            'df_selected_regions',
+            'df_selected_units',
+            'df_selected_transfer_units',
+            'df_selected_lsoa_catchment_nearest',
+            'df_selected_lsoa_catchment_island',
+            'df_selected_lsoa_admissions'
+        ]
+        for v in vars_to_delete:
+            delattr(self, v)
 
     # ##########################
-    # ##### AREAS TO MODEL #####   --> should this move to Units()?
+    # ##### AREAS TO MODEL #####
     # ##########################
     def get_model_areas(self):
         try:
             df = self.df_selected_regions
         except AttributeError:
+            # TO DO - replace with relative import e.g. from stroke_outcome:
+            # from importlib_resources import files  # For defining paths.
+            # filename = files('stroke_outcome.data').joinpath(
+            #     'mrs_dist_probs_cumsum.csv')
             # Load and parse area data
             dir_input = self.setup.dir_reference_data
             file_input = self.setup.file_input_regions
@@ -297,7 +440,7 @@ class Scenario(object):
         self.df_selected_regions = df
 
         # Save output to output folder.
-        dir_output = self.setup.dir_output
+        dir_output = self.setup.dir_scenario
         file_name = self.setup.file_selected_regions
         path_to_file = os.path.join(dir_output, file_name)
         df.to_csv(path_to_file, index=False)
@@ -310,13 +453,9 @@ class Scenario(object):
             self.set_unit_services(df_units)
 
     # #########################
-    # ##### UNIT SERVICES #####   --> should this move to Units()?
+    # ##### UNIT SERVICES #####
     # #########################
     def get_unit_services(self):
-
-        # TO DO - make this show less stuff to the user.
-        # Remove region codes and stuff.
-
         try:
             df = self.df_selected_units
         except AttributeError:
@@ -357,15 +496,18 @@ class Scenario(object):
         self.df_selected_units = df
 
         # Save output to output folder.
-        dir_output = self.setup.dir_output
+        dir_output = self.setup.dir_scenario
         file_name = self.setup.file_selected_units
         path_to_file = os.path.join(dir_output, file_name)
         df.to_csv(path_to_file, index=False)
 
         # Calculate transfer unit info:
-        self._load_transfer_units()
+        self.get_transfer_units()
 
-    def _load_transfer_units(self):
+    # ##########################
+    # ##### TRANSFER UNITS #####
+    # ##########################
+    def get_transfer_units(self):
         """
         write me
 
@@ -373,7 +515,7 @@ class Scenario(object):
         """
         # Merge in transfer unit names.
         # Load and parse hospital transfer data
-        dir_input = self.setup.dir_output
+        dir_input = self.setup.dir_scenario
         file_input = self.setup.file_national_transfer_units
         path_to_file = os.path.join(dir_input, file_input)
         transfer = pd.read_csv(path_to_file)
@@ -392,10 +534,13 @@ class Scenario(object):
         transfer = transfer[mask]
         transfer = transfer.set_index('postcode')
 
-        self.df_transfer_units = transfer
+        return transfer
+
+    def set_transfer_units(self, transfer):
+        self.df_selected_transfer_units = transfer
 
         # Save output to output folder.
-        dir_output = self.setup.dir_output
+        dir_output = self.setup.dir_scenario
         file_name = self.setup.file_selected_transfer_units
         path_to_file = os.path.join(dir_output, file_name)
         transfer.to_csv(path_to_file)
@@ -409,20 +554,13 @@ class Scenario(object):
         """
         (df_results, region_codes_containing_lsoa,
          region_codes_containing_units, units_catching_lsoa) = (
-            self.units.find_lsoa_catchment_nearest(
+            self.calculations.find_lsoa_catchment_nearest(
                 self.df_selected_units,
                 self,
                 treatment='ivt',
             ))
 
-        # Save output to output folder.
-        dir_output = self.setup.dir_output
-        file_name = self.setup.file_selected_lsoa_catchment_nearest
-        path_to_file = os.path.join(dir_output, file_name)
-        df_results.to_csv(path_to_file)
-
-        # Save to self.
-        self.df_lsoa_catchment_nearest = df_results
+        self.set_lsoa_catchment_nearest(df_results)
 
         # Update regions data with whether contain LSOA...
         df_regions = self.df_selected_regions
@@ -433,7 +571,7 @@ class Scenario(object):
         df_regions['contains_unit_catching_lsoa'] = 0
         mask = df_regions['region_code'].isin(region_codes_containing_units)
         df_regions.loc[mask, 'contains_unit_catching_lsoa'] = 1
-        # Save to self:
+        # Save to self and to file:
         self.set_model_areas(df_regions)
 
         # Update units data with whether catch LSOA in selected regions.
@@ -443,24 +581,35 @@ class Scenario(object):
         df_units.loc[mask, 'catches_lsoa_in_selected_region'] = 1
         self.set_unit_services(df_units)
 
+    def set_lsoa_catchment_nearest(self, df_results):
+        """
+        Assume that if this is run directly instead of through
+        find_lsoa_catchment_nearest that the other dataframes have
+        already been updated - have columns for:
+        + contains_selected_lsoa,
+        + contains_unit_catching_lsoa,
+        + catches_lsoa_in_selected_region
+        """
+        # Save output to output folder.
+        dir_output = self.setup.dir_scenario
+        file_name = self.setup.file_selected_lsoa_catchment_nearest
+        path_to_file = os.path.join(dir_output, file_name)
+        df_results.to_csv(path_to_file)
+
+        # Save to self.
+        self.df_selected_lsoa_catchment_nearest = df_results
+
     def find_lsoa_catchment_island(self):
         """
         TO DO - write me
         """
-        df_results = self.units.find_lsoa_catchment_island(
+        df_results = self.calculations.find_lsoa_catchment_island(
             self.df_selected_units,
             self,
             treatment='ivt',
         )
 
-        # Save output to output folder.
-        dir_output = self.setup.dir_output
-        file_name = self.setup.file_selected_lsoa_catchment_island
-        path_to_file = os.path.join(dir_output, file_name)
-        df_results.to_csv(path_to_file)
-
-        # Save to self.
-        self.df_lsoa_catchment_island = df_results
+        self.set_lsoa_catchment_island(df_results)
 
         # Don't need the following columns for island mode,
         # but Combine and Map classes are expecting to find them.
@@ -491,6 +640,24 @@ class Scenario(object):
             df_units['catches_lsoa_in_selected_region'] = pd.NA
             self.set_unit_services(df_units)
 
+    def set_lsoa_catchment_island(self, df_results):
+        """
+        Assume that if this is run directly instead of through
+        find_lsoa_catchment_nearest that the other dataframes have
+        already been updated - have columns for:
+        + contains_selected_lsoa,
+        + contains_unit_catching_lsoa,
+        + catches_lsoa_in_selected_region
+        """
+        # Save output to output folder.
+        dir_output = self.setup.dir_scenario
+        file_name = self.setup.file_selected_lsoa_catchment_island
+        path_to_file = os.path.join(dir_output, file_name)
+        df_results.to_csv(path_to_file)
+
+        # Save to self.
+        self.df_selected_lsoa_catchment_island = df_results
+
     def set_lsoa_catchment_type(self, lsoa_catchment_type):
         """
         TO DO - write me
@@ -499,28 +666,28 @@ class Scenario(object):
 
         if lsoa_catchment_type == 'island':
             try:
-                self.df_lsoa = self.df_lsoa_catchment_island
+                self.df_lsoa = self.df_selected_lsoa_catchment_island
             except AttributeError:
                 # If that data doesn't exist yet, make it now:
                 self.find_lsoa_catchment_island()
-                self.df_lsoa = self.df_lsoa_catchment_island
+                self.df_lsoa = self.df_selected_lsoa_catchment_island
             # Which LSOA selection file should be used?
             self.setup.file_selected_lsoas = (
                 self.setup.file_selected_lsoa_catchment_island)
         else:
             try:
-                self.df_lsoa = self.df_lsoa_catchment_nearest
+                self.df_lsoa = self.df_selected_lsoa_catchment_nearest
             except AttributeError:
                 # If that data doesn't exist yet, make it now:
                 self.find_lsoa_catchment_nearest()
-                self.df_lsoa = self.df_lsoa_catchment_nearest
+                self.df_lsoa = self.df_selected_lsoa_catchment_nearest
             # Which LSOA selection file should be used?
             self.setup.file_selected_lsoas = (
                 self.setup.file_selected_lsoa_catchment_nearest)
 
         self.lsoa_catchment_type = lsoa_catchment_type
 
-    def _create_lsoa_travel_dicts(self):
+    def create_lsoa_travel_dicts(self):
         """
         Convert LSOA travel time dataframe into separate dicts.
         """
@@ -540,7 +707,10 @@ class Scenario(object):
             unit_val = df_travel[f'postcode_nearest_{treatment}']
             setattr(self, unit_key, unit_val)
 
-    def _load_admissions(self):
+    # ######################
+    # ##### ADMISSIONS #####
+    # ######################
+    def get_admissions(self):
         """
         Load admission data on the selected stroke teams.
 
@@ -583,24 +753,34 @@ class Scenario(object):
             how='inner'
         )
 
-        # Process admissions.
-        # Total admissions across these hospitals in a year:
-        self.total_admissions = np.round(admissions["Admissions"].sum(), 0)
-        # Average time between admissions to these hospitals in a year:
-        self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions
-
         # Relative frequency of admissions across a year:
         admissions['relative_frequency'] = (
-            admissions['Admissions'] / self.total_admissions)
-        # Save the LSOA names in the same order as the
-        # LSOA relative frequency array.
+            admissions['admissions'] / self.total_admissions)
+        # Set index to both LSOA name and code so that both follow
+        # through to all of the results data.
         admissions = admissions.set_index(['area', 'lsoa_code'])
-        self.lsoa_names = admissions.index.values
-        self.lsoa_relative_frequency = (
-            admissions['relative_frequency'].to_dict())
+
+        return admissions
+
+    def set_admissions(self, admissions):
+        # Save to self:
+        self.df_selected_lsoa_admissions = admissions
+
+        # Generate stats for self:
+        self.process_admissions()
 
         # Save output to output folder.
-        dir_output = self.setup.dir_output
+        dir_output = self.setup.dir_scenario
         file_name = self.setup.file_selected_lsoa_admissions
         path_to_file = os.path.join(dir_output, file_name)
         admissions.to_csv(path_to_file)
+
+    def process_admissions(self):
+        """
+        Get some stats from the existing admissions DataFrame.
+        """
+        # Total admissions across these hospitals in a year:
+        self.total_admissions = np.round(
+            self.df_selected_lsoa_admissions["admissions"].sum(), 0)
+        # Average time between admissions to these hospitals in a year:
+        self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions

@@ -1,7 +1,11 @@
 """
 Class for organising paths, directory and file names.
+
+
+        # TO DO - make this run from any starting directory. --------------------------
 """
 import os  # For defining paths.
+from importlib_resources import files  # For defining paths.
 import yaml
 
 
@@ -14,17 +18,20 @@ class Setup(object):
     the method create_output_dir.
 
     Directory setup:
-    > dir_output_this_setup
-        > dir_output_all_runs
-            > list_dir_output[0]
+    > dir_output_top
+        > dir_output_all_scenarios
+            > list_dir_scenario[0]
                 + file_selected_regions
-                + file_selected_stroke_units
+                + file_selected_units
                 > pathway
+                    + file_selected_regions
+                    + file_selected_units
                     + file_national_transfer_units
                     + file_selected_transfer_units
                     + file_selected_lsoas
-                    + file_selected_lsoa_by_catchment
-                    + file_selected_lsoa_by_region_island
+                    + file_selected_lsoa_catchment_nearest
+                    + file_selected_lsoa_catchment_island
+                    + file_selected_lsoa_admissions
                     + file_results_all
                     + file_results_summary_all
                     + file_results_summary_by_admitting_unit
@@ -35,17 +42,18 @@ class Setup(object):
                     + file_gdf_lines_transfer
                     + file_gdf_boundaries_lsoa
                     + {assorted map images.jpg}
-            > list_dir_output[1]
-                {same contents as list_dir_output[0]}
+            > list_dir_scenario[1]
+                {similar contents to list_dir_scenario[0]}
             ...
-            {up to list_dir_output[n]}
+            {up to list_dir_scenario[n]}
             ...
             > dir_output_combined
                 + file_combined_selected_regions
-                + file_combined_selected_stroke_units
+                + file_combined_selected_units
                 + file_combined_selected_transfer_units
                 + file_combined_selected_lsoas
                 + file_combined_selected_regions
+                + file_combined_selected_lsoa_admissions
                 + file_combined_results_summary_by_admitting_unit
                 + file_combined_results_summary_by_lsoa
                 > maps
@@ -54,24 +62,29 @@ class Setup(object):
                     + file_gdf_lines_transfer
                     + file_gdf_boundaries_lsoa
                     + {assorted map images.jpg}
+
+    TO DO - easier to store all dirs in one dict, all files in another? ----------
     """
 
     def __init__(self, *initial_data, **kwargs):
 
+        # Where is all of this going anyway?
+        self.path_before_dir_output_top = '.'
+
         # Directories:
         # (don't include slashes please)
         # Reference data:
-        self.dir_data = 'data'
-        self.dir_data_geojson = 'data_geojson'
-        # Path to working directory:
-        self.dir_output_this_setup = 'output'
-        self.dir_output_all_runs = 'output_group'
-        # The current working directory:
+        self.dir_reference_data = 'data'
+        self.dir_reference_data_geojson = 'data_geojson'
+
+        # Path to scenario directory:
+        self.dir_output_top = 'output'
+        self.dir_output_all_scenarios = 'output_group'
+        # The current scenario directory:
         self.dir_scenario = 'scenario'
-        # Keep a list of working directories, e.g. one directory for
-        # each scenario:
-        self.list_dir_output = []
-        # Subdirs of the working directory:
+        # Keep a list of scenario directories:
+        self.list_dir_scenario = []
+        # Subdirs of the scenario directory:
         self.dir_output_pathway = 'pathway'
         self.dir_output_maps = 'maps'
         # Combined multiple scenarios:
@@ -84,25 +97,33 @@ class Setup(object):
         self.file_input_travel_times_inter_unit = (
             'inter_hospital_time_calibrated.csv')
         self.file_input_lsoa_regions = 'regions_lsoa_ew.csv'
-        self.file_input_hospital_coords = 'unit_postcodes_coords.csv'
         self.file_input_admissions = 'admissions_2017-2019.csv'
-        # Geojson files:
-        self.file_geojson_lsoa = 'LSOA_(Dec_2011)_Boundaries_Super_Generalised_Clipped_(BSC)_EW_V3.geojson'
-        self.file_geojson_sibcl = 'SICBL_JUL_2022_EN_BUC_4104971945004813003.geojson'
-        self.file_geojson_lhb = 'Local_Health_Boards_April_2020_WA_BGC_2022_94310626700012506.geojson'
+        # Reference geometry files for Maps:
+        self.file_input_hospital_coords = 'unit_postcodes_coords.csv'
+        self.file_geojson_lsoa = ''.join([
+            'LSOA_(Dec_2011)_Boundaries_Super_Generalised_Clipped_(BSC)',
+            '_EW_V3.geojson'
+        ])
+        self.file_geojson_sibcl = (
+            'SICBL_JUL_2022_EN_BUC_4104971945004813003.geojson')
+        self.file_geojson_lhb = ''.join([
+            'Local_Health_Boards_April_2020_WA_BGC_2022_',
+            '94310626700012506.geojson'
+        ])
 
         # File names that the pathway can save to:
         filenames = [
             # Input file names:
             'selected_regions',
-            'selected_stroke_units',
+            'selected_units',
             # Output file names:
             # Units():
             'national_transfer_units',
             # Scenario():
             'selected_transfer_units',
-            'selected_lsoa_by_catchment',
-            'selected_lsoa_by_region_island',
+            'selected_lsoa_catchment_nearest',
+            'selected_lsoa_catchment_island',
+            'selected_lsoa_admissions',
             # Model():
             'results_all',
             'results_summary_all',
@@ -110,10 +131,11 @@ class Setup(object):
             'results_summary_by_lsoa',
             # Combine():
             'combined_selected_regions',
-            'combined_selected_stroke_units',
+            'combined_selected_units',
             'combined_selected_transfer_units',
             'combined_selected_lsoas',
             'combined_selected_regions',
+            'combined_selected_lsoa_admissions'
             'combined_results_summary_by_admitting_unit',
             'combined_results_summary_by_lsoa',
             # Map():
@@ -123,12 +145,13 @@ class Setup(object):
             'gdf_boundaries_lsoa',
         ]
         for f in filenames:
+            # Set an attribute: self.file_{f} = '{f}.csv'
             setattr(self, f'file_{f}', f'{f}.csv')
 
         # Which LSOA catchment type are we using?
         # This gets updated later with either
-        # self.selected_lsoa_by_catchment or
-        # self.selected_lsoa_by_region_island.
+        # self.selected_lsoa_catchment_nearest or
+        # self.selected_lsoa_catchment_island.
         self.file_selected_lsoas = None
 
         # Overwrite default values
@@ -140,18 +163,53 @@ class Setup(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-        # Add a path to the top dir for this setup:
-        self.dir_output_all_runs = os.path.join(
-            self.dir_output_this_setup, self.dir_output_all_runs
-        )
-        self.create_new_top_dir = True
+        # Create the path to each directory.
+        self.create_paths_to_dirs()
+        # Check the required directory structure
+        # up to and excluding any scenario directories.
+        # Does the top directory already exist?
+        if os.path.exists(self.path_to_dir_output_top):
+            pass
+        else:
+            os.mkdir(self.path_to_dir_output_top)
+
+        # Assume we always want a fresh directory for this Setup.
+        self.create_new_dir_output_all_scenarios = True
         # Does this dir already exist?
-        if os.path.exists(self.dir_output_all_runs):
-            # Flag to create a new top dir.
-            self.rename_top_dir = True
+        if os.path.exists(self.path_to_dir_output_all_scenarios):
+            # Flag to rename the dir so we don't overwrite it.
+            self.rename_dir_output_all_scenarios = True
         else:
             # Don't need to change the name.
-            self.rename_top_dir = False
+            self.rename_dir_output_all_scenarios = False
+
+    def create_paths_to_dirs(self):
+        self.set_dir_name(
+            attr='dir_output_top',
+            val=self.dir_output_top,
+            path_before_dir=self.path_before_dir_output_top
+            )
+
+        self.set_dir_name(
+            attr='dir_output_all_scenarios',
+            val=self.dir_output_all_scenarios,
+            path_before_dir=self.path_to_dir_output_top
+            )
+        self.set_dir_name(
+            attr='dir_scenario',
+            val=self.dir_scenario,
+            path_before_dir=self.path_to_dir_output_all_scenarios
+            )
+        self.set_dir_name(
+            attr='dir_output_pathway',
+            val=self.dir_output_pathway,
+            path_before_dir=self.path_to_dir_scenario
+            )
+        self.set_dir_name(
+            attr='dir_output_maps',
+            val=self.dir_output_maps,
+            path_before_dir=self.path_to_dir_scenario
+            )
 
     def create_output_dir(
             self,
@@ -222,31 +280,35 @@ class Setup(object):
             return dir_output
 
         # First, do we need to make a new top directory?
-        if self.rename_top_dir:
+        if self.rename_dir_output_all_scenarios:
             # While the requested output folder already exists,
             # add a suffix or increase its number until there's a new name.
-            dir_output_all_runs = self.dir_output_all_runs
-            dir_output_top = os.path.split(dir_output_all_runs)[-1]
-            while os.path.isdir(dir_output_all_runs):
+            dir_output_all_scenarios = self.dir_output_all_scenarios
+            dir_output_top = os.path.split(dir_output_all_scenarios)[-1]
+            while os.path.isdir(dir_output_all_scenarios):
                 dir_output_top = _iterate_dir_suffix(
                     dir_output_top, delim)
-                dir_output_all_runs = os.path.join(
-                    self.dir_output_this_setup, dir_output_top)
-            self.dir_output_all_runs = dir_output_all_runs
+                dir_output_all_scenarios = os.path.join(
+                    self.dir_output_top, dir_output_top)
+            self.set_dir_name(
+                attr='dir_output_all_scenarios',
+                val=dir_output_all_scenarios,
+                path_before_dir=self.dir_output_top
+                )
             # Update flag so this doesn't run again.
-            self.rename_top_dir = False
+            self.rename_dir_output_all_scenarios = False
         else:
             pass
-        if self.create_new_top_dir:
+        if self.create_new_dir_output_all_scenarios:
             # Create top directory:
-            os.mkdir(self.dir_output_all_runs)
+            os.mkdir(self.dir_output_all_scenarios)
             # Update flag so this doesn't run again.
-            self.create_new_top_dir = False
+            self.create_new_dir_output_all_scenarios = False
         else:
             pass
 
         if path_to_dir is None:
-            path_to_dir = self.dir_output_all_runs
+            path_to_dir = self.dir_output_all_scenarios
             subdir = True
         else:
             subdir = False
@@ -268,13 +330,21 @@ class Setup(object):
         if combined:
             # Save to self
             # (and so overwrite any name that was there before):
-            self.dir_output_combined = dir_output_this_run
+            self.set_dir_name(
+                attr='dir_output_combined',
+                val=dir_output_this_run,
+                path_before_dir=self.dir_output_all_scenarios
+            )
         elif subdir:
-            # Add the output directory to the list:
-            self.list_dir_output.append(dir_output_this_run)
             # Save to self
             # (and so overwrite any name that was there before):
-            self.dir_output = dir_output_this_run
+            self.set_dir_name(
+                attr='dir_scenario',
+                val=dir_output_this_run,
+                path_before_dir=self.dir_output_all_scenarios
+            )
+            # Add the output directory to the list:
+            self.setup.update_scenario_list()
 
         # Return the name so that we can point the code
         # at this directory:
@@ -284,7 +354,7 @@ class Setup(object):
         """Save the variable dict as a .yml file."""
         setup_vars = vars(self)
 
-        dir_output = self.dir_output_all_runs
+        dir_output = self.dir_output_all_scenarios
         file_output = 'setup.yml'
         file_setup_vars = os.path.join(dir_output, file_output)
 
@@ -298,3 +368,34 @@ class Setup(object):
 
         for key, val in setup_vars_imported.items():
             setattr(self, key, val)
+
+    def set_dir_name(self, attr, dir, path_before_dir):
+        setattr(self, attr, dir)
+        path_to_dir = os.path.join(path_before_dir, dir)
+        setattr(self, f'path_to_{attr}', path_to_dir)
+
+    def update_scenario_list(self):
+        """
+        Set the main directory for this scenario.
+        """
+        # If it's not already in the list of scenario directories,
+        # then add it:
+        if self.dir_scenario not in self.list_dir_scenario:
+            self.list_dir_scenario.append(self.dir_scenario)
+
+    def make_list_dir_scenario(self):
+        """
+        Overwrite self.list_dir_scenario with new list from dirs.
+        """
+        # Gather names of all dirs in dir_output_all_scenarios.
+        list_dir_scenario = next(os.walk(self.dir_output_all_scenarios))[1]
+        # Add the paths:
+        list_dir_scenario = [
+            os.path.join(self.dir_output_all_scenarios, d)
+            for d in list_dir_scenario
+        ]
+        # Remove the combined dir if it's in there:
+        if self.dir_output_combined in list_dir_scenario:
+            list_dir_scenario.remove(self.dir_output_combined)
+        # Save to self:
+        self.list_dir_scenario = list_dir_scenario

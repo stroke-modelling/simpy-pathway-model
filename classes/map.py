@@ -52,7 +52,6 @@ from shapely.geometry import Polygon # For extent box.
 import string  # For generating labels for stroke units.
 
 from classes.setup import Setup
-
 import classes.map_functions as maps  # for plotting.
 
 
@@ -81,6 +80,13 @@ class Map(object):
         except AttributeError:
             self.setup = Setup()
 
+        # Create a new maps/ dir for outputs.
+        try:
+            os.mkdir(self.setup.path_to_dir_output_maps)
+        except FileExistsError:
+            # The directory already exists.
+            pass
+
     # ##########################
     # ##### FILE SELECTION #####
     # ##########################
@@ -88,13 +94,20 @@ class Map(object):
         """
         On changing dir, wipe the loaded data and reload from this dir.
         """
-        if ((dir_data is None) | (dir_data == 'combined')):
+        combo_condition = (
+            (dir_data is None) |
+            (dir_data == 'combined') |
+            (dir_data == self.setup.dir_output_combined)
+            )
+        if combo_condition:
             # Use combined data files.
             self.dir_data = self.setup.dir_output_combined
             self.data_type = 'combined'
         else:
+            # Check that we have the most up-to-date list of dirs:
+            self.setup.make_list_dir_scenario()
             # Use files for the selected scenario only.
-            for d in self.setup.list_dir_output:
+            for d in self.setup.list_dir_scenario:
                 end = os.path.split(d)[-1]
                 if end == dir_data:
                     self.dir_data = d
@@ -320,7 +333,7 @@ class Map(object):
         }
 
         # Import region file:
-        dir_input = self.setup.dir_data_geojson
+        dir_input = self.setup.dir_reference_data_geojson
         file_input = geojson_file_dict[region_type]
         path_to_file = os.path.join(dir_input, file_input)
         gdf_boundaries = geopandas.read_file(path_to_file)
@@ -535,7 +548,7 @@ class Map(object):
         #   - separate: ['{unnamed level}']
 
         # Load and parse geometry data
-        dir_input = self.setup.dir_data
+        dir_input = self.setup.dir_reference_data
         file_input = self.setup.file_input_hospital_coords
         path_to_file = os.path.join(dir_input, file_input)
         df_coords = pd.read_csv(path_to_file, index_col='postcode')
@@ -601,7 +614,7 @@ class Map(object):
         #   - separate: ['{unnamed level}']
 
         # Load and parse geometry data
-        dir_input = self.setup.dir_data
+        dir_input = self.setup.dir_reference_data
         file_input = self.setup.file_input_hospital_coords
         path_to_file = os.path.join(dir_input, file_input)
         df_coords = pd.read_csv(path_to_file)

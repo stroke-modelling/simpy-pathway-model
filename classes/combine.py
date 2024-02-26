@@ -43,6 +43,10 @@ class Combine(object):
             self.setup.dir_output_combined, combined=True)
 
     def combine_files(self):
+        # Check that we have the most up-to-date list of
+        # directories to combine:
+        self.setup.make_list_dir_scenario()
+        # Combine files:
         self.combine_selected_regions()
         self.combine_selected_units()
         self.combine_selected_transfer()

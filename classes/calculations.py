@@ -7,31 +7,13 @@ import os  # For checking directory existence
 from classes.setup import Setup
 
 
-class Units(object):  # TO DO - rename me to something more like "calculations for pathway"?
+class Calculations(object):
     """
     Links between stroke units.
     """
 
     def __init__(self, *initial_data, **kwargs):
         """Constructor method for model parameters"""
-        # Which stroke team choice model will we use?
-        self.destination_decision_type = 0
-        # 0 is 'drip-and-ship'
-
-        # Are we using any extra units?
-        # i.e. not used in the main IVT and MT units list.
-        self.custom_units = False
-
-        # Stroke unit services updates.
-        # Change which units provide IVT, MT, and MSU by changing
-        # their 'use_ivt' flags in the services dataframe.
-        # Example:
-        # self.services_updates = {
-        #     'hospital_name1': {'use_mt': 0},
-        #     'hospital_name2': {'use_ivt': 0, 'use_msu': None},
-        #     'hospital_name3': {'Nearest_mt': 'EX25DW'},
-        #     }
-        # self.services_updates = {}
 
         # Overwrite default values
         # (can take named arguments or a dictionary)
@@ -120,8 +102,7 @@ class Units(object):  # TO DO - rename me to something more like "calculations f
         The value is set to either 0 (not provided) or 1 (provided).
 
         Most of the values are stored in a reference file but
-        they can be updated by the user with the dictionary
-        self.services_updates.
+        they can be updated by the user with the ... UPDATE ME ------------------
 
         These values should be set for all units nationally,
         because otherwise patients from e.g. Newcastle will have their
@@ -152,7 +133,7 @@ class Units(object):  # TO DO - rename me to something more like "calculations f
         # path_to_file = os.path.join(dir_output, file_name)
         # services.to_csv(path_to_file, index=False)
 
-    def find_lsoa_by_catchment(
+    def find_lsoa_catchment_nearest(
             self,
             df_units,
             scenario,
@@ -168,7 +149,7 @@ class Units(object):  # TO DO - rename me to something more like "calculations f
         teams = df_units['postcode'].values
 
         # Load travel time matrix:
-        dir_input = self.setup.dir_data
+        dir_input = self.setup.dir_reference_data
         file_input = self.setup.file_input_travel_times
         path_to_file = os.path.join(dir_input, file_input)
         df_time_lsoa_hospital = pd.read_csv(
@@ -190,7 +171,7 @@ class Units(object):  # TO DO - rename me to something more like "calculations f
             df_time_lsoa_hospital[teams].idxmin(axis='columns'))
 
         # Load in all LSOA names, codes, regions...
-        dir_input = self.setup.dir_data
+        dir_input = self.setup.dir_reference_data
         file_input = self.setup.file_input_lsoa_regions
         path_to_file = os.path.join(dir_input, file_input)
         df_lsoa = pd.read_csv(path_to_file)
@@ -253,7 +234,17 @@ class Units(object):  # TO DO - rename me to something more like "calculations f
         return (df_results, region_codes_containing_lsoa,
                 region_codes_containing_units, units_catching_lsoa)
 
-    def find_lsoa_by_region_island(
+    def find_catching_regions_and_units():
+        """
+        Find these things:
+
+        region_codes_containing_lsoa,
+        region_codes_containing_units,
+        units_catching_lsoa
+        """
+
+
+    def find_lsoa_catchment_island(
             self,
             df_units,
             scenario,
@@ -263,7 +254,7 @@ class Units(object):  # TO DO - rename me to something more like "calculations f
         TO DO - write me ----------------------------------------------------------
         """
         # Load travel time matrix:
-        dir_input = self.setup.dir_data
+        dir_input = self.setup.dir_reference_data
         file_input = self.setup.file_input_travel_times
         path_to_file = os.path.join(dir_input, file_input)
         df_time_lsoa_hospital = pd.read_csv(
@@ -295,7 +286,7 @@ class Units(object):  # TO DO - rename me to something more like "calculations f
             df_time_lsoa_hospital[teams].idxmin(axis='columns'))
 
         # Load in all LSOA names, codes, regions...
-        dir_input = self.setup.dir_data
+        dir_input = self.setup.dir_reference_data
         file_input = self.setup.file_input_lsoa_regions
         path_to_file = os.path.join(dir_input, file_input)
         df_lsoa = pd.read_csv(path_to_file)
@@ -373,7 +364,7 @@ class Units(object):  # TO DO - rename me to something more like "calculations f
         # Each stroke unit will be assigned the MT unit that it is
         # closest to in travel time.
         # Travel time matrix between hospitals:
-        dir_input = self.setup.dir_data
+        dir_input = self.setup.dir_reference_data
         file_input = self.setup.file_input_travel_times_inter_unit
         path_to_file = os.path.join(dir_input, file_input)
         df_time_inter_hospital = pd.read_csv(
