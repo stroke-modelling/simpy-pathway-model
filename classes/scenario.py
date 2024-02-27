@@ -365,6 +365,27 @@ class Scenario(object):
                 # Create those two parameters.
                 self.process_admissions(self.df_selected_lsoa_admissions)
 
+    def save_to_file(self):
+        """Save the variable dict as a .yml file."""
+        scenario_vars = vars(self)
+
+        # Only keep a selection of params:
+        types_to_keep = [float, int, str]
+
+        vars_to_save = {}
+        for key, val in scenario_vars.items():
+            if any([isinstance(val, t) for t in types_to_keep]):
+                if isinstance(val, np.float64):
+                    val = val.tolist()
+                vars_to_save[key] = val
+
+        dir_output = self.setup.dir_output_pathway
+        file_output = 'scenario_output.yml'
+        file_setup_vars = os.path.join(dir_output, file_output)
+
+        with open(file_setup_vars, 'w') as f:
+            yaml.dump(vars_to_save, f)
+
     # ###############################
     # ##### MAIN SETUP FUNCTION #####
     # ###############################
@@ -411,6 +432,9 @@ class Scenario(object):
             self.set_admissions(admissions)
 
         # self.make_dicts_for_pathway()
+
+        # Save any parameters we've just calculated to .yml.
+        self.save_to_file()
 
     def reset_scenario_data(self):
         # Delete the DataFrames.
@@ -797,8 +821,9 @@ class Scenario(object):
         Get some stats from the existing admissions DataFrame.
         """
         # Total admissions across these hospitals in a year:
+        # Keep .tolist() to convert from np.float64 to float.
         self.total_admissions = np.round(
-            admissions["admissions"].sum(), 0)
+            admissions["admissions"].sum(), 0).tolist()
         # Average time between admissions to these hospitals in a year:
         self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions
 
