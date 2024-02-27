@@ -4,6 +4,7 @@ Scenario class with global parameters for the pathway model.
 TO DO -----------------------------------------------------------------------------
 - write this docstring
 - only save inputs to Scenario() for init?
+- tidy up Calculations - it's confusing.
 
 Usually the scenario.yml file should contain:
 
@@ -496,6 +497,7 @@ class Scenario(object):
         try:
             df = self.df_selected_units
         except AttributeError:
+            # TO DO - replace with relative import
             # Load and parse unit data
             dir_input = self.setup.dir_reference_data
             file_input = self.setup.file_input_unit_services
@@ -550,7 +552,7 @@ class Scenario(object):
 
         TO DO - just keep a copy of national transfer units with 'selected' column?
         """
-        self.national_dict = self.calculations.load_data()#_find_national_mt_feeder_units()
+        self.national_dict = self.calculations.load_data()
 
         # Merge in transfer unit names.
         # Load and parse hospital transfer data
@@ -629,10 +631,21 @@ class Scenario(object):
         + contains_unit_catching_lsoa,
         + catches_lsoa_in_selected_region
         """
+        # TO DO - need to run the checks for LSOA catchment in other regions, by other units
+        # even when they've been imported from file.
+        # Store all LSOA results in one file?
+
+        # TO DO - store everything in self, only save it at the end?
+        # check that saving is possible at the start so it doesn't crash.
+        # But then can't use the mapping module as you go along.
+        # Unless you pass scenario to Map()...?
+        self.update_units_with_lsoa_catchment()
+
         # Save output to output folder.
-        dir_output = self.setup.dir_output_pathway
-        file_name = self.setup.file_selected_lsoa_catchment_nearest
-        path_to_file = os.path.join(dir_output, file_name)
+        path_to_file = os.path.join(
+            self.setup.dir_output_pathway,
+            self.setup.file_selected_lsoa_catchment_nearest
+            )
         df_results.to_csv(path_to_file)
 
         # Save to self.
@@ -670,6 +683,7 @@ class Scenario(object):
         if save_file:
             self.set_model_areas(df_regions)
 
+    def update_units_with_lsoa_catchment(self):
         # Update units data with whether catch LSOA in selected regions.
         df_units = self.df_selected_units
         if 'catches_lsoa_in_selected_region' in df_units.columns:
@@ -688,6 +702,8 @@ class Scenario(object):
         + contains_unit_catching_lsoa,
         + catches_lsoa_in_selected_region
         """
+        self.update_units_with_lsoa_catchment()
+
         # Save output to output folder.
         dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_selected_lsoa_catchment_island
@@ -777,6 +793,7 @@ class Scenario(object):
             float. Average time between admissions in the
             considered stroke teams.
         """
+        # TO DO - replace with relative import
         # Load and parse admissions data
         dir_input = self.setup.dir_reference_data
         file_input = self.setup.file_input_admissions
@@ -826,7 +843,3 @@ class Scenario(object):
             admissions["admissions"].sum(), 0).tolist()
         # Average time between admissions to these hospitals in a year:
         self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions
-
-    # def make_dicts_for_pathway(self):
-    #     self.lsoa_ivt_unit = self.df_lsoa['postcode_nearest_ivt'].to_dict()
-    #     self.lsoa_ivt_travel_time = self.df_lsoa['time_nearest_ivt'].to_dict()

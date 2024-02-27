@@ -40,6 +40,7 @@ TO DO - better colour assignment.
 e.g. drip and ship catchment map, make all feeder units different shades
 of the same colour for each MT unit.
 
+TO DO - get this ready for packaging.
 """
 import numpy as np
 import pandas as pd

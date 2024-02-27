@@ -2,6 +2,10 @@
 Units class for defining choice of stroke unit through the pathway.
 
 TO DO - should this be a functions file?
+don't want a big run() function here - have clear names for what it actually does.
+TO DO - split apart all of the LSOA functions more.
+TO DO - transfer units parts are confusing.
+
 """
 import pandas as pd
 import os  # For checking directory existence
