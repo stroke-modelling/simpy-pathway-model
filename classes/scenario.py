@@ -176,17 +176,17 @@ class Scenario(object):
     def load_scenario_from_files(self):
         if self.load_dir is None:
             # Update path to scenario files:
-            self.setup.set_dir_name(
-                attr='dir_scenario',
-                val=self.name,
-                path_before_dir=self.setup.path_to_dir_output_all_scenarios
-            )
+            self.setup.dir_scenario = self.name
+            # self.setup.dir_scenario = os.path.join(
+            #     self.setup.dir_output_all_scenarios,
+            #     self.name
+            # )
         else:
+            self.name = self.load_dir
             # Update path to scenario files:
-            self.setup.set_dir_name(
-                attr='dir_scenario',
-                val=self.load_dir,
-                path_before_dir=self.setup.path_to_dir_output_all_scenarios
+            self.setup.dir_scenario = os.path.join(
+                self.setup.dir_output_all_scenarios,
+                self.name
             )
             # Import the kwargs from provided yml file:
             path_to_scenario_yml = os.path.join(
@@ -205,7 +205,7 @@ class Scenario(object):
         # or keep the given name and overwrite anything in there.
         if self.make_new_output_dir:
             try:
-                os.mkdir(self.setup.path_to_dir_scenario)
+                os.mkdir(self.setup.dir_scenario)
                 rename_scenario = False
             except FileExistsError:
                 # The directory already exists.
@@ -215,14 +215,9 @@ class Scenario(object):
                 # in the new name.
                 # Return here because the output dir will be changed if
                 # a dir with the same name already exists.
-                dir_scenario = self.setup.create_output_dir(
+                self.setup.dir_scenario = self.setup.create_output_dir(
                     self.setup.dir_scenario)
-                self.setup.set_dir_name(
-                    attr='dir_scenario',
-                    val=dir_scenario,
-                    path_before_dir=self.setup.path_to_dir_output_all_scenarios
-                )
-                os.mkdir(self.setup.path_to_dir_scenario)
+                # os.mkdir(self.setup.dir_scenario)
                 self.setup.update_scenario_list()
             else:
                 # Nothing to do here.
@@ -232,8 +227,12 @@ class Scenario(object):
             pass
 
         # Create a new pathway/ dir for outputs.
+        self.setup.dir_output_pathway = os.path.join(
+            self.setup.dir_scenario,
+            self.setup.name_dir_output_pathway
+        )
         try:
-            os.mkdir(self.setup.path_to_dir_output_pathway)
+            os.mkdir(self.setup.dir_output_pathway)
         except FileExistsError:
             # The directory already exists.
             pass
@@ -344,7 +343,7 @@ class Scenario(object):
 
         # If admissions DataFrame exists, check that the related
         # parameters exist too.
-        if hasattr(self, 'df_admissions'):
+        if hasattr(self, 'df_selected_lsoa_admissions'):
             params_bool = (hasattr(self, 'total_admissions') &
                            hasattr(self, 'inter_arrival_time'))
             if params_bool:
@@ -352,7 +351,7 @@ class Scenario(object):
                 pass
             else:
                 # Create those two parameters.
-                self._process_admissions()
+                self._process_admissions(self.df_selected_lsoa_admissions)
 
     # ###############################
     # ##### MAIN SETUP FUNCTION #####
@@ -399,6 +398,8 @@ class Scenario(object):
             admissions = self.get_admissions()
             self.set_admissions(admissions)
 
+        self.make_dicts_for_pathway()
+
     def reset_scenario_data(self):
         # Delete the DataFrames.
         vars_to_delete = [
@@ -440,7 +441,7 @@ class Scenario(object):
         self.df_selected_regions = df
 
         # Save output to output folder.
-        dir_output = self.setup.dir_scenario
+        dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_selected_regions
         path_to_file = os.path.join(dir_output, file_name)
         df.to_csv(path_to_file, index=False)
@@ -496,7 +497,7 @@ class Scenario(object):
         self.df_selected_units = df
 
         # Save output to output folder.
-        dir_output = self.setup.dir_scenario
+        dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_selected_units
         path_to_file = os.path.join(dir_output, file_name)
         df.to_csv(path_to_file, index=False)
@@ -513,9 +514,11 @@ class Scenario(object):
 
         TO DO - just keep a copy of national transfer units with 'selected' column?
         """
+        self.national_dict = self.calculations.load_data()#_find_national_mt_feeder_units()
+
         # Merge in transfer unit names.
         # Load and parse hospital transfer data
-        dir_input = self.setup.dir_scenario
+        dir_input = self.setup.dir_output_pathway
         file_input = self.setup.file_national_transfer_units
         path_to_file = os.path.join(dir_input, file_input)
         transfer = pd.read_csv(path_to_file)
@@ -540,7 +543,7 @@ class Scenario(object):
         self.df_selected_transfer_units = transfer
 
         # Save output to output folder.
-        dir_output = self.setup.dir_scenario
+        dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_selected_transfer_units
         path_to_file = os.path.join(dir_output, file_name)
         transfer.to_csv(path_to_file)
@@ -591,7 +594,7 @@ class Scenario(object):
         + catches_lsoa_in_selected_region
         """
         # Save output to output folder.
-        dir_output = self.setup.dir_scenario
+        dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_selected_lsoa_catchment_nearest
         path_to_file = os.path.join(dir_output, file_name)
         df_results.to_csv(path_to_file)
@@ -650,7 +653,7 @@ class Scenario(object):
         + catches_lsoa_in_selected_region
         """
         # Save output to output folder.
-        dir_output = self.setup.dir_scenario
+        dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_selected_lsoa_catchment_island
         path_to_file = os.path.join(dir_output, file_name)
         df_results.to_csv(path_to_file)
@@ -753,6 +756,8 @@ class Scenario(object):
             how='inner'
         )
 
+        self.process_admissions(admissions)
+
         # Relative frequency of admissions across a year:
         admissions['relative_frequency'] = (
             admissions['admissions'] / self.total_admissions)
@@ -760,27 +765,31 @@ class Scenario(object):
         # through to all of the results data.
         admissions = admissions.set_index(['area', 'lsoa_code'])
 
+        # TO DO - need a separate admissions list for each LSOA catchment type.
+        # Add it into the existing LSOA file.
+
         return admissions
 
     def set_admissions(self, admissions):
         # Save to self:
         self.df_selected_lsoa_admissions = admissions
 
-        # Generate stats for self:
-        self.process_admissions()
-
         # Save output to output folder.
-        dir_output = self.setup.dir_scenario
+        dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_selected_lsoa_admissions
         path_to_file = os.path.join(dir_output, file_name)
         admissions.to_csv(path_to_file)
 
-    def process_admissions(self):
+    def process_admissions(self, admissions):
         """
         Get some stats from the existing admissions DataFrame.
         """
         # Total admissions across these hospitals in a year:
         self.total_admissions = np.round(
-            self.df_selected_lsoa_admissions["admissions"].sum(), 0)
+            admissions["admissions"].sum(), 0)
         # Average time between admissions to these hospitals in a year:
         self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions
+
+    def make_dicts_for_pathway(self):
+        self.lsoa_ivt_unit = self.df_lsoa['postcode_nearest_ivt'].to_dict()
+        self.lsoa_ivt_travel_time = self.df_lsoa['time_nearest_ivt'].to_dict()

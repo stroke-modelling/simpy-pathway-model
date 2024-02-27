@@ -53,6 +53,7 @@ class Combine(object):
         self.combine_selected_lsoa()
         self.combine_results_summary_by_lsoa()
         self.combine_results_summary_by_admitting_unit()
+        self.combine_admissions()
 
     # ##########################
     # ##### SPECIFIC FILES #####
@@ -86,7 +87,7 @@ class Combine(object):
         |    n | ... | -x.xx, yy.yy |            |          1 |
         +------+-----+--------------+------------+------------+
         """
-        file_to_merge = self.setup.file_selected_stroke_units
+        file_to_merge = self.setup.file_selected_units
 
         try:
             df = self._hstack_multiple_dataframes(
@@ -112,7 +113,7 @@ class Combine(object):
 
         if save_to_file:
             output_dir = self.setup.dir_output_combined
-            output_filename = self.setup.file_combined_selected_stroke_units
+            output_filename = self.setup.file_combined_selected_units
             path_to_file = os.path.join(output_dir, output_filename)
             df.to_csv(path_to_file)
 
@@ -438,7 +439,7 @@ class Combine(object):
         |    n |          1 |      0.00 |            |           |
         +------+------------+-----------+------------+-----------+
         """
-        file_to_merge = self.setup.selected_lsoa_admissions
+        file_to_merge = self.setup.file_selected_lsoa_admissions
 
         try:
             df = self._hstack_multiple_dataframes(
@@ -567,7 +568,11 @@ class Combine(object):
 
         for d, dir_output in enumerate(self.setup.list_dir_scenario):
             file_input = file_to_merge
-            path_to_file = os.path.join(dir_output, file_input)
+            path_to_file = os.path.join(
+                dir_output,
+                self.setup.name_dir_output_pathway,
+                file_input
+                )
 
             df = pd.read_csv(
                 path_to_file, index_col=csv_index, header=csv_header)
@@ -654,7 +659,11 @@ class Combine(object):
 
         for d, dir_output in enumerate(self.setup.list_dir_scenario):
             file_input = file_to_merge
-            path_to_file = os.path.join(dir_output, file_input)
+            path_to_file = os.path.join(
+                dir_output, 
+                self.setup.name_dir_output_pathway,
+                file_input
+                )
 
             df = pd.read_csv(path_to_file)
 

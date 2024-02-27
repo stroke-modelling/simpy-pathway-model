@@ -67,6 +67,8 @@ class Setup(object):
     """
 
     def __init__(self, *initial_data, **kwargs):
+        # Assume we always want a fresh directory for this Setup.
+        self.create_new_dir_output_all_scenarios = True
 
         # Where is all of this going anyway?
         self.path_before_dir_output_top = '.'
@@ -84,9 +86,10 @@ class Setup(object):
         self.dir_scenario = 'scenario'
         # Keep a list of scenario directories:
         self.list_dir_scenario = []
+        # self.list_path_to_dir_scenario = []
         # Subdirs of the scenario directory:
-        self.dir_output_pathway = 'pathway'
-        self.dir_output_maps = 'maps'
+        self.name_dir_output_pathway = 'pathway'
+        self.name_dir_output_maps = 'maps'
         # Combined multiple scenarios:
         self.dir_output_combined = 'combined'
 
@@ -135,7 +138,7 @@ class Setup(object):
             'combined_selected_transfer_units',
             'combined_selected_lsoas',
             'combined_selected_regions',
-            'combined_selected_lsoa_admissions'
+            'combined_selected_lsoa_admissions',
             'combined_results_summary_by_admitting_unit',
             'combined_results_summary_by_lsoa',
             # Map():
@@ -164,52 +167,80 @@ class Setup(object):
             setattr(self, key, kwargs[key])
 
         # Create the path to each directory.
-        self.create_paths_to_dirs()
+        self.dir_output_top = os.path.join(
+            self.path_before_dir_output_top,
+            self.dir_output_top
+            )
+        self.dir_output_all_scenarios = os.path.join(
+            self.dir_output_top,
+            self.dir_output_all_scenarios
+        )
         # Check the required directory structure
         # up to and excluding any scenario directories.
         # Does the top directory already exist?
-        if os.path.exists(self.path_to_dir_output_top):
+        if os.path.exists(self.dir_output_top):
             pass
         else:
-            os.mkdir(self.path_to_dir_output_top)
+            os.mkdir(self.dir_output_top)
 
-        # Assume we always want a fresh directory for this Setup.
-        self.create_new_dir_output_all_scenarios = True
         # Does this dir already exist?
-        if os.path.exists(self.path_to_dir_output_all_scenarios):
+        if os.path.exists(self.dir_output_all_scenarios):
             # Flag to rename the dir so we don't overwrite it.
             self.rename_dir_output_all_scenarios = True
         else:
             # Don't need to change the name.
             self.rename_dir_output_all_scenarios = False
 
-    def create_paths_to_dirs(self):
-        self.set_dir_name(
-            attr='dir_output_top',
-            val=self.dir_output_top,
-            path_before_dir=self.path_before_dir_output_top
-            )
+        if self.create_new_dir_output_all_scenarios:
+            # Create the all scenarios dir:
+            self.create_all_scenario_dir()
 
-        self.set_dir_name(
-            attr='dir_output_all_scenarios',
-            val=self.dir_output_all_scenarios,
-            path_before_dir=self.path_to_dir_output_top
-            )
-        self.set_dir_name(
-            attr='dir_scenario',
-            val=self.dir_scenario,
-            path_before_dir=self.path_to_dir_output_all_scenarios
-            )
-        self.set_dir_name(
-            attr='dir_output_pathway',
-            val=self.dir_output_pathway,
-            path_before_dir=self.path_to_dir_scenario
-            )
-        self.set_dir_name(
-            attr='dir_output_maps',
-            val=self.dir_output_maps,
-            path_before_dir=self.path_to_dir_scenario
-            )
+    def create_all_scenario_dir(self, delim='!'):
+        """
+        Create a directory for storing the output of this run.
+
+        If the chosen directory name already exists, add a suffix
+        "!1" or similar to make a new directory name and create that
+        instead.
+
+        Choose a delimiter that wouldn't normally go into a dir
+        name just to make the naming easier.
+
+        Inputs
+        ------
+        dir_output          - str. Requested name of the output directory
+                              for this run of the model only.
+        delim               - str. A character to split off the requested
+                              directory name from the suffix that this
+                              function adds to it.
+        """
+
+
+        # First, do we need to make a new top directory?
+        if self.rename_dir_output_all_scenarios:
+            # While the requested output folder already exists,
+            # add a suffix or increase its number until there's a new name.
+            dir_output_all_scenarios = self.dir_output_all_scenarios
+            dir_output_top = os.path.split(dir_output_all_scenarios)[0]
+            dir_output_end = os.path.split(dir_output_all_scenarios)[-1]
+            while os.path.isdir(dir_output_all_scenarios):
+                dir_output_end = self._iterate_dir_suffix(
+                    dir_output_end, delim)
+                dir_output_all_scenarios = os.path.join(
+                    dir_output_top, dir_output_end)
+            self.dir_output_all_scenarios = dir_output_all_scenarios
+            # Update flag so this doesn't run again.
+            self.rename_dir_output_all_scenarios = False
+        else:
+            pass
+
+        if self.create_new_dir_output_all_scenarios:
+            # Create top directory:
+            os.mkdir(self.dir_output_all_scenarios)
+            # Update flag so this doesn't run again.
+            self.create_new_dir_output_all_scenarios = False
+        else:
+            pass
 
     def create_output_dir(
             self,
@@ -236,77 +267,6 @@ class Setup(object):
                               directory name from the suffix that this
                               function adds to it.
         """
-        def _iterate_dir_suffix(dir_output, delim):
-            """
-            Update string for dir!{x} to dir!{x+1}.
-            """
-            if len(dir_output) > 0:
-                if (dir_output[-1] == '/') | (dir_output[-1] == '\\'):
-                    # Remove final '/' or '\'
-                    dir_output = dir_output[:-1]
-                else:
-                    # Don't change the name.
-                    pass
-            else:
-                # The name is just an empty string.
-                pass
-            # Split the dir name by every delim:
-            dir_parts = dir_output.split(delim)
-            # # Make a single string of everything up to the final delim:
-            # For now, assume that the delimiter doesn't appear
-            # elsewhere in the file name.
-            dir_start = dir_parts[0]
-            # If delimiter would appear elsewhere, would need something
-            # like this only need a way to tell the difference between
-            # a name ending _1 and ending _useful_stuff.
-            # dir_start = (
-            #     delim.join(dir_parts.split(delim)[:-1])
-            #     if len(dir_parts) > 1 else dir_output)
-            if len(dir_parts) == 1:
-                # No delim in it yet. Set up the suffix.
-                suffix = 1
-            else:
-                # Increase the number after the delim.
-                suffix = dir_parts[-1]
-                try:
-                    suffix = int(suffix)
-                    suffix += 1
-                except ValueError:
-                    # The final part of the directory name is not
-                    # a number.
-                    suffix = 1
-            # Update the directory name:
-            dir_output = f'{dir_start}{delim}{suffix}'
-            return dir_output
-
-        # First, do we need to make a new top directory?
-        if self.rename_dir_output_all_scenarios:
-            # While the requested output folder already exists,
-            # add a suffix or increase its number until there's a new name.
-            dir_output_all_scenarios = self.dir_output_all_scenarios
-            dir_output_top = os.path.split(dir_output_all_scenarios)[-1]
-            while os.path.isdir(dir_output_all_scenarios):
-                dir_output_top = _iterate_dir_suffix(
-                    dir_output_top, delim)
-                dir_output_all_scenarios = os.path.join(
-                    self.dir_output_top, dir_output_top)
-            self.set_dir_name(
-                attr='dir_output_all_scenarios',
-                val=dir_output_all_scenarios,
-                path_before_dir=self.dir_output_top
-                )
-            # Update flag so this doesn't run again.
-            self.rename_dir_output_all_scenarios = False
-        else:
-            pass
-        if self.create_new_dir_output_all_scenarios:
-            # Create top directory:
-            os.mkdir(self.dir_output_all_scenarios)
-            # Update flag so this doesn't run again.
-            self.create_new_dir_output_all_scenarios = False
-        else:
-            pass
-
         if path_to_dir is None:
             path_to_dir = self.dir_output_all_scenarios
             subdir = True
@@ -320,9 +280,10 @@ class Setup(object):
         # While the requested output folder already exists,
         # add a suffix or increase its number until there's a new name.
         while os.path.isdir(dir_output_this_run):
-            dir_output = _iterate_dir_suffix(dir_output, delim)
-            dir_output_this_run = os.path.join(
-                path_to_dir, dir_output)
+            dir_output = self._iterate_dir_suffix(dir_output, delim)
+            # dir_output_this_run = os.path.join(
+            #     path_to_dir, dir_output)
+            dir_output_this_run = dir_output
 
         # Create this directory:
         os.mkdir(dir_output_this_run)
@@ -330,25 +291,60 @@ class Setup(object):
         if combined:
             # Save to self
             # (and so overwrite any name that was there before):
-            self.set_dir_name(
-                attr='dir_output_combined',
-                val=dir_output_this_run,
-                path_before_dir=self.dir_output_all_scenarios
-            )
+            self.dir_output_combined = dir_output_this_run
         elif subdir:
             # Save to self
             # (and so overwrite any name that was there before):
-            self.set_dir_name(
-                attr='dir_scenario',
-                val=dir_output_this_run,
-                path_before_dir=self.dir_output_all_scenarios
-            )
+            self.dir_scenario = dir_output_this_run
             # Add the output directory to the list:
-            self.setup.update_scenario_list()
+            self.update_scenario_list()
 
         # Return the name so that we can point the code
         # at this directory:
         return dir_output_this_run
+
+    def _iterate_dir_suffix(self, dir_output, delim):
+        """
+        Update string for dir!{x} to dir!{x+1}.
+        """
+        if len(dir_output) > 0:
+            if (dir_output[-1] == '/') | (dir_output[-1] == '\\'):
+                # Remove final '/' or '\'
+                dir_output = dir_output[:-1]
+            else:
+                # Don't change the name.
+                pass
+        else:
+            # The name is just an empty string.
+            pass
+        # Split the dir name by every delim:
+        dir_parts = dir_output.split(delim)
+        # # Make a single string of everything up to the final delim:
+        # For now, assume that the delimiter doesn't appear
+        # elsewhere in the file name.
+        dir_start = dir_parts[0]
+        # If delimiter would appear elsewhere, would need something
+        # like this only need a way to tell the difference between
+        # a name ending _1 and ending _useful_stuff.
+        # dir_start = (
+        #     delim.join(dir_parts.split(delim)[:-1])
+        #     if len(dir_parts) > 1 else dir_output)
+        if len(dir_parts) == 1:
+            # No delim in it yet. Set up the suffix.
+            suffix = 1
+        else:
+            # Increase the number after the delim.
+            suffix = dir_parts[-1]
+            try:
+                suffix = int(suffix)
+                suffix += 1
+            except ValueError:
+                # The final part of the directory name is not
+                # a number.
+                suffix = 1
+        # Update the directory name:
+        dir_output = f'{dir_start}{delim}{suffix}'
+        return dir_output
 
     def save_to_file(self):
         """Save the variable dict as a .yml file."""
@@ -369,10 +365,10 @@ class Setup(object):
         for key, val in setup_vars_imported.items():
             setattr(self, key, val)
 
-    def set_dir_name(self, attr, dir, path_before_dir):
-        setattr(self, attr, dir)
-        path_to_dir = os.path.join(path_before_dir, dir)
-        setattr(self, f'path_to_{attr}', path_to_dir)
+    # def set_dir_name(self, attr, val, path_before_dir):
+    #     setattr(self, attr, val)
+    #     path_to_dir = os.path.join(path_before_dir, val)
+    #     setattr(self, f'path_to_{attr}', path_to_dir)
 
     def update_scenario_list(self):
         """
@@ -382,6 +378,7 @@ class Setup(object):
         # then add it:
         if self.dir_scenario not in self.list_dir_scenario:
             self.list_dir_scenario.append(self.dir_scenario)
+            # self.list_path_to_dir_scenario.append(self.path_to_dir_scenario)
 
     def make_list_dir_scenario(self):
         """

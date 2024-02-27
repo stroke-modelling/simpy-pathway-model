@@ -116,8 +116,8 @@ class Calculations(object):
             Columns for whether a team provides IVT, MT, and MSU.
         """
         # Load default stroke unit services:
-        dir_input = self.setup.dir_output
-        file_input = self.setup.file_selected_stroke_units
+        dir_input = self.setup.dir_output_pathway
+        file_input = self.setup.file_selected_units
         path_to_file = os.path.join(dir_input, file_input)
         services = pd.read_csv(path_to_file)
         # Each row is a stroke unit. The columns are 'postcode' and
@@ -188,7 +188,7 @@ class Calculations(object):
         # Find selected regions:
         # Columns [region, region_code, region_type,
         #          ICB22CD, ICB22NM, ISDN, selected]
-        df_regions = scenario.selected_regions
+        df_regions = scenario.df_selected_regions
         region_list = sorted(list(set(
             df_regions['region_code'][df_regions['selected'] == 1])))
         # Find all LSOA within selected regions.
@@ -307,7 +307,7 @@ class Calculations(object):
         # Find selected regions:
         # Columns [region, region_code, region_type,
         #          ICB22CD, ICB22NM, ISDN, selected]
-        df_regions = scenario.selected_regions
+        df_regions = scenario.df_selected_regions
         region_list = sorted(list(set(
             df_regions['region_code'][df_regions['selected'] == 1])))
 
@@ -411,7 +411,7 @@ class Calculations(object):
         self.national_ivt_feeder_units = df_nearest_mt
 
         # Save output to output folder.
-        dir_output = self.setup.dir_output
+        dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_national_transfer_units
         path_to_file = os.path.join(dir_output, file_name)
         df_nearest_mt.to_csv(path_to_file)

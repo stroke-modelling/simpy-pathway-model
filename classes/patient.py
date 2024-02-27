@@ -166,9 +166,9 @@ class Patient():
             str. The chosen LSOA.
         """
         # From the scenario object, take the LSOA names...
-        elements = scenario.df_admissions.index
+        elements = scenario.df_selected_lsoa_admissions.index
         # ... and the frequency of each LSOA in the admission numbers...
-        frequencies = scenario.df_admissions['relative_frequency']
+        frequencies = scenario.df_selected_lsoa_admissions['relative_frequency']
         # ... and make a weighted selection of LSOA.
         lsoa, lsoa_code = random.choices(elements, weights=frequencies)[0]
         return lsoa, lsoa_code

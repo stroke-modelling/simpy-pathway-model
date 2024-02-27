@@ -244,15 +244,18 @@ class Pathway(object):
         patient.admitting_unit_travel_duration:
             float. Time to travel to the admitting unit.
         """
-        if self.scenario.destination_decision_type == 0:
-            # Drip and ship model.
-            ivt_unit_chosen = True
-        else:
-            # TO DO - implement mothership or other ways to pick
-            # and choose in some known ratio.
-            # PLACEHOLDER selection:
-            c = 0.25  # Chance of the MT unit being picked
-            ivt_unit_chosen = (np.random.binomial(1, c) == 0)
+        # if self.scenario.destination_decision_type == 0:
+        #     # Drip and ship model.
+        #     ivt_unit_chosen = True
+        # else:
+        #     # TO DO - implement mothership or other ways to pick
+        #     # and choose in some known ratio.
+        #     # PLACEHOLDER selection:
+        #     c = 0.25  # Chance of the MT unit being picked
+        #     ivt_unit_chosen = (np.random.binomial(1, c) == 0)
+        ivt_unit_chosen = True
+        # TEMPORARY 27th Feb 2024 - replaced selection of units with just the one
+        # in scenario, removed destination_decision_type param.
 
         # Pick out the chosen unit info:
         if ivt_unit_chosen:

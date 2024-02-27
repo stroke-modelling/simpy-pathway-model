@@ -62,6 +62,8 @@ class Map(object):
     class Combine():
 
     TO DO - write me
+
+    TO DO - separate this out from Setup?
     """
     def __init__(self, *initial_data, **kwargs):
 
@@ -80,13 +82,6 @@ class Map(object):
         except AttributeError:
             self.setup = Setup()
 
-        # Create a new maps/ dir for outputs.
-        try:
-            os.mkdir(self.setup.path_to_dir_output_maps)
-        except FileExistsError:
-            # The directory already exists.
-            pass
-
     # ##########################
     # ##### FILE SELECTION #####
     # ##########################
@@ -103,17 +98,35 @@ class Map(object):
             # Use combined data files.
             self.dir_data = self.setup.dir_output_combined
             self.data_type = 'combined'
+            self.dir_output_maps = os.path.join(
+                self.dir_data, self.setup.name_dir_output_maps
+            )
         else:
             # Check that we have the most up-to-date list of dirs:
             self.setup.make_list_dir_scenario()
             # Use files for the selected scenario only.
-            for d in self.setup.list_dir_scenario:
-                end = os.path.split(d)[-1]
+            for d, dir_scen in enumerate(self.setup.list_dir_scenario):
+                end = os.path.split(dir_scen)[-1]
                 if end == dir_data:
-                    self.dir_data = d
+                    self.dir_data = dir_scen
+            # Add the "pathway" and "maps" parts:
+            self.dir_output_maps = os.path.join(
+                self.dir_data, self.setup.name_dir_output_maps
+            )
+            self.dir_data = os.path.join(
+                self.dir_data,
+                self.setup.name_dir_output_pathway
+                )
             self.data_type = 'single'
 
         self.delete_loaded_data()
+
+        # Create a new maps/ dir for outputs.
+        try:
+            os.mkdir(self.dir_output_maps)
+        except FileExistsError:
+            # The directory already exists.
+            pass
 
     def delete_loaded_data(self):
         # Delete these attributes if they exist:
@@ -153,7 +166,7 @@ class Map(object):
                 'index_col': [0, 1],
                 },
             'df_units': {
-                'file': self.setup.file_combined_selected_stroke_units,
+                'file': self.setup.file_combined_selected_units,
                 'header': [0, 1],
                 'index_col': 0,
                 },
@@ -188,7 +201,7 @@ class Map(object):
                 'index_col': [0, 1],
                 },
             'df_units': {
-                'file': self.setup.file_selected_stroke_units,
+                'file': self.setup.file_selected_units,
                 'header': [0],
                 'index_col': 0,
                 },
@@ -511,7 +524,7 @@ class Map(object):
         self.gdf_boundaries_regions = gdf_boundaries_regions
 
         # Save output to output folder.
-        dir_output = self.dir_data
+        dir_output = self.dir_output_maps
         file_name = self.setup.file_gdf_boundaries_regions
         path_to_file = os.path.join(dir_output, file_name)
         gdf_boundaries_regions.to_csv(path_to_file)
@@ -597,7 +610,7 @@ class Map(object):
         self.gdf_points_units = gdf_units
 
         # Save output to output folder.
-        dir_output = self.dir_data
+        dir_output = self.dir_output_maps
         file_name = self.setup.file_gdf_points_units
         path_to_file = os.path.join(dir_output, file_name)
         gdf_units.to_csv(path_to_file)
@@ -707,7 +720,7 @@ class Map(object):
         self.gdf_lines_transfer = gdf_transfer
 
         # Save output to output folder.
-        dir_output = self.dir_data
+        dir_output = self.dir_output_maps
         file_name = self.setup.file_gdf_lines_transfer
         path_to_file = os.path.join(dir_output, file_name)
         gdf_transfer.to_csv(path_to_file)
@@ -847,7 +860,7 @@ class Map(object):
         self.gdf_boundaries_lsoa = gdf_boundaries_lsoa
 
         # Save output to output folder.
-        dir_output = self.dir_data
+        dir_output = self.dir_output_maps
         file_name = self.setup.file_gdf_boundaries_lsoa
         path_to_file = os.path.join(dir_output, file_name)
         gdf_boundaries_lsoa.to_csv(path_to_file)
@@ -1506,7 +1519,7 @@ class Map(object):
         # Create file name:
         if save:
             file_name = f'map_selected_regions_{scenario}.jpg'
-            path_to_file = os.path.join(self.dir_data, file_name)
+            path_to_file = os.path.join(self.dir_output_maps, file_name)
         else:
             path_to_file = None
 
@@ -1596,7 +1609,7 @@ class Map(object):
         # Create file name:
         if save:
             file_name = f'map_selected_units_{scenario}.jpg'
-            path_to_file = os.path.join(self.dir_data, file_name)
+            path_to_file = os.path.join(self.dir_output_maps, file_name)
         else:
             path_to_file = None
 
@@ -1768,7 +1781,7 @@ class Map(object):
                 file_name += f'_{lsoa_catchment_type}'
             file_name += '.jpg'
 
-            path_to_file = os.path.join(self.dir_data, file_name)
+            path_to_file = os.path.join(self.dir_output_maps, file_name)
         else:
             path_to_file = None
 
@@ -1986,7 +1999,7 @@ class Map(object):
 
         if save:
             file_name = f'map_outcome_{outcome}_{scenario}.jpg'
-            path_to_file = os.path.join(self.dir_data, file_name)
+            path_to_file = os.path.join(self.dir_output_maps, file_name)
         else:
             path_to_file = None
 

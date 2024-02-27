@@ -118,7 +118,7 @@ class Model(object):
         self.get_outcomes()
 
         # Save output to output folder.
-        dir_output = self.setup.dir_output
+        dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_results_all
         path_to_file = os.path.join(dir_output, file_name)
         self.results_all.to_csv(path_to_file, index=False)
@@ -136,7 +136,7 @@ class Model(object):
         self.results_summary_all.index.name = 'statistic'
 
         # Save output to output folder.
-        dir_output = self.setup.dir_output
+        dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_results_summary_all
         path_to_file = os.path.join(dir_output, file_name)
         self.results_summary_all.to_csv(path_to_file)
@@ -153,7 +153,7 @@ class Model(object):
         # self.results_summary_by_admitting_unit.set_index(self.results_summary_by_admitting_unit.columns[0], inplace=True)
 
         # Save output to output folder.
-        dir_output = self.setup.dir_output
+        dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_results_summary_by_admitting_unit
         path_to_file = os.path.join(dir_output, file_name)
         self.results_summary_by_admitting_unit.to_csv(
@@ -172,7 +172,7 @@ class Model(object):
         # self.results_summary_by_lsoa.set_index(self.results_summary_by_lsoa.columns[0], inplace=True)
 
         # Save output to output folder.
-        dir_output = self.setup.dir_output
+        dir_output = self.setup.dir_output_pathway
         file_name = self.setup.file_results_summary_by_lsoa
         path_to_file = os.path.join(dir_output, file_name)
         self.results_summary_by_lsoa.to_csv(
