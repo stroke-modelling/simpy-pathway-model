@@ -1,5 +1,7 @@
 """
 Units class for defining choice of stroke unit through the pathway.
+
+TO DO - should this be a functions file?
 """
 import pandas as pd
 import os  # For checking directory existence

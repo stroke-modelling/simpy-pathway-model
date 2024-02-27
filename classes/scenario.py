@@ -116,7 +116,7 @@ class Scenario(object):
         self.scenario_yml = 'scenario.yml'
         # Whether or not to make a new directory
         # (if not, risk overwriting existing files):
-        self.make_new_output_dir = True
+        self.make_new_scenario_dir = True
 
         # ----- Geography -----
         # Which LSOAs, stroke units, and regions will we use?
@@ -182,12 +182,13 @@ class Scenario(object):
             #     self.name
             # )
         else:
-            self.name = self.load_dir
-            # Update path to scenario files:
-            self.setup.dir_scenario = os.path.join(
-                self.setup.dir_output_all_scenarios,
-                self.name
-            )
+            self.name = os.path.split(self.load_dir)[-1]
+            self.setup.dir_scenario = self.load_dir
+            # # Update path to scenario files:
+            # self.setup.dir_scenario = os.path.join(
+            #     self.setup.dir_output_all_scenarios,
+            #     self.name
+            # )
             # Import the kwargs from provided yml file:
             path_to_scenario_yml = os.path.join(
                 self.setup.dir_scenario, self.scenario_yml)
@@ -197,13 +198,24 @@ class Scenario(object):
             for key, val in scenario_vars_imported.items():
                 setattr(self, key, val)
 
+            # Create a new pathway/ dir for outputs.
+            self.setup.dir_output_pathway = os.path.join(
+                self.setup.dir_scenario,
+                self.setup.name_dir_output_pathway
+            )
+            try:
+                os.mkdir(self.setup.dir_output_pathway)
+            except FileExistsError:
+                # The directory already exists.
+                pass
+
             # Load in any data files that are present:
             self.import_dataframes_from_file()
 
     def check_output_directories(self):
         # Pass in a keyword for whether to make a new directory
         # or keep the given name and overwrite anything in there.
-        if self.make_new_output_dir:
+        if self.make_new_scenario_dir is True:
             try:
                 os.mkdir(self.setup.dir_scenario)
                 rename_scenario = False
@@ -262,37 +274,37 @@ class Scenario(object):
             'df_selected_regions': dict(
                 csv_header=0,
                 csv_index=None,
-                file='selected_regions',
+                file='file_selected_regions',
                 func=self.set_model_areas
             ),
             'df_selected_units': dict(
                 csv_header=0,
                 csv_index=None,
-                file='selected_units',
+                file='file_selected_units',
                 func=self.set_unit_services
             ),
             'df_selected_transfer_units': dict(
                 csv_header=0,
                 csv_index=0,
-                file='selected_transfer_units',
+                file='file_selected_transfer_units',
                 func=self.set_transfer_units
             ),
             'df_selected_lsoa_catchment_nearest': dict(
                 csv_header=0,
                 csv_index=0,
-                file='selected_lsoa_catchment_nearest',
+                file='file_selected_lsoa_catchment_nearest',
                 func=self.set_lsoa_catchment_nearest
             ),
             'df_selected_lsoa_catchment_island': dict(
                 csv_header=0,
                 csv_index=0,
-                file='selected_lsoa_catchment_island',
+                file='file_selected_lsoa_catchment_island',
                 func=self.set_lsoa_catchment_island
             ),
             'df_selected_lsoa_admissions': dict(
                 csv_header=0,
                 csv_index=[0, 1],
-                file='selected_lsoa_admissions',
+                file='file_selected_lsoa_admissions',
                 func=self.set_admissions
             ),
         }
@@ -303,7 +315,7 @@ class Scenario(object):
         for key, data_dict in data_dicts.items():
             # Import from pathway subdirectory.
             path_to_file = os.path.join(
-                self.setup.dir_pathway,
+                self.setup.dir_output_pathway,
                 getattr(self.setup, data_dict['file'])
             )
             if os.path.exists(path_to_file):
@@ -351,7 +363,7 @@ class Scenario(object):
                 pass
             else:
                 # Create those two parameters.
-                self._process_admissions(self.df_selected_lsoa_admissions)
+                self.process_admissions(self.df_selected_lsoa_admissions)
 
     # ###############################
     # ##### MAIN SETUP FUNCTION #####
@@ -398,7 +410,7 @@ class Scenario(object):
             admissions = self.get_admissions()
             self.set_admissions(admissions)
 
-        self.make_dicts_for_pathway()
+        # self.make_dicts_for_pathway()
 
     def reset_scenario_data(self):
         # Delete the DataFrames.
@@ -790,6 +802,6 @@ class Scenario(object):
         # Average time between admissions to these hospitals in a year:
         self.inter_arrival_time = (365 * 24 * 60) / self.total_admissions
 
-    def make_dicts_for_pathway(self):
-        self.lsoa_ivt_unit = self.df_lsoa['postcode_nearest_ivt'].to_dict()
-        self.lsoa_ivt_travel_time = self.df_lsoa['time_nearest_ivt'].to_dict()
+    # def make_dicts_for_pathway(self):
+    #     self.lsoa_ivt_unit = self.df_lsoa['postcode_nearest_ivt'].to_dict()
+    #     self.lsoa_ivt_travel_time = self.df_lsoa['time_nearest_ivt'].to_dict()
