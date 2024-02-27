@@ -1,8 +1,5 @@
 """
 Class for organising paths, directory and file names.
-
-
-        # TO DO - make this run from any starting directory. --------------------------
 """
 import os  # For defining paths.
 from importlib_resources import files  # For defining paths.
@@ -195,6 +192,58 @@ class Setup(object):
             # Create the all scenarios dir:
             self.create_all_scenario_dir()
 
+    def save_to_file(self):
+        """Save the variable dict as a .yml file."""
+        setup_vars = vars(self)
+
+        dir_output = self.dir_output_all_scenarios
+        file_output = 'setup.yml'
+        file_setup_vars = os.path.join(dir_output, file_output)
+
+        with open(file_setup_vars, 'w') as f:
+            yaml.dump(setup_vars, f)
+
+    def import_from_file(self, path_to_setup_file):
+        """Import a .yml file and overwrite attributes here."""
+        with open(path_to_setup_file, 'r') as f:
+            setup_vars_imported = yaml.safe_load(f)
+
+        for key, val in setup_vars_imported.items():
+            setattr(self, key, val)
+
+    # ###########################
+    # ##### TRACK SCENARIOS #####
+    # ###########################
+    def update_scenario_list(self):
+        """
+        Set the main directory for this scenario.
+        """
+        # If it's not already in the list of scenario directories,
+        # then add it:
+        if self.dir_scenario not in self.list_dir_scenario:
+            self.list_dir_scenario.append(self.dir_scenario)
+            # self.list_path_to_dir_scenario.append(self.path_to_dir_scenario)
+
+    def make_list_dir_scenario(self):
+        """
+        Overwrite self.list_dir_scenario with new list from dirs.
+        """
+        # Gather names of all dirs in dir_output_all_scenarios.
+        list_dir_scenario = next(os.walk(self.dir_output_all_scenarios))[1]
+        # Add the paths:
+        list_dir_scenario = [
+            os.path.join(self.dir_output_all_scenarios, d)
+            for d in list_dir_scenario
+        ]
+        # Remove the combined dir if it's in there:
+        if self.dir_output_combined in list_dir_scenario:
+            list_dir_scenario.remove(self.dir_output_combined)
+        # Save to self:
+        self.list_dir_scenario = list_dir_scenario
+
+    # ##############################
+    # ##### DIRECTORY CREATION #####
+    # ##############################
     def create_all_scenario_dir(self, delim='!'):
         """
         Create a directory for storing the output of this run.
@@ -345,54 +394,3 @@ class Setup(object):
         # Update the directory name:
         dir_output = f'{dir_start}{delim}{suffix}'
         return dir_output
-
-    def save_to_file(self):
-        """Save the variable dict as a .yml file."""
-        setup_vars = vars(self)
-
-        dir_output = self.dir_output_all_scenarios
-        file_output = 'setup.yml'
-        file_setup_vars = os.path.join(dir_output, file_output)
-
-        with open(file_setup_vars, 'w') as f:
-            yaml.dump(setup_vars, f)
-
-    def import_from_file(self, path_to_setup_file):
-        """Import a .yml file and overwrite attributes here."""
-        with open(path_to_setup_file, 'r') as f:
-            setup_vars_imported = yaml.safe_load(f)
-
-        for key, val in setup_vars_imported.items():
-            setattr(self, key, val)
-
-    # def set_dir_name(self, attr, val, path_before_dir):
-    #     setattr(self, attr, val)
-    #     path_to_dir = os.path.join(path_before_dir, val)
-    #     setattr(self, f'path_to_{attr}', path_to_dir)
-
-    def update_scenario_list(self):
-        """
-        Set the main directory for this scenario.
-        """
-        # If it's not already in the list of scenario directories,
-        # then add it:
-        if self.dir_scenario not in self.list_dir_scenario:
-            self.list_dir_scenario.append(self.dir_scenario)
-            # self.list_path_to_dir_scenario.append(self.path_to_dir_scenario)
-
-    def make_list_dir_scenario(self):
-        """
-        Overwrite self.list_dir_scenario with new list from dirs.
-        """
-        # Gather names of all dirs in dir_output_all_scenarios.
-        list_dir_scenario = next(os.walk(self.dir_output_all_scenarios))[1]
-        # Add the paths:
-        list_dir_scenario = [
-            os.path.join(self.dir_output_all_scenarios, d)
-            for d in list_dir_scenario
-        ]
-        # Remove the combined dir if it's in there:
-        if self.dir_output_combined in list_dir_scenario:
-            list_dir_scenario.remove(self.dir_output_combined)
-        # Save to self:
-        self.list_dir_scenario = list_dir_scenario
