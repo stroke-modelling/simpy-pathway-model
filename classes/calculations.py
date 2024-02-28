@@ -94,11 +94,141 @@ class Calculations(object):
 
         return national_dict
 
-    # ################################
-    # ##### NATIONAL INFORMATION #####
-    # ################################
+    # ################
+    # ##### LSOA #####
+    # ################
+    def find_each_lsoa_chosen_unit(
+            self,
+            df_time_lsoa_to_units,
+            treatment='IVT'
+        ):
+        """
+
+        """
+        # Put the results in this dataframe where each row
+        # is a different LSOA:
+        df_results = pd.DataFrame(index=df_time_lsoa_to_units.index)
+        # The smallest time in each row:
+        df_results[f'time_nearest_{treatment}'] = (
+            df_time_lsoa_to_units.min(axis='columns'))
+        # The name of the column containing the smallest
+        # time in each row:
+        df_results[f'postcode_nearest_{treatment}'] = (
+            df_time_lsoa_to_units.idxmin(axis='columns'))
+        return df_results
+
+    def find_lsoa_catchment(
+            self,
+            teams_to_limit=[],
+            treatment='IVT',
+            ):
+        # Load travel time matrix:
+        path_to_file = os.path.join(self.setup.dir_reference_data,
+                                    self.setup.file_input_travel_times)
+        df_time_lsoa_to_units = pd.read_csv(path_to_file, index_col='LSOA')
+        # Each column is a postcode of a stroke team and
+        # each row is an LSOA name (LSOA11NM).
+
+        # Limit columns to requested units:
+        if len(teams_to_limit) > 0:
+            df_time_lsoa_to_units = df_time_lsoa_to_units[teams_to_limit]
+
+        # Assign LSOA by catchment area of these stroke units.
+        df_catchment = self.find_each_lsoa_chosen_unit(
+            df_time_lsoa_to_units, treatment=treatment)
+        return df_catchment
+
+    def limit_lsoa_catchment_to_selected_units(
+            self,
+            df_catchment,
+            regions_selected,
+            regions_to_limit=[],
+            limit_to_england=False,
+            limit_to_wales=False,
+            treatment='IVT',
+            ):
+        # Load in all LSOA names, codes, regions...
+        path_to_file = os.path.join(self.setup.dir_reference_data,
+                                    self.setup.file_input_lsoa_regions)
+        df_lsoa = pd.read_csv(path_to_file)
+        # Columns: [lsoa, lsoa_code, region_code, region, region_type,
+        #           icb_code, icb, isdn]
+        # If requested, limit to England or Wales.
+        if limit_to_england:
+            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'SICBL']
+        elif limit_to_wales:
+            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LHB']
+
+        # Keep a copy of the original catchment columns for later:
+        cols_df_catchment = df_catchment.columns
+        # Merge in region information to catchment:
+        df_catchment.reset_index(inplace=True)
+        df_catchment = pd.merge(
+            df_catchment, df_lsoa,
+            left_on='LSOA', right_on='lsoa', how='left'
+        )
+        df_catchment.drop('lsoa', axis='columns', inplace=True)
+        df_catchment.set_index('LSOA', inplace=True)
+
+        # Limit rows to LSOA in requested regions:
+        if len(regions_to_limit) > 0:
+            mask = df_catchment['region_code'].isin(regions_to_limit)
+            df_catchment = df_catchment.loc[mask].copy()
+
+        # Find where the results data is in selected regions:
+        mask = df_catchment['region_code'].isin(regions_selected)
+        # Find list of units catching any LSOA in selected regions:
+        units_catching_lsoa = sorted(list(set(
+            df_catchment.loc[mask][f'postcode_nearest_{treatment}'])))
+
+        # Limit the results to only
+        # LSOAs that are caught by units
+        # that catch any LSOA in the selected regions.
+        mask = df_catchment[
+            f'postcode_nearest_{treatment}'].isin(units_catching_lsoa)
+        df_catchment = df_catchment.loc[mask].copy()
+
+        # Restore the shortened catchment DataFrame to its starting columns
+        # plus the useful regions:
+        cols = cols_df_catchment + ['region', 'region_code', 'region_type']
+        df_catchment = df_catchment[cols]
+
+        return df_catchment
+
+    def find_catchment_info_regions_and_units(
+            self, df_catchment, df_units_regions, treatment='IVT'
+            ):
+        """
+        """
+        # Find list of regions containing LSOA caught by selected units.
+        regions_containing_lsoa = sorted(list(set(
+            df_catchment['region_code'])))
+
+        # Find list of units catching any LSOA in selected regions:
+        units_catching_lsoa = sorted(list(set(
+            df_catchment[f'postcode_nearest_{treatment}'])))
+
+        # Limit the units data:
+        mask = df_units_regions['Postcode'].isin(units_catching_lsoa)
+        df_units_regions = df_units_regions[mask]
+        # Find list of regions containing these units:
+        regions_containing_units_catching_lsoa = (
+            df_units_regions['region_code'].tolist())
+
+        to_return = (
+            regions_containing_lsoa,
+            units_catching_lsoa,
+            regions_containing_units_catching_lsoa
+        )
+        return to_return
+
+    # #################
+    # ##### UNITS #####
+    # #################
     def _set_national_hospital_services(self):
         """
+        DELETE THIS
+
         Make table of which stroke units provide which treatments.
 
         Each stroke unit has a flag in this table for each of:
@@ -138,204 +268,6 @@ class Calculations(object):
         # file_name = self.setup.file_national_unit_services
         # path_to_file = os.path.join(dir_output, file_name)
         # services.to_csv(path_to_file, index=False)
-
-    def find_lsoa_catchment_nearest(
-            self,
-            df_units,
-            scenario,
-            treatment='IVT'
-            ):
-        """
-        TO DO - write me -----------------------------------------------------------
-        """
-        # Find list of stroke units catching these LSOA.
-        # Limit to units offering IVT:
-        df_units = df_units[df_units[f'use_{treatment}'] == 1]
-        # List of teams to use:
-        teams = df_units['postcode'].values
-
-        # Load travel time matrix:
-        dir_input = self.setup.dir_reference_data
-        file_input = self.setup.file_input_travel_times
-        path_to_file = os.path.join(dir_input, file_input)
-        df_time_lsoa_hospital = pd.read_csv(
-            path_to_file,
-            index_col='LSOA'
-            )
-        # Each column is a postcode of a stroke team and
-        # each row is an LSOA name (LSOA11NM).
-
-        # Put the results in this dataframe where each row
-        # is a different LSOA:
-        df_results = pd.DataFrame(index=df_time_lsoa_hospital.index)
-        # The smallest time in each row:
-        df_results[f'time_nearest_{treatment}'] = (
-            df_time_lsoa_hospital[teams].min(axis='columns'))
-        # The name of the column containing the smallest
-        # time in each row:
-        df_results[f'postcode_nearest_{treatment}'] = (
-            df_time_lsoa_hospital[teams].idxmin(axis='columns'))
-
-        # Load in all LSOA names, codes, regions...
-        dir_input = self.setup.dir_reference_data
-        file_input = self.setup.file_input_lsoa_regions
-        path_to_file = os.path.join(dir_input, file_input)
-        df_lsoa = pd.read_csv(path_to_file)
-        # Full list of columns:
-        # [LSOA11NM, LSOA11CD, region_code, region, region_type,
-        #  ICB22CD, ICB22NM, ISDN]
-
-        # If requested, limit to England or Wales.
-        if scenario.limit_to_england:
-            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'SICBL']
-        elif scenario.limit_to_wales:
-            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LHB']
-
-        # Find selected regions:
-        # Columns [region, region_code, region_type,
-        #          ICB22CD, ICB22NM, ISDN, selected]
-        df_regions = scenario.df_selected_regions
-        region_list = sorted(list(set(
-            df_regions['region_code'][df_regions['selected'] == 1])))
-        # Find all LSOA within selected regions.
-        df_lsoa_in_regions = df_lsoa[df_lsoa['region_code'].isin(region_list)].copy()
-        # Find list of units catching any LSOA in selected regions.
-        mask = df_results.index.isin(df_lsoa_in_regions['lsoa'])
-        df_results_in_regions = df_results.loc[mask]
-        units_catching_lsoa = list(set(
-            df_results_in_regions[f'postcode_nearest_{treatment}']))
-        # Find regions containing these units:
-        mask = df_units['postcode'].isin(units_catching_lsoa)
-        region_codes_containing_units = list(set(
-            df_units.loc[mask, 'region_code']))
-
-        # Separate out LSOA caught by selected units.
-        # Limit units to those offering IVT:
-        df_units = df_units[df_units[f'use_{treatment}'] == 1]
-        selected_units = df_units['postcode'][df_units['selected']  == 1]
-        mask = df_results[f'postcode_nearest_{treatment}'].isin(selected_units)
-        df_results = df_results.loc[mask]
-
-        # Limit to just these LSOA:
-        df_results = df_results.reset_index()
-        df_results = pd.merge(
-            df_results, df_lsoa[['lsoa', 'lsoa_code', 'region_code']],
-            left_on='LSOA', right_on='lsoa', how='inner'
-            )
-
-        # Find regions containing LSOA:
-        region_codes_containing_lsoa = list(set(
-            df_results['region_code']))
-
-        df_results = df_results.drop(['LSOA', 'region_code'], axis='columns')
-        df_results = df_results.set_index('lsoa')
-
-        # Reorder columns:
-        df_results = df_results[[
-            'lsoa_code',
-            f'postcode_nearest_{treatment}',
-            f'time_nearest_{treatment}'
-            ]]
-
-        return (df_results, region_codes_containing_lsoa,
-                region_codes_containing_units, units_catching_lsoa)
-
-    def find_catching_regions_and_units():
-        """
-        Find these things:
-
-        region_codes_containing_lsoa,
-        region_codes_containing_units,
-        units_catching_lsoa
-        """
-
-
-    def find_lsoa_catchment_island(
-            self,
-            df_units,
-            scenario,
-            treatment='IVT',
-            ):
-        """
-        TO DO - write me ----------------------------------------------------------
-        """
-        # Load travel time matrix:
-        dir_input = self.setup.dir_reference_data
-        file_input = self.setup.file_input_travel_times
-        path_to_file = os.path.join(dir_input, file_input)
-        df_time_lsoa_hospital = pd.read_csv(
-            path_to_file,
-            index_col='LSOA'
-            )
-        # Each column is a postcode of a stroke team and
-        # each row is an LSOA name (LSOA11NM).
-
-        # Limit units to those offering IVT:
-        df_units = df_units[df_units[f'use_{treatment}'] == 1]
-        # Limit to selected units:
-        df_units = df_units[df_units['selected'] == 1]
-        # List of teams to use:
-        teams = df_units['postcode'].values
-        # Limit the travel time list to only selected units.
-        df_time_lsoa_hospital = df_time_lsoa_hospital[teams]
-
-        # Assign LSOA by catchment area of these stroke units.
-        # Put the results in this dataframe where each row
-        # is a different LSOA:
-        df_results = pd.DataFrame(index=df_time_lsoa_hospital.index)
-        # The smallest time in each row:
-        df_results[f'time_nearest_{treatment}'] = (
-            df_time_lsoa_hospital[teams].min(axis='columns'))
-        # The name of the column containing the smallest
-        # time in each row:
-        df_results[f'postcode_nearest_{treatment}'] = (
-            df_time_lsoa_hospital[teams].idxmin(axis='columns'))
-
-        # Load in all LSOA names, codes, regions...
-        dir_input = self.setup.dir_reference_data
-        file_input = self.setup.file_input_lsoa_regions
-        path_to_file = os.path.join(dir_input, file_input)
-        df_lsoa = pd.read_csv(path_to_file)
-        # Full list of columns:
-        # [LSOA11NM, LSOA11CD, region_code, region, region_type,
-        #  ICB22CD, ICB22NM, ISDN]
-        # Only keep LSOA name and code and region name and code:
-        cols_to_keep = [
-            'lsoa', 'lsoa_code', 'region', 'region_code', 'region_type']
-        df_lsoa = df_lsoa[cols_to_keep]
-
-        # If requested, limit to England or Wales.
-        if scenario.limit_to_england:
-            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'SICBL']
-        elif scenario.limit_to_wales:
-            df_lsoa = df_lsoa[df_lsoa['region_type'] == 'LHB']
-
-        # Find selected regions:
-        # Columns [region, region_code, region_type,
-        #          ICB22CD, ICB22NM, ISDN, selected]
-        df_regions = scenario.df_selected_regions
-        region_list = sorted(list(set(
-            df_regions['region_code'][df_regions['selected'] == 1])))
-
-        # Find all LSOA within selected regions.
-        df_lsoa_in_regions = df_lsoa[df_lsoa['region_code'].isin(region_list)]
-
-        # Limit the results list to only selected LSOA.
-        df_results = df_results.reset_index()
-        df_results = pd.merge(
-            df_results, df_lsoa_in_regions[['lsoa', 'lsoa_code']],
-            left_on='LSOA', right_on='lsoa', how='right'
-            )
-        df_results = df_results.drop('LSOA', axis='columns')
-        df_results = df_results.set_index('lsoa')
-
-        # Reorder columns:
-        df_results = df_results[[
-            'lsoa_code',
-            f'postcode_nearest_{treatment}',
-            f'time_nearest_{treatment}'
-            ]]
-        return df_results
 
     def _find_national_mt_feeder_units(self):
         """

@@ -589,22 +589,110 @@ class Scenario(object):
     # #########################
     # ##### SELECTED LSOA #####
     # #########################
-    def find_lsoa_catchment_nearest(self):
+    def calculate_lsoa_catchment(self, regions_to_limit=[]):  # TO DO - move to Calculations?
         """
         TO DO - write me
         """
-        (df_results, region_codes_containing_lsoa,
-         region_codes_containing_units, units_catching_lsoa) = (
-            self.calculations.find_lsoa_catchment_nearest(
-                self.df_selected_units,
-                self,
-                treatment='ivt',
+        # Regions data:
+        df_regions = self.df_selected_regions
+        mask = df_regions['selected'] == 1
+        regions_selected = sorted(set(list(
+            df_regions.loc[mask]['region_code'])))
+
+        # For all LSOA:
+        df_catchment = self.calculations.find_lsoa_catchment()
+        # Limit to the useful LSOA:
+        df_catchment = (
+            self.calculations.limit_lsoa_catchment_to_selected_units(
+                df_catchment,
+                regions_selected,
+                regions_to_limit=regions_to_limit,
+                limit_to_england=self.limit_to_england,
+                limit_to_wales=self.limit_to_wales,
+                treatment='IVT',
             ))
 
-        self.set_lsoa_catchment_nearest(df_results)
+        # Units data for region matching:
+        df_units = self.df_selected_units
+
+        # Find which regions and units use these LSOA:
+        catch_tuple = (
+             self.calculations.find_catchment_info_regions_and_units(
+                df_catchment, df_units, treatment='IVT'))
+        # catch_tuple contains:
+        # + region codes containing lsoa
+        # + units catching lsoa
+        # + region codes containing units
+
+        # Drop region columns from df_catchment:
+        cols_to_drop = ['region', 'region_code', 'region_type']
+        df_catchment = df_catchment.drop(cols_to_drop, axis='columns')
+
+        return (df_catchment, *catch_tuple)
+
+    def find_lsoa_catchment(self):
+        """
+        Wrapper for calculate_lsoa_catchment.
+        """
+        if self.lsoa_catchment_type == 'island':
+            # Find list of selected regions:
+            limit_to_regions = sorted(list(set(
+                self.df_selected_regions['region_code'])))
+        else:
+            limit_to_regions = []
+
+        tup = self.find_lsoa_catchment(limit_to_regions=limit_to_regions)
+        # tup contains:
+        # + DataFrame: each LSOA's catchment unit and time.
+        # + list: region codes containing lsoa
+        # + list: units catching lsoa
+        # + list: region codes containing units
+        return tup
+
+    def update_data_with_lsoa_catchment(
+            self,
+            df_catchment,
+            region_codes_containing_lsoa,
+            units_catching_lsoa,
+            region_codes_containing_units
+            ):
+        """
+        write me
+        """
+        # Set up catchment DataFrame.
+        df_catchment['Use'] = 1
+        df_catchment.reset_index(inplace=True)
+        df_catchment.rename(columns={'LSOA': 'lsoa'}, inplace=True)
+        # Now add a MultiIndex column level to df_catchment:
+        cols_df_catchment = [
+            ['any'] * 1 + [self.lsoa_catchment_type] * 3,
+            df_catchment.columns
+        ]
+        df_catchment = pd.DataFrame(
+            df_catchment.values,
+            index=df_catchment.index,
+            columns=cols_df_catchment
+        )
+        # Set column level names:
+        df_catchment.columns = df_catchment.columns.set_names(
+            ['catchment', 'property'])
+
+        if hasattr(self, 'df_lsoa') is False:
+            self.df_lsoa = df_catchment
+        else:
+            # Existing data:
+            df_lsoa_before = self.df_lsoa
+            # If this catchment type already exists, delete it:
+            try:
+                df_lsoa_before.drop(self.lsoa_catchment_type, axis='columns')
+            except KeyError
+                # No data to delete.
+                pass
+            # Merge the new data in with the existing DataFrame.
+            df_lsoa = pd.merge(df_lsoa_before, df_catchment,
+                               on='lsoa', how='outer')
 
         # Update regions data with whether contain LSOA...
-        df_regions = self.df_selected_regions
         df_regions['contains_selected_lsoa'] = 0
         mask = df_regions['region_code'].isin(region_codes_containing_lsoa)
         df_regions.loc[mask, 'contains_selected_lsoa'] = 1
@@ -612,14 +700,15 @@ class Scenario(object):
         df_regions['contains_unit_catching_lsoa'] = 0
         mask = df_regions['region_code'].isin(region_codes_containing_units)
         df_regions.loc[mask, 'contains_unit_catching_lsoa'] = 1
-        # Save to self and to file:
-        self.set_model_areas(df_regions)
 
         # Update units data with whether catch LSOA in selected regions.
-        df_units = self.df_selected_units
         df_units['catches_lsoa_in_selected_region'] = 0
         mask = df_units['postcode'].isin(units_catching_lsoa)
         df_units.loc[mask, 'catches_lsoa_in_selected_region'] = 1
+
+        # Save to self and to file:
+        self.set_lsoa_catchment_nearest(df_catchment)
+        self.set_model_areas(df_regions)
         self.set_unit_services(df_units)
 
     def set_lsoa_catchment_nearest(self, df_results):
@@ -635,11 +724,6 @@ class Scenario(object):
         # even when they've been imported from file.
         # Store all LSOA results in one file?
 
-        # TO DO - store everything in self, only save it at the end?
-        # check that saving is possible at the start so it doesn't crash.
-        # But then can't use the mapping module as you go along.
-        # Unless you pass scenario to Map()...?
-        self.update_units_with_lsoa_catchment()
 
         # Save output to output folder.
         path_to_file = os.path.join(
@@ -651,47 +735,13 @@ class Scenario(object):
         # Save to self.
         self.df_selected_lsoa_catchment_nearest = df_results
 
-    def find_lsoa_catchment_island(self):
-        """
-        TO DO - write me
-        """
-        df_results = self.calculations.find_lsoa_catchment_island(
-            self.df_selected_units,
-            self,
-            treatment='ivt',
-        )
-
-        self.set_lsoa_catchment_island(df_results)
-
-        # Don't need the following columns for island mode,
-        # but Combine and Map classes are expecting to find them.
-        # Update regions data with whether contain LSOA.
-        df_regions = self.df_selected_regions
-        save_file = False
-        if 'contains_selected_lsoa' in df_regions.columns:
-            # Don't overwrite the existing data.
-            pass
-        else:
-            df_regions['contains_selected_lsoa'] = pd.NA
-            save_file = True
-        if 'contains_unit_catching_lsoa' in df_regions.columns:
-            # Don't overwrite the existing data.
-            pass
-        else:
-            df_regions['contains_unit_catching_lsoa'] = pd.NA
-            save_file = True
-        if save_file:
-            self.set_model_areas(df_regions)
-
-    def update_units_with_lsoa_catchment(self):
-        # Update units data with whether catch LSOA in selected regions.
-        df_units = self.df_selected_units
-        if 'catches_lsoa_in_selected_region' in df_units.columns:
-            # Don't overwrite the existing data.
-            pass
-        else:
-            df_units['catches_lsoa_in_selected_region'] = pd.NA
-            self.set_unit_services(df_units)
+        # Save to self and to file:
+        # Change column rows to MultiIndex.
+        # Some columns are true for "any" catchment type,
+        # others are specific to this "catchment" method.
+        self.set_lsoa_catchment_island(df_catchment)
+        self.set_model_areas(df_regions)
+        self.set_unit_services(df_units)
 
     def set_lsoa_catchment_island(self, df_results):
         """
