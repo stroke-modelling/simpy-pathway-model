@@ -117,13 +117,9 @@ class Setup(object):
             'selected_regions',
             'selected_units',
             # Output file names:
-            # Units():
-            'national_transfer_units',
             # Scenario():
             'selected_transfer_units',
-            'selected_lsoa_catchment_nearest',
-            'selected_lsoa_catchment_island',
-            'selected_lsoa_admissions',
+            'selected_lsoa',
             # Model():
             'results_all',
             'results_summary_all',
@@ -134,8 +130,6 @@ class Setup(object):
             'combined_selected_units',
             'combined_selected_transfer_units',
             'combined_selected_lsoas',
-            'combined_selected_regions',
-            'combined_selected_lsoa_admissions',
             'combined_results_summary_by_admitting_unit',
             'combined_results_summary_by_lsoa',
             # Map():
@@ -263,9 +257,6 @@ class Setup(object):
                               directory name from the suffix that this
                               function adds to it.
         """
-
-
-        # First, do we need to make a new top directory?
         if self.rename_dir_output_all_scenarios:
             # While the requested output folder already exists,
             # add a suffix or increase its number until there's a new name.
