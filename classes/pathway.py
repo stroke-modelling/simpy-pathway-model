@@ -223,11 +223,7 @@ class Pathway(object):
 
     def choose_admitting_unit(self, patient: type[Patient]):
         """
-        Choose which unit to travel to first.
-
-        Choose whether to travel to nearest IVT or nearest MT unit.
-        In the drip-and-ship model, the nearest IVT unit is picked.
-        Other models are not yet implemented.
+        write me
 
         Inputs
         ------
@@ -244,31 +240,10 @@ class Pathway(object):
         patient.admitting_unit_travel_duration:
             float. Time to travel to the admitting unit.
         """
-        # if self.scenario.destination_decision_type == 0:
-        #     # Drip and ship model.
-        #     ivt_unit_chosen = True
-        # else:
-        #     # TO DO - implement mothership or other ways to pick
-        #     # and choose in some known ratio.
-        #     # PLACEHOLDER selection:
-        #     c = 0.25  # Chance of the MT unit being picked
-        #     ivt_unit_chosen = (np.random.binomial(1, c) == 0)
-        ivt_unit_chosen = True
-        # TEMPORARY 27th Feb 2024 - replaced selection of units with just the one
-        # in scenario, removed destination_decision_type param.
 
-        # Pick out the chosen unit info:
-        if ivt_unit_chosen:
-            # Use IVT unit details.
-            unit = patient.closest_ivt_unit
-            time_to_unit = patient.closest_ivt_travel_duration
-        else:
-            # Use MT unit details.
-            unit = patient.closest_mt_unit
-            time_to_unit = patient.closest_mt_travel_duration
         # Store with this patient's details:
-        patient.admitting_unit = unit
-        patient.admitting_unit_travel_duration = time_to_unit
+        patient.admitting_unit = patient.unit
+        patient.admitting_unit_travel_duration = patient.travel_duration
 
     def go_to_admitting_unit(self, patient: type[Patient]):
         """
@@ -434,12 +409,12 @@ class Pathway(object):
             If transfer was not required, then this is left as the
             initialised value in the Patient object.
         """
-        if (patient.thrombectomy & patient.mt_transfer_required):
+        if (patient.thrombectomy & patient.transfer_required):
             # If the patient needs MT in another unit,
             # find how long it will take for the transfer and
             # travel time:
             duration = (self.scenario.transfer_time_delay +
-                        patient.mt_transfer_travel_duration)
+                        patient.transfer_travel_duration)
             # Let this time pass in the simulation:
             yield self.env.timeout(duration)
             # How long has it been since this patient's stroke onset?
@@ -490,7 +465,7 @@ class Pathway(object):
             # Nothing happens when thrombectomy not given.
             pass
         else:
-            if patient.mt_transfer_required:
+            if patient.transfer_required:
                 # This patient receives MT in a transfer unit.
                 # Another method has already added on the transfer
                 # delay and travel time. Here we find just the

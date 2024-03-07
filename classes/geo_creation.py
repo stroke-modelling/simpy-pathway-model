@@ -1299,3 +1299,31 @@ def _combine_lsoa_into_catchment_shapes(self, gdf, col_to_dissolve):
     gdf = gdf.reset_index()
     gdf = gdf[[col_to_dissolve, 'geometry']].dissolve(by=col_to_dissolve)
     return gdf
+
+
+def find_catchment_info_regions_and_units(
+        self, df_catchment, df_units_regions
+        ):
+    """
+    """
+    # Find list of regions containing LSOA caught by selected units.
+    regions_containing_lsoa = sorted(list(set(
+        df_catchment['region_code'])))
+
+    # Find list of units catching any LSOA in selected regions:
+    units_catching_lsoa = sorted(list(set(
+        df_catchment['unit_postcode'])))
+
+    # Limit the units data:
+    mask = df_units_regions['Postcode'].isin(units_catching_lsoa)
+    df_units_regions = df_units_regions[mask]
+    # Find list of regions containing these units:
+    regions_containing_units_catching_lsoa = (
+        df_units_regions['region_code'].tolist())
+
+    to_return = (
+        regions_containing_lsoa,
+        units_catching_lsoa,
+        regions_containing_units_catching_lsoa
+    )
+    return to_return

@@ -120,23 +120,16 @@ class Patient():
         self.stroke_type = self.generate_stroke_type()
 
         # Find unit details for this LSOA.
-        self.closest_ivt_unit = scenario.lsoa_ivt_unit[self.lsoa]
-        self.closest_ivt_travel_duration = (
-            scenario.lsoa_ivt_travel_time[self.lsoa])
+        self.unit = scenario.df_selected_lsoa.loc[
+            (self.lsoa, self.LSOA11CD), 'unit_postcode']
+        self.travel_duration = scenario.df_selected_lsoa.loc[
+            (self.lsoa, self.LSOA11CD), 'unit_travel_time']
 
-        # TO DO - currently piggybacking off transfer units.
-        # Change to separate MT unit?
-        self.closest_mt_unit = scenario.national_dict['mt_transfer_unit'][self.closest_ivt_unit]
-        self.closest_mt_travel_duration = (
-            scenario.national_dict['mt_transfer_time'][self.closest_ivt_unit])
-
-        # TO DO - move this calculation to scenario? ----------------------------------
-        self.mt_transfer_unit = (
-            scenario.national_dict['mt_transfer_unit'][self.closest_ivt_unit])
-        self.mt_transfer_travel_duration = (
-            scenario.national_dict['mt_transfer_time'][self.closest_ivt_unit])
-        self.mt_transfer_required = (
-            self.closest_ivt_unit != self.closest_mt_unit)
+        self.transfer_unit = scenario.df_selected_transfer.loc[
+            self.unit, 'transfer_unit_postcode']
+        self.transfer_travel_duration = scenario.df_selected_transfer.loc[
+            self.unit, 'transfer_unit_travel_time']
+        self.transfer_required = (self.unit != self.transfer_unit)
 
         # These will be selected later:
         self.admitting_unit = ''

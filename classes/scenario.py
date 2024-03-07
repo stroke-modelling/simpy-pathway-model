@@ -1,36 +1,17 @@
 """
 Scenario class with global parameters for the pathway model.
 
+set up dataframes that then get passed to pathway for actual setup.
+
 TO DO -----------------------------------------------------------------------------
 - write this docstring
-- only save inputs to Scenario() for init?
 
-        Assume that if this is run directly instead of through
-        find_lsoa_catchment_nearest that the other dataframes have
-        already been updated - have columns for:
-        + contains_selected_lsoa,
-        + contains_unit_catching_lsoa,
-        + catches_lsoa_in_selected_region
-
-        # TO DO - need to run the checks for LSOA catchment in other regions, by other units
-        # even when they've been imported from file.
-
-Usually the scenario.yml file should contain:
-
-'name'  # this scenario
-# Geography setup: for LSOA, region, units...
-'limit_to_england',  # bool
-'limit_to_wales',  # bool
-'lsoa_catchment_type',  # 'island' or 'nearest'
-
-
-TO DO - should this all be functions too? Not a class?
-No, too many files and stuff in self.
 """
 import numpy as np
 import pandas as pd
 import os
 import yaml
+from importlib_resources import files
 
 # from classes.calculations import Calculations
 
@@ -125,13 +106,21 @@ class Scenario(object):
         the data has been loaded in, so at each step check if it
         already exists or not.
         """
-        self.df_selected_units = units
+        self.df_units = units
 
         self.get_transfer_units()
 
         self.calculate_lsoa_catchment()
 
         admissions = self.load_admissions()
+        self.match_admissions_to_selected_lsoa(admissions)
+
+        return_dict = {
+            'df_units': self.df_units,
+            'df_transfer': self.df_transfer,
+            'df_lsoa': self.df_lsoa,
+        }
+        return return_dict
 
     # #########################
     # ##### UNIT SERVICES #####
@@ -140,16 +129,19 @@ class Scenario(object):
         """
         write me
         """
-        # TO DO - replace with relative import
-        # Load and parse unit data
-        path_to_file = os.path.join(self.setup.dir_reference_data,
-                                    self.setup.file_input_unit_services)
+        # # Relative import from package files:
+        # path_to_file = files('scenario.data').joinpath(
+        #     'stroke_units_regions.csv')
+        # Load and parse unit data TO DO - change to relative import above
+        path_to_file = './data/stroke_units_regions.csv'
         df = pd.read_csv(path_to_file)
 
         # Drop the LSOA column.
         df = df.drop('lsoa', axis='columns')
         # Add a "selected" column for user input.
         df['selected'] = 0
+
+        df = df.set_index('postcode')
 
         return df
 
@@ -163,24 +155,26 @@ class Scenario(object):
         If exists, don't load?
         """
         # Find which IVT units are feeders to each MT unit:
-        transfer = self.find_national_mt_feeder_units()
-        transfer = transfer.rename(columns={'from_postcode': 'postcode'})
+        transfer = self.find_national_mt_feeder_units(self.df_units)
+        transfer = transfer.reset_index()
+        # transfer = transfer.rename(columns={'from_postcode': 'postcode'})
         # transfer = transfer.drop(['time_nearest_mt'], axis='columns')
         # Index: 'Postcode'
         # Columns: 'name_nearest_mt'
 
-        units = self.df_selected_units
+        units = self.df_units.copy()
         # Index: 'Postcode'
         # Columns: names, services, regions etc. ...
+        units = units.reset_index()
 
         # Label selected stroke units.
-        selected_units = units['postcode'][units['selected'] == 1]
+        selected_units = units['postcode'][units['selected'] == 1].tolist()
         mask = transfer['postcode'].isin(selected_units)
         transfer['selected'] = 0
-        transfer['selected'][mask] = 1
+        transfer.loc[mask, 'selected'] = 1
         transfer = transfer.set_index('postcode')
 
-        self.transfer = transfer
+        self.df_transfer = transfer
 
     def find_national_mt_feeder_units(self, df_stroke_teams):
         """
@@ -198,12 +192,8 @@ class Scenario(object):
             its postcode, the postcode of the nearest MT unit,
             and travel time to that MT unit.
         """
-        # Get list of services that each stroke team provides:
-        # df_stroke_teams = self.national_hospital_services
-        # Each row is a different stroke team and the columns are
-        # 'postcode', 'SSNAP name', 'use_ivt', 'use_mt', 'use_msu'
-        # where the "use_" columns contain 0 (False) or 1 (True).
-
+        df_stroke_teams = df_stroke_teams.copy()
+        df_stroke_teams = df_stroke_teams.reset_index()
         # Pick out the names of hospitals offering IVT:
         mask_ivt = (df_stroke_teams['use_ivt'] == 1)
         ivt_hospital_names = df_stroke_teams['postcode'][mask_ivt].values
@@ -211,15 +201,20 @@ class Scenario(object):
         mask_mt = (df_stroke_teams['use_mt'] == 1)
         mt_hospital_names = df_stroke_teams['postcode'][mask_mt].values
 
+        # Only define transfer for units offering IVT.
+        mask = df_stroke_teams['postcode'].isin(ivt_hospital_names)
+        df_stroke_teams.loc[~mask, 'transfer_unit_postcode'] = 'none'
+
         # TO DO - change to relative import
         # Firstly, determine MT feeder units based on travel time.
         # Each stroke unit will be assigned the MT unit that it is
         # closest to in travel time.
         # Travel time matrix between hospitals:
-        path_to_file = os.path.join(
-            self.setup.dir_reference_data,
-            self.setup.file_input_travel_times_inter_unit
-            )
+        # # Relative import from package files:
+        # path_to_file = files('scenario.data').joinpath(
+        #     'inter_hospital_time_calibrated.csv')
+        # Load and parse unit data TO DO - change to relative import above
+        path_to_file = './data/inter_hospital_time_calibrated.csv'
         df_time_inter_hospital = pd.read_csv(path_to_file,
                                              index_col='from_postcode')
         # Reduce columns of inter-hospital time matrix to just MT hospitals:
@@ -237,9 +232,13 @@ class Scenario(object):
         df_nearest_mt['transfer_unit_postcode'] = (
             df_time_inter_hospital.idxmin(axis='columns'))
 
-        # Only define transfer for units offering IVT.
-        mask = df_nearest_mt.index.isin(ivt_hospital_names)
-        df_nearest_mt.loc[~mask, 'transfer_unit_postcode'] = 'none'
+        # Make sure the complete list of stroke teams is included:
+        df_nearest_mt = df_nearest_mt.reset_index()
+        df_nearest_mt = df_nearest_mt.rename(columns={'from_postcode': 'postcode'})
+        df_nearest_mt = pd.merge(
+            df_nearest_mt, df_stroke_teams['postcode'],
+            on='postcode', how='right')
+        df_nearest_mt = df_nearest_mt.set_index('postcode')
 
         # Update the feeder units list with anything specified
         # by the user.
@@ -248,7 +247,7 @@ class Scenario(object):
         units_to_update = df_services_to_update['postcode'].values
         transfer_units_to_update = df_services_to_update[
             'transfer_unit_postcode'].values
-        for u, unit in units_to_update:
+        for u, unit in enumerate(units_to_update):
             transfer_unit = transfer_units_to_update[u]
             if transfer_unit == 'none':
                 # Set values to missing:
@@ -271,12 +270,14 @@ class Scenario(object):
         """
         TO DO - write me
         """
-        units = self.df_selected_units
-        regions_selected = sorted(list(set(units['region_code'])))
+        units = self.df_units
+        regions_selected = sorted(list(set(units.loc[
+            units['selected'] == 1, 'region_code'])))
+        units_selected = units.index[units['selected'] == 1].tolist()
 
         if self.lsoa_catchment_type == 'island':
             # Only use the selected stroke units:
-            teams_to_limit = units['postcode'][units['selected'] == 1]
+            teams_to_limit = units_selected
             # Find list of selected regions:
             regions_to_limit = regions_selected
         else:
@@ -291,9 +292,12 @@ class Scenario(object):
             df_catchment,
             regions_selected,
             regions_to_limit=regions_to_limit,
+            units_to_limit=units_selected,
             limit_to_england=self.limit_to_england,
             limit_to_wales=self.limit_to_wales
             )
+
+        self.df_lsoa = df_catchment
 
     def find_each_lsoa_chosen_unit(self, df_time_lsoa_to_units):
         """
@@ -303,7 +307,7 @@ class Scenario(object):
         # is a different LSOA:
         df_results = pd.DataFrame(index=df_time_lsoa_to_units.index)
         # The smallest time in each row:
-        df_results['time_nearest'] = (
+        df_results['unit_travel_time'] = (
             df_time_lsoa_to_units.min(axis='columns'))
         # The name of the column containing the smallest
         # time in each row:
@@ -317,8 +321,11 @@ class Scenario(object):
             ):
         # TO DO - change to relative import
         # Load travel time matrix:
-        path_to_file = os.path.join(self.setup.dir_reference_data,
-                                    self.setup.file_input_travel_times)
+        # # Relative import from package files:
+        # path_to_file = files('scenario.data').joinpath(
+        #     'lsoa_travel_time_matrix_calibrated.csv')
+        # Load and parse unit data TO DO - change to relative import above
+        path_to_file = './data/lsoa_travel_time_matrix_calibrated.csv'
         df_time_lsoa_to_units = pd.read_csv(path_to_file, index_col='LSOA')
         # Each column is a postcode of a stroke team and
         # each row is an LSOA name (LSOA11NM).
@@ -337,19 +344,23 @@ class Scenario(object):
             df_catchment,
             regions_selected,
             regions_to_limit=[],
+            units_to_limit=[],
             limit_to_england=False,
             limit_to_wales=False
             ):
         # TO DO - change to relative import
         # Load in all LSOA names, codes, regions...
-        path_to_file = os.path.join(self.setup.dir_reference_data,
-                                    self.setup.file_input_lsoa_regions)
+        # # Relative import from package files:
+        # path_to_file = files('scenario.data').joinpath(
+        #     'regions_lsoa_ew.csv')
+        # Load and parse unit data TO DO - change to relative import above
+        path_to_file = './data/regions_lsoa_ew.csv'
         df_lsoa = pd.read_csv(path_to_file)
         # Columns: [lsoa, lsoa_code, region_code, region, region_type,
         #           icb_code, icb, isdn]
 
         # Keep a copy of the original catchment columns for later:
-        cols_df_catchment = df_catchment.columns
+        cols_df_catchment = df_catchment.columns.tolist()
         # Merge in region information to catchment:
         df_catchment.reset_index(inplace=True)
         df_catchment = pd.merge(
@@ -361,23 +372,19 @@ class Scenario(object):
 
         # Limit rows to LSOA in requested regions:
         if len(regions_to_limit) > 0:
+            # Limit the results to only LSOAs in regions
+            # containing selected units.
             mask = df_catchment['region_code'].isin(regions_to_limit)
             df_catchment = df_catchment.loc[mask].copy()
+        elif len(units_to_limit) > 0:
+            # Limit the results to only LSOAs that are caught
+            # by selected units.
+            mask = df_catchment['unit_postcode'].isin(units_to_limit)
         else:
-            # Find where the results data is in selected regions:
-            mask = df_catchment['region_code'].isin(regions_selected)
-            # Find list of units catching any LSOA in selected regions:
-            units_catching_lsoa = sorted(list(set(
-                df_catchment.loc[mask]['unit_postcode'])))
-
-            # Limit the results to only
-            # LSOAs that are caught by units
-            # that catch any LSOA in the selected regions.
-            mask = df_catchment[
-                'unit_postcode'].isin(units_catching_lsoa)
+            mask = [True] * len(df_catchment)
 
         df_catchment['selected'] = 0
-        df_catchment['selected'][mask] = 1
+        df_catchment.loc[mask, 'selected'] = 1
 
         # If requested, remove England or Wales.
         if limit_to_england:
@@ -389,7 +396,7 @@ class Scenario(object):
 
         # Restore the shortened catchment DataFrame to its starting columns
         # plus the useful regions:
-        cols = cols_df_catchment + ['selected']
+        cols = cols_df_catchment + ['lsoa_code', 'selected']
         # ['region', 'region_code', 'region_type']
         df_catchment = df_catchment[cols]
 
@@ -423,9 +430,14 @@ class Scenario(object):
         """
         # TO DO - replace with relative import
         # Load and parse admissions data
-        path_to_file = os.path.join(self.setup.dir_reference_data,
-                                    self.setup.file_input_admissions)
+        # # Relative import from package files:
+        # path_to_file = files('scenario.data').joinpath(
+        #     'admissions_2017-2019.csv')
+        # Load and parse unit data TO DO - change to relative import above
+        path_to_file = './data/admissions_2017-2019.csv'
         admissions = pd.read_csv(path_to_file)
+
+        admissions = admissions.rename(columns={'area': 'LSOA'})
         return admissions
 
     def match_admissions_to_selected_lsoa(self, admissions):
@@ -433,15 +445,17 @@ class Scenario(object):
         write me
         """
         # Keep only these LSOAs in the admissions data:
-        admissions = pd.merge(left=self.df_lsoa, right=admissions,
-                              left_on='lsoa', right_on='area', how='left')
+        df_lsoa = self.df_lsoa.copy()
+        df_lsoa = df_lsoa.reset_index()
+        admissions = pd.merge(left=df_lsoa, right=admissions,
+                              on='LSOA', how='left')
 
         admissions_mask = admissions.loc[admissions['selected'] == 1].copy()
 
         # Total admissions across these hospitals in a year:
         # Keep .tolist() to convert from np.float64 to float.
         total_admissions = np.round(
-            admissions_mask["admissions"].sum(), 0).tolist()
+            admissions_mask['admissions'].sum(), 0).tolist()
 
         # Relative frequency of admissions across a year:
         admissions_mask['relative_frequency'] = (
@@ -449,9 +463,11 @@ class Scenario(object):
 
         # Merge this info back into the main DataFrame:
         admissions = pd.merge(
-            admissions, admissions_mask, on='lsoa', how='left')
+            admissions, admissions_mask[['LSOA', 'relative_frequency']],
+            on='LSOA', how='left')
 
         # Set index to both LSOA name and code so that both follow
         # through to all of the results data.
-        admissions = admissions.set_index(['area', 'lsoa_code'])
-        return admissions
+        admissions = admissions.set_index(['LSOA', 'lsoa_code'])
+
+        self.df_lsoa = admissions
