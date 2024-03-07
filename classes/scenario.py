@@ -32,11 +32,10 @@ import pandas as pd
 import os
 import yaml
 
-from classes.calculations import Calculations
-from classes.setup import Setup
+# from classes.calculations import Calculations
 
 
-class Scenario(object):  # TO DO - rename this - e.g. geography wrangling, catchment wrangling?
+class Scenario(object):
     """
     Global variables for model.
 
@@ -64,11 +63,6 @@ class Scenario(object):  # TO DO - rename this - e.g. geography wrangling, catch
         self.name = 'scenario'
         # Load existing data from this dir:
         self.load_dir = None
-        # Load existing parameters from this file:
-        self.scenario_yml = 'scenario.yml'
-        # Whether or not to make a new directory
-        # (if not, risk overwriting existing files):
-        self.make_new_scenario_dir = True
 
         # ----- Geography -----
         # Which LSOAs, stroke units, and regions will we use?
@@ -86,184 +80,26 @@ class Scenario(object):  # TO DO - rename this - e.g. geography wrangling, catch
             setattr(self, key, kwargs[key])
 
         # ----- Load helper classes -----
-        # If no setup object was given, create one now:
-        try:
-            self.setup
-        except AttributeError:
-            self.setup = Setup()
         # Create calculations object:
-        self.calculations = Calculations({'setup': self.setup})
+        # self.calculations = Calculations({'setup': self.setup})
 
         # ----- Load Scenario from files -----
         if self.load_dir is None:
-            # Update path to scenario files:
-            self.setup.dir_scenario = self.name
-            # self.setup.dir_scenario = os.path.join(
-            #     self.setup.dir_output_all_scenarios,
-            #     self.name
-            # )
+            pass
         else:
             self.load_scenario_from_files()
 
-        # ----- Make output directories -----
-        self.check_output_directories()
-
-    def load_scenario_from_files(self):
+    def load_scenario_from_files(self, path_to_scenario_yml):
         """
         """
-        self.name = os.path.split(self.load_dir)[-1]
-        self.setup.dir_scenario = self.load_dir
-        # # Update path to scenario files:
-        # self.setup.dir_scenario = os.path.join(
-        #     self.setup.dir_output_all_scenarios,
-        #     self.name
-        # )
         # Import the kwargs from provided yml file:
-        path_to_scenario_yml = os.path.join(
-            self.setup.dir_scenario, self.scenario_yml)
         with open(path_to_scenario_yml, 'r') as f:
             scenario_vars_imported = yaml.safe_load(f)
         # Save the imported kwargs to self:
         for key, val in scenario_vars_imported.items():
             setattr(self, key, val)
 
-        # Create a new pathway/ dir for outputs.
-        self.setup.dir_output_pathway = os.path.join(
-            self.setup.dir_scenario,
-            self.setup.name_dir_output_pathway
-        )
-        try:
-            os.mkdir(self.setup.dir_output_pathway)
-        except FileExistsError:
-            # The directory already exists.
-            pass
-
-        # Load in any data files that are present:
-        self.import_dataframes_from_file()
-
-    def check_output_directories(self):
-        """
-        """
-        # Pass in a keyword for whether to make a new directory
-        # or keep the given name and overwrite anything in there.
-        if self.make_new_scenario_dir is True:
-            try:
-                os.mkdir(self.setup.dir_scenario)
-                rename_scenario = False
-            except FileExistsError:
-                # The directory already exists.
-                rename_scenario = True
-            if rename_scenario:
-                # Rename the scenario and create a new directory
-                # in the new name.
-                # Return here because the output dir will be changed if
-                # a dir with the same name already exists.
-                self.setup.dir_scenario = self.setup.create_output_dir(
-                    self.setup.dir_scenario)
-                # os.mkdir(self.setup.dir_scenario)
-                self.setup.update_scenario_list()
-            else:
-                # Nothing to do here.
-                pass
-        else:
-            # Use the existing output directory.
-            pass
-
-        # Create a new pathway/ dir for outputs.
-        self.setup.dir_output_pathway = os.path.join(
-            self.setup.dir_scenario,
-            self.setup.name_dir_output_pathway
-        )
-        try:
-            os.mkdir(self.setup.dir_output_pathway)
-        except FileExistsError:
-            # The directory already exists.
-            pass
-
-    def import_dataframes_from_file(self):
-        """
-        Load dataframes from file.
-
-        TO DO - write me.
-
-        don't want to store a .yml with a bunch of DataFrames in it.
-        Plan:
-        Load Setup vars,
-        look for each file in turn,
-        setattr(name here, data).
-        If file doesn't exist, pass -
-        might want to load Scenario with only input files e.g.
-
-        # Expect the following to be set before running this:
-        # + name  # (from directory name?)
-        # + setup
-        # + units
-        """
-        # These can be loaded from file if they exist.
-        # Set up csv contents (header and index columns):
-        data_dicts = {
-            'df_selected_regions': dict(
-                csv_header=0,
-                csv_index=None,
-                file='file_selected_regions',
-                func=self.set_model_areas
-            ),
-            'df_selected_units': dict(
-                csv_header=0,
-                csv_index=None,
-                file='file_selected_units',
-                func=self.set_unit_services
-            ),
-            # No point loading these two from file?
-            # 'df_selected_transfer_units': dict(
-            #     csv_header=0,
-            #     csv_index=0,
-            #     file='file_selected_transfer_units',
-            #     func=self.set_transfer_units
-            # ),
-            # 'df_selected_lsoa': dict(
-            #     csv_header=0,
-            #     csv_index=0,
-            #     file='file_selected_lsoa',
-            #     func=self.set_lsoa
-            # )
-        }
-        # Expect to find each file in either the given dir_scenario
-        # or a subdirectory of it.
-        # Look first in the pathway/ subdirectory, then in the main
-        # directory, then give up.
-        for key, data_dict in data_dicts.items():
-            # Import from pathway subdirectory.
-            path_to_file = os.path.join(
-                self.setup.dir_output_pathway,
-                getattr(self.setup, data_dict['file'])
-            )
-            if os.path.exists(path_to_file):
-                pass
-            else:
-                # Import from main directory.
-                path_to_file = os.path.join(
-                    self.setup.dir_scenario,
-                    getattr(self.setup, data_dict['file'])
-                )
-                if os.path.exists(path_to_file):
-                    pass
-                else:
-                    # Give up.
-                    path_to_file = None
-            if path_to_file is None:
-                # Don't attempt to load.
-                pass
-            else:
-                df = pd.read_csv(
-                    path_to_file,
-                    index_col=data_dict['csv_index'],
-                    header=data_dict['csv_header']
-                )
-                # Run the function to set this:
-                data_dict['func'](df)
-
-    def save_to_file(self):
+    def save_to_file(self, file_setup_vars='scenario_output.yml'):
         """Save the variable dict as a .yml file."""
         scenario_vars = vars(self)
 
@@ -277,100 +113,25 @@ class Scenario(object):  # TO DO - rename this - e.g. geography wrangling, catch
                     val = val.tolist()
                 vars_to_save[key] = val
 
-        file_setup_vars = os.path.join(self.setup.dir_output_pathway,
-                                       'scenario_output.yml')
-
         with open(file_setup_vars, 'w') as f:
             yaml.dump(vars_to_save, f)
 
     # ###############################
     # ##### MAIN SETUP FUNCTION #####
     # ###############################
-    def process_scenario(self):
+    def process_scenario(self, units):
         """
         Some of the attributes might already exist depending on how
         the data has been loaded in, so at each step check if it
         already exists or not.
         """
-        if hasattr(self, 'df_selected_regions'):
-            pass
-        else:
-            regions = self.get_model_areas()
-            # ... probably want some user interaction here...
-            self.set_model_areas(regions)
+        self.df_selected_units = units
 
-        if hasattr(self, 'df_selected_units'):
-            pass
-        else:
-            units = self.get_unit_services()
-            # ... probably want some user interaction here...
-            self.set_unit_services(units)
+        self.get_transfer_units()
 
-        if hasattr(self, 'df_selected_transfer_units'):
-            pass
-        else:
-            transfer = self.get_transfer_units()
-            self.set_transfer_units(transfer)
+        self.calculate_lsoa_catchment()
 
-        if hasattr(self, 'df_selected_lsoa'):
-            pass
-        else:
-            self.calculate_lsoa_catchment()
-            try:
-                self.df_selected_lsoa['admissions']
-            except KeyError:
-                admissions = self.load_admissions()
-                self.set_admissions(admissions)
-
-        # Save any parameters we've just calculated to .yml.
-        self.save_to_file()
-
-    def reset_scenario_data(self):
-        # Delete the DataFrames.
-        vars_to_delete = [
-            'df_selected_regions',
-            'df_selected_units',
-            'df_selected_transfer_units',
-            'df_selected_lsoa',
-        ]
-        for v in vars_to_delete:
-            delattr(self, v)
-
-    # ##########################
-    # ##### AREAS TO MODEL #####
-    # ##########################
-    def get_model_areas(self):
-        """
-        write me
-        """
-        try:
-            df = self.df_selected_regions
-        except AttributeError:
-            # TO DO - replace with relative import e.g. from stroke_outcome:
-            # from importlib_resources import files  # For defining paths.
-            # filename = files('stroke_outcome.data').joinpath(
-            #     'mrs_dist_probs_cumsum.csv')
-            # Load and parse area data
-            path_to_file = os.path.join(self.setup.dir_reference_data,
-                                        self.setup.file_input_regions)
-            df = pd.read_csv(path_to_file)
-
-            # Add a "selected" column for user input.
-            df['selected'] = 0
-        return df
-
-    def set_model_areas(self, df):
-        """
-        write me
-        """
-        # TO DO - run sanity checks
-
-        self.df_selected_regions = df
-
-        # Save output to output folder.
-        path_to_file = os.path.join(self.setup.dir_output_pathway,
-                                    self.setup.file_selected_regions)
-        df.to_csv(path_to_file, index=False)
+        admissions = self.load_admissions()
 
     # #########################
     # ##### UNIT SERVICES #####
@@ -379,52 +140,18 @@ class Scenario(object):  # TO DO - rename this - e.g. geography wrangling, catch
         """
         write me
         """
-        try:
-            df = self.df_selected_units
-        except AttributeError:
-            # TO DO - replace with relative import
-            # Load and parse unit data
-            path_to_file = os.path.join(self.setup.dir_reference_data,
-                                        self.setup.file_input_unit_services)
-            df = pd.read_csv(path_to_file)
+        # TO DO - replace with relative import
+        # Load and parse unit data
+        path_to_file = os.path.join(self.setup.dir_reference_data,
+                                    self.setup.file_input_unit_services)
+        df = pd.read_csv(path_to_file)
 
-            # Drop the LSOA column.
-            df = df.drop('lsoa', axis='columns')
-            # Add a "selected" column for user input.
-            df['selected'] = 0
+        # Drop the LSOA column.
+        df = df.drop('lsoa', axis='columns')
+        # Add a "selected" column for user input.
+        df['selected'] = 0
 
-            try:
-                # Load in the selected areas.
-                df_areas = self.df_selected_regions
-                # Which areas were selected?
-                selected = df_areas['region'][df_areas['selected'] == 1]
-                # Shouldn't contain repeats or NaN, but just in case:
-                selected = selected.dropna().unique()
-                # Set "selected" to 1 for any unit in the
-                # selected areas.
-                mask = df['region'].isin(selected)
-                # Also only select units offering IVT.
-                # TO DO - might not always be IVT? -----------------------------
-                mask = mask & (df['use_ivt'] == 1)
-                df.loc[mask, 'selected'] = 1
-            except AttributeError:
-                # self.df_selected_regions has not yet been set.
-                pass
         return df
-
-    def set_unit_services(self, df):
-        """
-        write me
-        """
-        # TO DO - run sanity checks
-        # TO DO - add an option to load this from a custom file.
-
-        self.df_selected_units = df
-
-        # Save output to output folder.
-        path_to_file = os.path.join(self.setup.dir_output_pathway,
-                                    self.setup.file_selected_units)
-        df.to_csv(path_to_file, index=False)
 
     # ##########################
     # ##### TRANSFER UNITS #####
@@ -436,7 +163,7 @@ class Scenario(object):  # TO DO - rename this - e.g. geography wrangling, catch
         If exists, don't load?
         """
         # Find which IVT units are feeders to each MT unit:
-        transfer = self.calculations.find_national_mt_feeder_units()
+        transfer = self.find_national_mt_feeder_units()
         transfer = transfer.rename(columns={'from_postcode': 'postcode'})
         # transfer = transfer.drop(['time_nearest_mt'], axis='columns')
         # Index: 'Postcode'
@@ -446,24 +173,96 @@ class Scenario(object):  # TO DO - rename this - e.g. geography wrangling, catch
         # Index: 'Postcode'
         # Columns: names, services, regions etc. ...
 
-        # Limit to selected stroke units.
+        # Label selected stroke units.
         selected_units = units['postcode'][units['selected'] == 1]
         mask = transfer['postcode'].isin(selected_units)
-        transfer = transfer[mask]
+        transfer['selected'] = 0
+        transfer['selected'][mask] = 1
         transfer = transfer.set_index('postcode')
 
-        return transfer
+        self.transfer = transfer
 
-    def set_transfer_units(self, transfer):
+    def find_national_mt_feeder_units(self, df_stroke_teams):
         """
-        write me
-        """
-        self.df_selected_transfer_units = transfer
+        Find catchment areas for national hospitals offering MT.
 
-        # Save output to output folder.
-        path_to_file = os.path.join(self.setup.dir_output_pathway,
-                                    self.setup.file_selected_transfer_units)
-        transfer.to_csv(path_to_file)
+        For each stroke unit, find the name of and travel time to
+        its nearest MT unit. Wheel-and-spoke model. If the unit
+        is an MT unit then the travel time is zero.
+
+        Stores
+        ------
+
+        national_ivt_feeder_units:
+            pd.DataFrame. Each row is a stroke unit. Columns are
+            its postcode, the postcode of the nearest MT unit,
+            and travel time to that MT unit.
+        """
+        # Get list of services that each stroke team provides:
+        # df_stroke_teams = self.national_hospital_services
+        # Each row is a different stroke team and the columns are
+        # 'postcode', 'SSNAP name', 'use_ivt', 'use_mt', 'use_msu'
+        # where the "use_" columns contain 0 (False) or 1 (True).
+
+        # Pick out the names of hospitals offering IVT:
+        mask_ivt = (df_stroke_teams['use_ivt'] == 1)
+        ivt_hospital_names = df_stroke_teams['postcode'][mask_ivt].values
+        # Pick out the names of hospitals offering MT:
+        mask_mt = (df_stroke_teams['use_mt'] == 1)
+        mt_hospital_names = df_stroke_teams['postcode'][mask_mt].values
+
+        # TO DO - change to relative import
+        # Firstly, determine MT feeder units based on travel time.
+        # Each stroke unit will be assigned the MT unit that it is
+        # closest to in travel time.
+        # Travel time matrix between hospitals:
+        path_to_file = os.path.join(
+            self.setup.dir_reference_data,
+            self.setup.file_input_travel_times_inter_unit
+            )
+        df_time_inter_hospital = pd.read_csv(path_to_file,
+                                             index_col='from_postcode')
+        # Reduce columns of inter-hospital time matrix to just MT hospitals:
+        df_time_inter_hospital = df_time_inter_hospital[mt_hospital_names]
+
+        # From this reduced dataframe, pick out
+        # the smallest time in each row and
+        # the MT hospital that it belongs to.
+        # Store the results in this DataFrame:
+        df_nearest_mt = pd.DataFrame(index=df_time_inter_hospital.index)
+        # The smallest time in each row:
+        df_nearest_mt['transfer_unit_travel_time'] = (
+            df_time_inter_hospital.min(axis='columns'))
+        # The name of the column containing the smallest time in each row:
+        df_nearest_mt['transfer_unit_postcode'] = (
+            df_time_inter_hospital.idxmin(axis='columns'))
+
+        # Only define transfer for units offering IVT.
+        mask = df_nearest_mt.index.isin(ivt_hospital_names)
+        df_nearest_mt.loc[~mask, 'transfer_unit_postcode'] = 'none'
+
+        # Update the feeder units list with anything specified
+        # by the user.
+        df_services_to_update = df_stroke_teams[
+            df_stroke_teams['transfer_unit_postcode'] != 'nearest']
+        units_to_update = df_services_to_update['postcode'].values
+        transfer_units_to_update = df_services_to_update[
+            'transfer_unit_postcode'].values
+        for u, unit in units_to_update:
+            transfer_unit = transfer_units_to_update[u]
+            if transfer_unit == 'none':
+                # Set values to missing:
+                transfer_unit = pd.NA
+                mt_time = pd.NA
+            else:
+                # Find the time to this MT unit.
+                mt_time = df_time_inter_hospital.loc[unit][transfer_unit]
+
+            # Update the chosen nearest MT unit name and time.
+            df_nearest_mt.at[unit, 'transfer_unit_postcode'] = transfer_unit
+            df_nearest_mt.at[unit, 'transfer_unit_travel_time'] = mt_time
+
+        return df_nearest_mt
 
     # #########################
     # ##### SELECTED LSOA #####
@@ -472,98 +271,129 @@ class Scenario(object):  # TO DO - rename this - e.g. geography wrangling, catch
         """
         TO DO - write me
         """
-        # Regions data:
-        df_regions = self.df_selected_regions
-        mask = df_regions['selected'] == 1
-        regions_selected = sorted(set(list(
-            df_regions.loc[mask]['region_code'])))
+        units = self.df_selected_units
+        regions_selected = sorted(list(set(units['region_code'])))
 
         if self.lsoa_catchment_type == 'island':
+            # Only use the selected stroke units:
+            teams_to_limit = units['postcode'][units['selected'] == 1]
             # Find list of selected regions:
             regions_to_limit = regions_selected
         else:
+            teams_to_limit = []
             regions_to_limit = []
 
         # For all LSOA:
-        df_catchment = self.calculations.find_lsoa_catchment()
-        # Limit to the useful LSOA:
-        df_catchment = (
-            self.calculations.limit_lsoa_catchment_to_selected_units(
-                df_catchment,
-                regions_selected,
-                regions_to_limit=regions_to_limit,
-                limit_to_england=self.limit_to_england,
-                limit_to_wales=self.limit_to_wales
-            ))
+        df_catchment = self.find_lsoa_catchment(teams_to_limit)
 
-        # Units data for region matching:
-        df_units = self.df_selected_units
+        # Mark selected LSOA:
+        df_catchment = self.limit_lsoa_catchment_to_selected_units(
+            df_catchment,
+            regions_selected,
+            regions_to_limit=regions_to_limit,
+            limit_to_england=self.limit_to_england,
+            limit_to_wales=self.limit_to_wales
+            )
 
-        # Find which regions and units use these LSOA:
-        tup = self.calculations.find_catchment_info_regions_and_units(
-                df_catchment, df_units)
-        # tup contains lists of:
-        # + region codes containing lsoa
-        # + units catching lsoa
-        # + region codes containing units
+    def find_each_lsoa_chosen_unit(self, df_time_lsoa_to_units):
+        """
 
-        # Drop region columns from df_catchment:
-        cols_to_drop = ['region', 'region_code', 'region_type']
-        df_catchment = df_catchment.drop(cols_to_drop, axis='columns')
+        """
+        # Put the results in this dataframe where each row
+        # is a different LSOA:
+        df_results = pd.DataFrame(index=df_time_lsoa_to_units.index)
+        # The smallest time in each row:
+        df_results['time_nearest'] = (
+            df_time_lsoa_to_units.min(axis='columns'))
+        # The name of the column containing the smallest
+        # time in each row:
+        df_results['unit_postcode'] = (
+            df_time_lsoa_to_units.idxmin(axis='columns'))
+        return df_results
 
-        self.update_data_with_lsoa_catchment(df_catchment, *tup)
+    def find_lsoa_catchment(
+            self,
+            teams_to_limit=[]
+            ):
+        # TO DO - change to relative import
+        # Load travel time matrix:
+        path_to_file = os.path.join(self.setup.dir_reference_data,
+                                    self.setup.file_input_travel_times)
+        df_time_lsoa_to_units = pd.read_csv(path_to_file, index_col='LSOA')
+        # Each column is a postcode of a stroke team and
+        # each row is an LSOA name (LSOA11NM).
 
-    def update_data_with_lsoa_catchment(
+        # Limit columns to requested units:
+        if len(teams_to_limit) > 0:
+            df_time_lsoa_to_units = df_time_lsoa_to_units[teams_to_limit]
+
+        # Assign LSOA by catchment area of these stroke units.
+        df_catchment = self.find_each_lsoa_chosen_unit(
+            df_time_lsoa_to_units)
+        return df_catchment
+
+    def limit_lsoa_catchment_to_selected_units(
             self,
             df_catchment,
-            region_codes_containing_lsoa,
-            units_catching_lsoa,
-            region_codes_containing_units
+            regions_selected,
+            regions_to_limit=[],
+            limit_to_england=False,
+            limit_to_wales=False
             ):
-        """
-        write me
-        """
-        # ----- LSOA data -----
-        # Save to self and to file:
-        self.set_lsoa(df_catchment)
+        # TO DO - change to relative import
+        # Load in all LSOA names, codes, regions...
+        path_to_file = os.path.join(self.setup.dir_reference_data,
+                                    self.setup.file_input_lsoa_regions)
+        df_lsoa = pd.read_csv(path_to_file)
+        # Columns: [lsoa, lsoa_code, region_code, region, region_type,
+        #           icb_code, icb, isdn]
 
-        # ----- Units -----
-        df_units = self.df_selected_units
-        # Update units data with whether catch LSOA in selected regions.
-        df_units['catches_lsoa_in_selected_region'] = 0
-        mask = df_units['postcode'].isin(units_catching_lsoa)
-        df_units.loc[mask, 'catches_lsoa_in_selected_region'] = 1
-        # Save to self and to file:
-        self.set_unit_services(df_units)
+        # Keep a copy of the original catchment columns for later:
+        cols_df_catchment = df_catchment.columns
+        # Merge in region information to catchment:
+        df_catchment.reset_index(inplace=True)
+        df_catchment = pd.merge(
+            df_catchment, df_lsoa,
+            left_on='LSOA', right_on='lsoa', how='left'
+        )
+        df_catchment.drop('lsoa', axis='columns', inplace=True)
+        df_catchment.set_index('LSOA', inplace=True)
 
-        # ----- Regions -----
-        df_regions = self.df_selected_regions
-        # Update regions data with whether contain LSOA...
-        df_regions['contains_selected_lsoa'] = 0
-        mask = df_regions['region_code'].isin(region_codes_containing_lsoa)
-        df_regions.loc[mask, 'contains_selected_lsoa'] = 1
-        # ... and units.
-        df_regions['contains_unit_catching_lsoa'] = 0
-        mask = df_regions['region_code'].isin(region_codes_containing_units)
-        df_regions.loc[mask, 'contains_unit_catching_lsoa'] = 1
-        # Save to self and to file:
-        self.set_model_areas(df_regions)
+        # Limit rows to LSOA in requested regions:
+        if len(regions_to_limit) > 0:
+            mask = df_catchment['region_code'].isin(regions_to_limit)
+            df_catchment = df_catchment.loc[mask].copy()
+        else:
+            # Find where the results data is in selected regions:
+            mask = df_catchment['region_code'].isin(regions_selected)
+            # Find list of units catching any LSOA in selected regions:
+            units_catching_lsoa = sorted(list(set(
+                df_catchment.loc[mask]['unit_postcode'])))
 
-    def set_lsoa(self, df_results):
-        """
-        write me
-        """
-        # TO DO -
-        # if save, then if setup exists, then... ----------------------------------
-        # Save output to output folder.
-        path_to_file = os.path.join(
-            self.setup.dir_output_pathway,
-            self.setup.file_selected_lsoa
-            )
-        df_results.to_csv(path_to_file)
+            # Limit the results to only
+            # LSOAs that are caught by units
+            # that catch any LSOA in the selected regions.
+            mask = df_catchment[
+                'unit_postcode'].isin(units_catching_lsoa)
 
-        # Save to self.
-        self.df_selected_lsoa = df_results
+        df_catchment['selected'] = 0
+        df_catchment['selected'][mask] = 1
+
+        # If requested, remove England or Wales.
+        if limit_to_england:
+            mask = df_lsoa['region_type'] == 'LHB'
+            df_catchment['selected'][mask] = 0
+        elif limit_to_wales:
+            mask = df_lsoa['region_type'] == 'SICBL'
+            df_catchment['selected'][mask] = 0
+
+        # Restore the shortened catchment DataFrame to its starting columns
+        # plus the useful regions:
+        cols = cols_df_catchment + ['selected']
+        # ['region', 'region_code', 'region_type']
+        df_catchment = df_catchment[cols]
+
+        return df_catchment
 
     # ######################
     # ##### ADMISSIONS #####
@@ -606,22 +436,22 @@ class Scenario(object):  # TO DO - rename this - e.g. geography wrangling, catch
         admissions = pd.merge(left=self.df_lsoa, right=admissions,
                               left_on='lsoa', right_on='area', how='left')
 
+        admissions_mask = admissions.loc[admissions['selected'] == 1].copy()
+
         # Total admissions across these hospitals in a year:
         # Keep .tolist() to convert from np.float64 to float.
         total_admissions = np.round(
-            admissions["admissions"].sum(), 0).tolist()
+            admissions_mask["admissions"].sum(), 0).tolist()
 
         # Relative frequency of admissions across a year:
-        admissions['relative_frequency'] = (
-            admissions['admissions'] / total_admissions)
+        admissions_mask['relative_frequency'] = (
+            admissions_mask['admissions'] / total_admissions)
+
+        # Merge this info back into the main DataFrame:
+        admissions = pd.merge(
+            admissions, admissions_mask, on='lsoa', how='left')
+
         # Set index to both LSOA name and code so that both follow
         # through to all of the results data.
         admissions = admissions.set_index(['area', 'lsoa_code'])
         return admissions
-
-    def set_admissions(self, admissions):
-        """
-        write me
-        """
-        # Save to self and to file:
-        self.set_lsoa(admissions)
