@@ -130,7 +130,7 @@ class Scenario_simpy(object):
         self.process_admissions()
 
     def keep_only_selected_in_df(self, df_units, df_transfer, df_lsoa):
-        # Pull out only the "selected" parts of these:
+        # Pull out only the "selected" parts of these.
         self.df_selected_units = df_units[
             df_units['selected'] == 1].copy()
         self.df_selected_transfer = df_transfer[

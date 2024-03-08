@@ -8,8 +8,7 @@ import os
 
 from classes.patient import Patient
 from classes.pathway import Pathway
-from classes.scenario import Scenario
-# from classes.setup import Setup
+from classes.scenario_setup import Scenario_simpy as Scenario
 from stroke_outcome.continuous_outcome import Continuous_outcome
 
 
@@ -68,17 +67,6 @@ class Model(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-        # # Transfer Setup from Scenario:
-        # try:
-        #     self.setup = self.scenario.setup
-        # except AttributeError:
-        #     # Check whether Setup was passed directly to Model:
-        #     try:
-        #         self.setup
-        #     except AttributeError:
-        #         # If no setup was given, create one now:
-        #         self.setup = Setup()
-
     def end_run_routine(self):
         """
         End run routine. Summarise results of the completed simulation.
@@ -107,7 +95,6 @@ class Model(object):
         # with shared keys.
         # Get all names in the completed patient dictionaries:
         completed_patients_keys = self.pathway.completed_patients[0].keys()
-        
 
         # Convert results into DataFrames
         # self.pathway.completed_patients is a list of dictionaries
@@ -117,14 +104,9 @@ class Model(object):
         # Get outcomes
         self.get_outcomes()
 
-        # # Save output to output folder.
-        # dir_output = self.setup.dir_output_pathway
-        # file_name = self.setup.file_results_all
-        # path_to_file = os.path.join(dir_output, file_name)
-        # self.results_all.to_csv(path_to_file, index=False)
-
         # Keep only those that begin with "time":
-        aggregate_cols = [x for x in completed_patients_keys if x[0:4] == 'time']
+        aggregate_cols = [
+            x for x in completed_patients_keys if x[0:4] == 'time']
         # Remove the onset time key:
         aggregate_cols.remove('time_onset')
         # Add outcomes
@@ -135,48 +117,27 @@ class Model(object):
         # Rename the index column:
         self.results_summary_all.index.name = 'statistic'
 
-        # # Save output to output folder.
-        # dir_output = self.setup.dir_output_pathway
-        # file_name = self.setup.file_results_summary_all
-        # path_to_file = os.path.join(dir_output, file_name)
-        # self.results_summary_all.to_csv(path_to_file)
-
         # Group the results by first unit.
         # Group by unit, then take only the columns relating to time,
         # then take only their means and standard deviations.
-        self.results_summary_by_admitting_unit = self.results_all.copy().groupby(
-            by='unit')[aggregate_cols].agg(['mean', 'std'])
-        # self.results_summary_by_admitting_unit = self.results_summary_by_admitting_unit.reset_index()
+        self.results_summary_by_admitting_unit = (
+            self.results_all.copy().groupby(by='unit')[
+                aggregate_cols].agg(['mean', 'std'])
+        )
         # Rename the MultiIndex column names:
-        self.results_summary_by_admitting_unit.columns = self.results_summary_by_admitting_unit.columns.set_names(['property', 'subtype'])
-        # Set LSOA as index:
-        # self.results_summary_by_admitting_unit.set_index(self.results_summary_by_admitting_unit.columns[0], inplace=True)
-
-        # # Save output to output folder.
-        # dir_output = self.setup.dir_output_pathway
-        # file_name = self.setup.file_results_summary_by_admitting_unit
-        # path_to_file = os.path.join(dir_output, file_name)
-        # self.results_summary_by_admitting_unit.to_csv(
-        #     path_to_file)#, index=False)
+        self.results_summary_by_admitting_unit.columns = (
+            self.results_summary_by_admitting_unit.columns.set_names(
+                ['property', 'subtype']))
 
         # Group the results by LSOA.
-        # TO DO - include LSOA11CD in the columns. -------------------------------------------------
         # Group by LSOA, then take only the columns relating to time,
         # then take only their means and standard deviations.
         self.results_summary_by_lsoa = self.results_all.copy().groupby(
             by=['lsoa', 'LSOA11CD'])[aggregate_cols].agg(['mean', 'std'])
-        # self.results_summary_by_lsoa = self.results_summary_by_lsoa.reset_index()
         # Rename the MultiIndex column names:
-        self.results_summary_by_lsoa.columns = self.results_summary_by_lsoa.columns.set_names(['property', 'subtype'])
-        # Set LSOA as index:
-        # self.results_summary_by_lsoa.set_index(self.results_summary_by_lsoa.columns[0], inplace=True)
-
-        # # Save output to output folder.
-        # dir_output = self.setup.dir_output_pathway
-        # file_name = self.setup.file_results_summary_by_lsoa
-        # path_to_file = os.path.join(dir_output, file_name)
-        # self.results_summary_by_lsoa.to_csv(
-        #     path_to_file)#, index=False)
+        self.results_summary_by_lsoa.columns = (
+            self.results_summary_by_lsoa.columns.set_names(
+                ['property', 'subtype']))
 
     def generate_patient_arrival(self):
         """
@@ -207,7 +168,6 @@ class Model(object):
             # SimPy delay to next arrival (using environment timeout)
             yield self.env.timeout(time_to_next)
 
-    
     def get_outcomes(self):
         """
         Get outcomes for all patients from self.results(all)
@@ -230,12 +190,14 @@ class Model(object):
 
         patient_data_dict, outcomes_by_stroke_type, full_cohort_outcomes = (
             continuous_outcome.calculate_outcomes())
-        
-        self.results_all['mRS shift'] = full_cohort_outcomes['each_patient_mrs_shift']
-        self.results_all['utility_shift'] = full_cohort_outcomes['each_patient_utility_shift']
-        self.results_all['mRS 0-2'] = full_cohort_outcomes['each_patient_mrs_dist_post_stroke'][:, 2]
-        
-    
+
+        self.results_all['mRS shift'] = (
+            full_cohort_outcomes['each_patient_mrs_shift'])
+        self.results_all['utility_shift'] = (
+            full_cohort_outcomes['each_patient_utility_shift'])
+        self.results_all['mRS 0-2'] = (
+            full_cohort_outcomes['each_patient_mrs_dist_post_stroke'][:, 2])
+
     def run(self):
         """
         Model run: Initialise processes needed at model start,

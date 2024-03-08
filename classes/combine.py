@@ -4,13 +4,17 @@ Combine features from multiple runs.
 Welcome to MultiIndex hell. *Doom trumpets*
 
 TO DO - write me --------------------------------------------------------------------
+
+self.combine_selected_units()
+self.combine_selected_transfer()
+self.combine_selected_lsoa()
+self.combine_results_summary_by_lsoa()
+self.combine_results_summary_by_admitting_unit()
 """
 import numpy as np
 import pandas as pd
 import os
 from itertools import combinations
-
-from classes.setup import Setup
 
 
 class Combine(object):
@@ -32,34 +36,11 @@ class Combine(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-        # If no setup was given, create one now:
-        try:
-            self.setup
-        except AttributeError:
-            self.setup = Setup()
-
-        # Create the output folder for these combined files.
-        self.dir_output_combined = self.setup.create_output_dir(
-            self.setup.dir_output_combined, combined=True)
-
-    def combine_files(self):
-        # Check that we have the most up-to-date list of
-        # directories to combine:
-        self.setup.make_list_dir_scenario()
-        # Combine files:
-        self.combine_selected_regions()
-        self.combine_selected_units()
-        self.combine_selected_transfer()
-        self.combine_selected_lsoa()
-        self.combine_results_summary_by_lsoa()
-        self.combine_results_summary_by_admitting_unit()
-        self.combine_admissions()
-
-    # ##########################
-    # ##### SPECIFIC FILES #####
-    # ##########################
-
-    def combine_selected_units(self, save_to_file=True):
+    # ####################
+    # ##### WRAPPERS #####
+    # ####################
+    def combine_selected_units(
+            self, dict_scenario_df_to_merge):
         """
         Combine selected units.
 
@@ -87,37 +68,25 @@ class Combine(object):
         |    n | ... | -x.xx, yy.yy |            |          1 |
         +------+-----+--------------+------------+------------+
         """
-        file_to_merge = self.setup.file_selected_units
-
-        try:
-            df = self._hstack_multiple_dataframes(
-                file_to_merge,
-                cols_for_scenario=[
-                    'use_ivt',
-                    'use_mt',
-                    'use_msu',
-                    # 'Use',
-                    'selected',
-                    'transfer_unit_postcode',
-                    'catches_lsoa_in_selected_region'
-                ])
-        except FileNotFoundError:
-            err = ''.join([
-                f'Could not find file {file_to_merge} ',
-                'for combine_selected_units().'
+        df = self._hstack_multiple_dataframes(
+            dict_scenario_df_to_merge,
+            cols_for_scenario=[
+                'use_ivt',
+                'use_mt',
+                'use_msu',
+                # 'Use',
+                'selected',
+                'transfer_unit_postcode',
+                # 'catches_lsoa_in_selected_region'
             ])
-            raise FileNotFoundError(err) from None
 
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
 
-        if save_to_file:
-            output_dir = self.setup.dir_output_combined
-            output_filename = self.setup.file_combined_selected_units
-            path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)
+        return df
 
-    def combine_selected_transfer(self, save_to_file=True):
+    def combine_selected_transfer(
+            self, dict_scenario_df_to_merge):
         """
         Combine selected units.
 
@@ -145,33 +114,21 @@ class Combine(object):
         |    1 |             9 |          0 |          1 |
         +------+---------------+------------+------------+
         """
-        file_to_merge = self.setup.file_selected_transfer_units
-
-        try:
-            # Merge the separate files based on combo of unit and
-            # transfer unit, two indexes.
-            df = self._hstack_multiple_dataframes(
-                file_to_merge,
-                add_use_column=True,
-                extra_cols_for_index=['name_nearest_mt']
-                )
-        except FileNotFoundError:
-            err = ''.join([
-                f'Could not find file {file_to_merge} ',
-                'for combine_selected_transfer().'
-            ])
-            raise FileNotFoundError(err) from None
+        # Merge the separate files based on combo of unit and
+        # transfer unit, two indexes.
+        df = self._hstack_multiple_dataframes(
+            dict_scenario_df_to_merge,
+            add_use_column=True,
+            extra_cols_for_index=['transfer_unit_postcode']
+            )
 
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
 
-        if save_to_file:
-            output_dir = self.setup.dir_output_combined
-            output_filename = self.setup.file_combined_selected_transfer_units
-            path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)
+        return df
 
-    def combine_selected_lsoa(self, save_to_file=True):
+    def combine_selected_lsoa(
+            self, dict_scenario_df_to_merge):
         """
         Combine selected LSOA.
 
@@ -199,85 +156,20 @@ class Combine(object):
         |    n |   0 |            9 |   0 |              |
         +------+-----+--------------+-----+--------------+
         """
-        file_to_merge = self.setup.file_selected_lsoas
-
-        try:
-            df = self._hstack_multiple_dataframes( # TO DO - column name here might change
-                file_to_merge, add_use_column=True, cols_for_scenario=['postcode_nearest_ivt'])
-        except FileNotFoundError:
-            err = ''.join([
-                f'Could not find file {file_to_merge} ',
-                'for combine_selected_lsoa().'
-            ])
-            raise FileNotFoundError(err) from None
+        df = self._hstack_multiple_dataframes(
+            # TO DO - column name here might change
+            dict_scenario_df_to_merge,
+            add_use_column=True,
+            cols_for_scenario=['unit_postcode']
+            )
 
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
 
-        if save_to_file:
-            output_dir = self.setup.dir_output_combined
-            output_filename = self.setup.file_combined_selected_lsoas
-            path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)
+        return df
 
-    def combine_selected_regions(self, save_to_file=True):
-        """
-        Combine selected regions.
-
-        Each file input:
-        +--------+-----------+----------+
-        | Region | has_units | has_lsoa |    property
-        +--------+-----------+----------+
-        |      1 |      True |     True |
-        |      2 |      True |     True |
-        |      3 |     False |     True |
-        |    ... |       ... |      ... |
-        |      n |     False |     True |
-        +--------+-----------+----------+
-
-        Resulting DataFrame:
-                 +----------------------+----------------------+
-                 |      scenario_1      |      scenario_2      |    scenario
-        +--------+-----------+----------+-----------+----------+
-        | Region | has_units | has_lsoa | has_units | has_lsoa |    property
-        +--------+-----------+----------+-----------+----------+
-        |      1 |      True |     True |      True |     True |
-        |      2 |      True |     True |     False |     True |
-        |      3 |     False |     True |      True |     True |
-        |    ... |       ... |      ... |       ... |      ... |
-        |      n |     False |     True |     False |     True |
-        +--------+-----------+----------+-----------+----------+
-        """
-        file_to_merge = self.setup.file_selected_regions
-
-        try:
-            df = self._hstack_multiple_dataframes(
-                file_to_merge,
-                csv_index=[0, 1],
-                cols_for_scenario=[
-                    'selected',
-                    'contains_selected_lsoa',
-                    'contains_unit_catching_lsoa'
-                    ])
-        except FileNotFoundError:
-            err = ''.join([
-                f'Could not find file {file_to_merge} ',
-                'for combine_selected_regions().'
-            ])
-            raise FileNotFoundError(err) from None
-
-        # Rename the MultiIndex column names:
-        df.columns = df.columns.set_names(['scenario', 'property'])
-        # Replace missing values with 0:
-        # df = df.fillna(value=0)
-
-        if save_to_file:
-            output_dir = self.setup.dir_output_combined
-            output_filename = self.setup.file_combined_selected_regions
-            path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)
-
-    def combine_results_summary_by_lsoa(self, save_to_file=True):
+    def combine_results_summary_by_lsoa(
+            self, dict_scenario_df_to_merge):
         """
         Group by LSOA summary.
 
@@ -309,21 +201,10 @@ class Combine(object):
         |    n | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
         +------+------+------+------+------+------+------+
         """
-        file_to_merge = self.setup.file_results_summary_by_lsoa
-
-        try:
-            data = self._hstack_multiple_dataframes(
-                file_to_merge,
-                csv_header=[0, 1],
-                csv_index=[0, 1],
-                cols_for_scenario=':'
-                )
-        except FileNotFoundError:
-            err = ''.join([
-                f'Could not find file {file_to_merge} ',
-                'for combine_results_summary_by_lsoa().'
-            ])
-            raise FileNotFoundError(err) from None
+        data = self._hstack_multiple_dataframes(
+            dict_scenario_df_to_merge,
+            cols_for_scenario=':'
+            )
 
         # col_to_group = data.columns[0]
         cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
@@ -338,13 +219,10 @@ class Combine(object):
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property', 'subtype'])
 
-        if save_to_file:
-            output_dir = self.setup.dir_output_combined
-            output_filename = self.setup.file_combined_results_summary_by_lsoa
-            path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)
+        return df
 
-    def combine_results_summary_by_admitting_unit(self, save_to_file=True):
+    def combine_results_summary_by_admitting_unit(
+            self, dict_scenario_df_to_merge):
         """
         Group by admitting unit summary.
 
@@ -376,20 +254,10 @@ class Combine(object):
         |    n | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
         +------+------+------+------+------+------+------+
         """
-        file_to_merge = self.setup.file_results_summary_by_admitting_unit
-
-        try:
-            data = self._hstack_multiple_dataframes(
-                file_to_merge,
-                csv_header=[0, 1],
-                cols_for_scenario=':'
-                )
-        except FileNotFoundError:
-            err = ''.join([
-                f'Could not find file {file_to_merge} ',
-                'for combine_results_summary_by_admitting_unit().'
-            ])
-            raise FileNotFoundError(err) from None
+        data = self._hstack_multiple_dataframes(
+            dict_scenario_df_to_merge,
+            cols_for_scenario=':'
+            )
 
         # col_to_group = data.columns[0]
         cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
@@ -404,71 +272,11 @@ class Combine(object):
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property', 'subtype'])
 
-        if save_to_file:
-            output_dir = self.setup.dir_output_combined
-            output_filename = (
-                self.setup.file_combined_results_summary_by_admitting_unit)
-            path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)
+        return df
 
-    def combine_admissions(self, save_to_file=True):
-        """
-        Combine selected regions.
-
-        Each file input:
-        +------+------------+--------------------+
-        | lsoa | admissions | relative_frequency |    property
-        +------+------------+--------------------+
-        |    1 |         10 |               0.06 |
-        |    2 |          3 |               0.02 |
-        |    3 |          2 |               0.01 |
-        |  ... |        ... |                ... |
-        |    n |          1 |               0.00 |
-        +------+------------+--------------------+
-
-        Resulting DataFrame:
-               +------------------------+------------------------+
-               |       scenario_1       |       scenario_2       |    scenario
-        +------+------------+-----------+------------+-----------+
-        | lsoa | admissions | rel...ncy | admissions | rel...ncy |    property
-        +------+------------+-----------+------------+-----------+
-        |    1 |         10 |      0.06 |         10 |      0.06 |
-        |    2 |          3 |      0.02 |            |           |
-        |    3 |          2 |      0.01 |          2 |      0.01 |
-        |  ... |        ... |       ... |        ... |       ... |
-        |    n |          1 |      0.00 |            |           |
-        +------+------------+-----------+------------+-----------+
-        """
-        file_to_merge = self.setup.file_selected_lsoa_admissions
-
-        try:
-            df = self._hstack_multiple_dataframes(
-                file_to_merge,
-                cols_for_scenario=[
-                    'admissions',
-                    'relative_frequency',
-                    ])
-        except FileNotFoundError:
-            err = ''.join([
-                f'Could not find file {file_to_merge} ',
-                'for combine_admissions().'
-            ])
-            raise FileNotFoundError(err) from None
-
-        # Rename the MultiIndex column names:
-        df.columns = df.columns.set_names(['scenario', 'property'])
-        # Replace missing values with 0:
-        # df = df.fillna(value=0)
-
-        if save_to_file:
-            output_dir = self.setup.dir_output_combined
-            output_filename = self.setup.file_combined_selected_lsoa_admissions
-            path_to_file = os.path.join(output_dir, output_filename)
-            df.to_csv(path_to_file)
-
-    # ############################
-    # ##### HELPER FUNCTIONS #####
-    # ############################
+    # #####################
+    # ##### COMBINING #####
+    # #####################
     def _diff_data(self, df, cols_to_diff):
         """
         C
@@ -526,9 +334,7 @@ class Combine(object):
 
     def _hstack_multiple_dataframes(
             self,
-            file_to_merge,
-            csv_header=0,
-            csv_index=0,
+            dict_scenario_df_to_merge,
             add_use_column=False,
             cols_for_scenario=[],
             extra_cols_for_index=[]
@@ -562,38 +368,23 @@ class Combine(object):
         |      n |     False |     True |     False |     True |
         +--------+-----------+----------+-----------+----------+
         """
-        # data = pd.DataFrame()
-
         dfs_to_merge = {}
 
-        for d, dir_output in enumerate(self.setup.list_dir_scenario):
-            file_input = file_to_merge
-            path_to_file = os.path.join(
-                dir_output,
-                self.setup.name_dir_output_pathway,
-                file_input
-                )
-
-            df = pd.read_csv(
-                path_to_file, index_col=csv_index, header=csv_header)
-
+        for scenario_name, df in dict_scenario_df_to_merge.items():
             if len(extra_cols_for_index) > 0:
-                index_col = df.index.name
+                iname = list(df.index.names)
                 df = df.reset_index()
-                df = df.set_index([index_col] + extra_cols_for_index)
+                df = df.set_index(iname + extra_cols_for_index)
 
             if len(dfs_to_merge.items()) < 1:
-                shared_col_name = df.index.name#columns[0]
-                # dfs_to_merge['any'] = df[shared_col_name]
-
-            # Create a name for this scenario:
-            scenario_name = os.path.split(dir_output)[-1]
+                shared_col_name = df.index.name
 
             if isinstance(cols_for_scenario, str):
                 # Use all columns.
                 pass
             else:
-                split_for_any = True if ((len(cols_for_scenario) != (len(df.columns)))) else False
+                split_bool = ((len(cols_for_scenario) != (len(df.columns))))
+                split_for_any = True if split_bool else False
                 if split_for_any:
                     # Find the names of these columns in this df.
                     # (so can specify one level of multiindex only).
@@ -601,9 +392,11 @@ class Combine(object):
                     scenario_cols = [self.find_multiindex_col(
                         df.columns, col) for col in cols_for_scenario]
 
-                    if d == 0:
-                        # Remove these columns from this scenario.
-                        df_any = df.copy().drop(cols_for_scenario, axis='columns')
+                    if len(dfs_to_merge.items()) < 1:
+                        # First time around this loop.
+                        # Split off these columns from this scenario.
+                        df_any = df.copy().drop(
+                            cols_for_scenario, axis='columns')
                         dfs_to_merge['any'] = df_any
                     else:
                         pass
@@ -612,14 +405,19 @@ class Combine(object):
                     df = df[scenario_cols]
 
             if add_use_column:
-                shared_col_is_list = ((type(shared_col_name) == list) | 
+                shared_col_is_list = ((type(shared_col_name) == list) |
                                       (type(shared_col_name) == tuple))
                 # TO DO ^ make this more generic.
                 if shared_col_is_list:
                     use_col = tuple([b for b in shared_col_name[:-1]] + ['Use'])
                 else:
                     use_col = 'Use'
-                df[use_col] = 1
+                # Make a new column named use_col and set all values to 1:
+                # (use "assign" to avoid annoying warning, value set on
+                # copy of slice)
+                df = df.assign(**{use_col: 1})
+            else:
+                pass
 
             dfs_to_merge[scenario_name] = df
 
@@ -630,7 +428,6 @@ class Combine(object):
             keys=dfs_to_merge.keys()  # Names for extra index row
             )
 
-        # data = data.reset_index()
         try:
             # Move 'any' index to the far left:
             cols = list(np.unique(data.columns.get_level_values(0).to_list()))
@@ -644,12 +441,13 @@ class Combine(object):
         # Sort rows by contents of index:
         data = data.sort_index()
 
-        # Did have dtype float/str from missing values, now want int:
+        # Did have dtype float/str from missing values, now want int
+        # if possible:
         data = data.convert_dtypes()
 
         return data
 
-    def _merge_multiple_dataframes(self, file_to_merge, merge_col='lsoa_code'):
+    def _merge_multiple_dataframes(self, dict_scenario_df_to_merge, merge_col='lsoa_code'):
         # Combine multiple DataFrames from different scenarios into here.
         # Stacks all DataFrames one on top of the other with no other
         # change in columns.
@@ -657,18 +455,8 @@ class Combine(object):
         scenario_cols_list = []
         scenario_series_list = []
 
-        for d, dir_output in enumerate(self.setup.list_dir_scenario):
-            file_input = file_to_merge
-            path_to_file = os.path.join(
-                dir_output, 
-                self.setup.name_dir_output_pathway,
-                file_input
-                )
-
-            df = pd.read_csv(path_to_file)
-
+        for scenario_name, df in dict_scenario_df_to_merge.items():
             # Create a name for this scenario:
-            scenario_name = os.path.split(dir_output)[-1]
             scenario_series = pd.Series(
                 [1]*len(df),
                 index=df[merge_col],
