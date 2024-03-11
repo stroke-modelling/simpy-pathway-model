@@ -114,7 +114,7 @@ class Setup(object):
         # File names that the pathway can save to:
         filenames = [
             # Input file names:
-            'selected_regions',
+            # 'selected_regions',
             'selected_units',
             # Output file names:
             # Scenario():
@@ -126,7 +126,7 @@ class Setup(object):
             'results_summary_by_admitting_unit',
             'results_summary_by_lsoa',
             # Combine():
-            'combined_selected_regions',
+            # 'combined_selected_regions',
             'combined_selected_units',
             'combined_selected_transfer_units',
             'combined_selected_lsoas',

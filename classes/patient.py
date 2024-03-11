@@ -114,16 +114,16 @@ class Patient():
         self.id = id
 
         # Choose LSOA based on admission numbers
-        self.lsoa, self.LSOA11CD = self.choose_lsoa(scenario)
+        self.lsoa, self.lsoa_code = self.choose_lsoa(scenario)
 
         # Select stroke type:
         self.stroke_type = self.generate_stroke_type()
 
         # Find unit details for this LSOA.
         self.unit = scenario.df_selected_lsoa.loc[
-            (self.lsoa, self.LSOA11CD), 'unit_postcode']
+            (self.lsoa, self.lsoa_code), 'unit_postcode']
         self.travel_duration = scenario.df_selected_lsoa.loc[
-            (self.lsoa, self.LSOA11CD), 'unit_travel_time']
+            (self.lsoa, self.lsoa_code), 'unit_travel_time']
 
         self.transfer_unit = scenario.df_selected_transfer.loc[
             self.unit, 'transfer_unit_postcode']

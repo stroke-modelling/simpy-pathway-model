@@ -151,8 +151,6 @@ class Scenario(object):
     def get_transfer_units(self):
         """
         write me
-
-        If exists, don't load?
         """
         # Find which IVT units are feeders to each MT unit:
         transfer = self.find_national_mt_feeder_units(self.df_units)
@@ -169,7 +167,10 @@ class Scenario(object):
 
         # Label selected stroke units.
         selected_units = units['postcode'][units['selected'] == 1].tolist()
-        mask = transfer['postcode'].isin(selected_units)
+        mask = (
+            (transfer['postcode'].isin(selected_units)) &
+            (transfer['transfer_unit_postcode'].notna())
+        )
         transfer['selected'] = 0
         transfer.loc[mask, 'selected'] = 1
         transfer = transfer.set_index('postcode')
@@ -367,8 +368,8 @@ class Scenario(object):
             df_catchment, df_lsoa,
             left_on='LSOA', right_on='lsoa', how='left'
         )
-        df_catchment.drop('lsoa', axis='columns', inplace=True)
-        df_catchment.set_index('LSOA', inplace=True)
+        df_catchment.drop('LSOA', axis='columns', inplace=True)
+        df_catchment.set_index('lsoa', inplace=True)
 
         # Limit rows to LSOA in requested regions:
         if len(regions_to_limit) > 0:
@@ -437,7 +438,7 @@ class Scenario(object):
         path_to_file = './data/admissions_2017-2019.csv'
         admissions = pd.read_csv(path_to_file)
 
-        admissions = admissions.rename(columns={'area': 'LSOA'})
+        admissions = admissions.rename(columns={'area': 'lsoa'})
         return admissions
 
     def match_admissions_to_selected_lsoa(self, admissions):
@@ -448,7 +449,7 @@ class Scenario(object):
         df_lsoa = self.df_lsoa.copy()
         df_lsoa = df_lsoa.reset_index()
         admissions = pd.merge(left=df_lsoa, right=admissions,
-                              on='LSOA', how='left')
+                              on='lsoa', how='left')
 
         admissions_mask = admissions.loc[admissions['selected'] == 1].copy()
 
@@ -463,11 +464,11 @@ class Scenario(object):
 
         # Merge this info back into the main DataFrame:
         admissions = pd.merge(
-            admissions, admissions_mask[['LSOA', 'relative_frequency']],
-            on='LSOA', how='left')
+            admissions, admissions_mask[['lsoa', 'relative_frequency']],
+            on='lsoa', how='left')
 
         # Set index to both LSOA name and code so that both follow
         # through to all of the results data.
-        admissions = admissions.set_index(['LSOA', 'lsoa_code'])
+        admissions = admissions.set_index(['lsoa', 'lsoa_code'])
 
         self.df_lsoa = admissions

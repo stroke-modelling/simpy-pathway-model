@@ -118,7 +118,8 @@ class Combine(object):
         # transfer unit, two indexes.
         df = self._hstack_multiple_dataframes(
             dict_scenario_df_to_merge,
-            add_use_column=True,
+            # add_use_column=True,
+            cols_for_scenario=['selected', ],
             extra_cols_for_index=['transfer_unit_postcode']
             )
 
@@ -159,8 +160,8 @@ class Combine(object):
         df = self._hstack_multiple_dataframes(
             # TO DO - column name here might change
             dict_scenario_df_to_merge,
-            add_use_column=True,
-            cols_for_scenario=['unit_postcode']
+            # add_use_column=True,
+            cols_for_scenario=['unit_postcode', 'unit_travel_time', 'selected', 'relative_frequency']
             )
 
         # Rename the MultiIndex column names:

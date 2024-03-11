@@ -41,6 +41,15 @@ e.g. drip and ship catchment map, make all feeder units different shades
 of the same colour for each MT unit.
 
 TO DO - get this ready for packaging.
+
+
+    # ----- Gather data -----
+    # Selected LSOA names, codes.
+    # ['lsoa', 'LSOA11CD', 'postcode_nearest', 'time_nearest', 'Use']
+    # Index column: LSOA11NM.
+    # Expected column MultiIndex levels:
+    #   - combined: ['scenario', 'property']
+    #   - separate: ['{unnamed level}']
 """
 import numpy as np
 import pandas as pd
@@ -49,257 +58,15 @@ import matplotlib.pyplot as plt
 import os
 
 from shapely import LineString  # For creating line geometry.
-from shapely.geometry import Polygon # For extent box.
-import string  # For generating labels for stroke units.
 
 from classes.setup import Setup
 import classes.map_functions as maps  # for plotting.
 
 
-# ##########################
-# ##### FILE SELECTION #####
-# ##########################
-def set_data_dir(self, dir_data):
-    """
-    On changing dir, wipe the loaded data and reload from this dir.
-    """
-    combo_condition = (
-        (dir_data is None) |
-        (dir_data == 'combined') |
-        (dir_data == self.setup.dir_output_combined)
-        )
-    if combo_condition:
-        # Use combined data files.
-        self.dir_data = self.setup.dir_output_combined
-        self.data_type = 'combined'
-        self.dir_output_maps = os.path.join(
-            self.dir_data, self.setup.name_dir_output_maps
-        )
-    else:
-        # Check that we have the most up-to-date list of dirs:
-        self.setup.make_list_dir_scenario()
-        # Use files for the selected scenario only.
-        for d, dir_scen in enumerate(self.setup.list_dir_scenario):
-            end = os.path.split(dir_scen)[-1]
-            if end == dir_data:
-                self.dir_data = dir_scen
-        # Add the "pathway" and "maps" parts:
-        self.dir_output_maps = os.path.join(
-            self.dir_data, self.setup.name_dir_output_maps
-        )
-        self.dir_data = os.path.join(
-            self.dir_data,
-            self.setup.name_dir_output_pathway
-            )
-        self.data_type = 'single'
-
-    self.delete_loaded_data()
-
-    # Create a new maps/ dir for outputs.
-    try:
-        os.mkdir(self.dir_output_maps)
-    except FileExistsError:
-        # The directory already exists.
-        pass
-
-
-def delete_loaded_data(self):
-    # Delete these attributes if they exist:
-    data_attrs = [
-        # Loaded in from file:
-        'df_regions',
-        'df_units',
-        'df_transfer',
-        'df_lsoa',
-        'df_results_by_unit',
-        'df_results_by_lsoa',
-        # Combined data from files:
-        'gdf_boundaries_regions',
-        'gdf_points_units',
-        'gdf_lines_transfer',
-        'gdf_boundaries_lsoa',
-    ]
-    for attr in data_attrs:
-        try:
-            delattr(self, attr)
-        except AttributeError:
-            # The data wasn't loaded anyway.
-            pass
-
-
-def load_run_data(self, load_list=[]):
-    """
-    Load in data specific to these runs.
-
-    TO DO - reasonably expect that the selected regions and units files might change
-    after being plotted once, so need a way to force reload of the data.
-
-    TO DO - what if no setup?
-    """
-    # Setup for combined files:
-    dicts_combo = {
-        'df_regions': {
-            'file': self.setup.file_combined_selected_regions,
-            'header': [0, 1],
-            'index_col': [0, 1],
-            },
-        'df_units': {
-            'file': self.setup.file_combined_selected_units,
-            'header': [0, 1],
-            'index_col': 0,
-            },
-        'df_transfer': {
-            'file': self.setup.file_combined_selected_transfer_units,
-            'header': [0, 1],
-            'index_col': [0, 1],
-            },
-        'df_lsoa': {
-            'file': self.setup.file_combined_selected_lsoas,
-            'header': [0, 1],
-            'index_col': 1,
-            },
-        'df_results_by_unit': {
-            'file': (
-                self.setup.file_combined_results_summary_by_admitting_unit
-                ),
-            'header': [0, 1, 2],
-            'index_col': 0,
-            },
-        'df_results_by_lsoa': {
-            'file': self.setup.file_combined_results_summary_by_lsoa,
-            'header': [0, 1, 2],
-            'index_col': 1,
-            },
-    }
-    # Setup for individual run's files:
-    dicts_single = {
-        'df_regions': {
-            'file': self.setup.file_selected_regions,
-            'header': [0],
-            'index_col': [0, 1],
-            },
-        'df_units': {
-            'file': self.setup.file_selected_units,
-            'header': [0],
-            'index_col': 0,
-            },
-        'df_transfer': {
-            'file': self.setup.file_selected_transfer_units,
-            'header': [0],
-            'index_col': 0,
-            },
-        'df_lsoa': {
-            'file': self.setup.file_selected_lsoas,
-            'header': [0],
-            'index_col': 1,
-            },
-        'df_results_by_unit': {
-            'file': (
-                self.setup.file_results_summary_by_admitting_unit
-                ),
-            'header': [0, 1],
-            'index_col': 0,
-            },
-        'df_results_by_lsoa': {
-            'file': self.setup.file_results_summary_by_lsoa,
-            'header': [0, 1],
-            'index_col': 1,
-            },
-    }
-    if self.data_type == 'combined':
-        dicts_data = dicts_combo
-    else:
-        dicts_data = dicts_single
-
-    if len(load_list) == 0:
-        # Load everything.
-        load_list = list(dicts_data.keys())
-
-    for label in load_list:
-        data_dict = dicts_data[label]
-        # Make path to file:
-        try:
-            path_to_file = os.path.join(self.dir_data, data_dict['file'])
-        except TypeError:
-            # The file name is None.
-            # Can't import this.
-            path_to_file = ''
-        try:
-            # Specify header to import as a multiindex DataFrame.
-            df = pd.read_csv(
-                path_to_file,
-                header=data_dict['header'],
-                index_col=data_dict['index_col']
-                )
-            if ((label == 'df_transfer') & (self.data_type == 'single')):
-                # Add another column to the index.
-                # Assume that the wanted column isn't in slot 1
-                # and its location isn't known, so call it by name.
-                iname = df.index.name
-                df = df.reset_index()
-                df = df.set_index([iname, 'name_nearest_mt'])
-            else:
-                pass
-            # Save to self:
-            setattr(self, label, df)
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                f'Cannot import {label} from {data_dict["file"]}'
-                ) from None
-
-
-def process_data(self, load_list=[]):
-    """
-    Load everything in mmkay  TO DO - write me
-    """
-    def _check_prereqs_and_load(prereqs, func):
-        data_loaded = [hasattr(self, df) for df in prereqs]
-        if all(data_loaded):
-            func()
-        else:
-            # Something is missing so can't load the data.
-            pass
-
-    if 'gdf_boundaries_regions' in load_list:
-        func = self._load_geometry_regions
-        prereqs = ['df_regions']
-        _check_prereqs_and_load(prereqs, func)
-    if 'gdf_points_units' in load_list:
-        func = self._load_geometry_stroke_units
-        prereqs = ['df_regions', 'df_units']
-        _check_prereqs_and_load(prereqs, func)
-    if 'gdf_lines_transfer' in load_list:
-        func = self._load_geometry_transfer_units
-        prereqs = ['df_regions', 'df_units', 'df_transfer']
-        _check_prereqs_and_load(prereqs, func)
-    if 'gdf_boundaries_lsoa' in load_list:
-        func = self._load_geometry_lsoa
-        prereqs = ['df_regions', 'df_lsoa']
-        _check_prereqs_and_load(prereqs, func)
-
-
-def _check_prereqs_exist(self, prereqs):
-    """
-    Run this at start of plot setup functions.
-    """
-    missing_attrs = []
-    for attr in prereqs:
-        if hasattr(self, attr):
-            pass
-        else:
-            missing_attrs.append(attr)
-    if len(missing_attrs) > 0:
-        err = ''.join([
-            f'Missing some information: {missing_attrs}\n',
-            'Try reloading: self.load_run_data() and ',
-            'self.process_data()'
-        ])
-        raise Exception(err) from None
-    else:
-        pass
-
-
-def import_geojson(self, region_type: 'str'):
+# #####################
+# ##### LOAD DATA #####
+# #####################
+def import_geojson(region_type: 'str'):
     """
     Import a geojson file as GeoDataFrame.
 
@@ -321,23 +88,29 @@ def import_geojson(self, region_type: 'str'):
     """
     # Select geojson file based on input region type:
     geojson_file_dict = {
-        'LSOA11NM': self.setup.file_geojson_lsoa,
-        'SICBL22NM': self.setup.file_geojson_sibcl,
-        'LHB20NM': self.setup.file_geojson_lhb,
+        'LSOA11NM': ''.join([
+            'LSOA_(Dec_2011)_Boundaries_Super_Generalised_Clipped_(BSC)',
+            '_EW_V3.geojson'
+        ]),
+        'SICBL22NM': 'SICBL_JUL_2022_EN_BUC_4104971945004813003.geojson',
+        'LHB20NM': ''.join([
+            'Local_Health_Boards_April_2020_WA_BGC_2022_',
+            '94310626700012506.geojson'
+        ]),
     }
 
+    # TO DO - change to relative import.
+    # # Relative import from package files:
+    # path_to_file = files('map.data_geojson').joinpath(file_input)
     # Import region file:
-    dir_input = self.setup.dir_reference_data_geojson
     file_input = geojson_file_dict[region_type]
-    path_to_file = os.path.join(dir_input, file_input)
+    path_to_file = os.path.join('data_geojson', file_input)
     gdf_boundaries = geopandas.read_file(path_to_file)
 
     if region_type == 'LSOA11NM':
         index_col = 'LSOA11CD'
         # Only keep these columns.
-        # Don't keep LSOA11NM because that will be merged in later
-        # from an LSOA dataframe.
-        geo_cols = ['BNG_E', 'BNG_N',
+        geo_cols = ['LSOA11NM', 'BNG_E', 'BNG_N',
                     'LONG', 'LAT', 'GlobalID', 'geometry']
 
     else:
@@ -403,39 +176,220 @@ def import_geojson(self, region_type: 'str'):
         gdf_boundaries = gdf_boundaries.to_crs('EPSG:27700')
     return gdf_boundaries
 
-# ##########################
-# ##### DATA WRANGLING #####
-# ##########################
-def _load_geometry_regions(
-        self, limit_to_england=False, limit_to_wales=False):
+
+# ########################
+# ##### PROCESS DATA #####
+# ########################
+def load_regions():
     """
-    Create GeoDataFrames of new geometry and existing DataFrames.
+    Load region data from file.
     """
-    # ----- Gather data -----
-    # Selected regions names and usage.
-    # ['{region type}', 'selected', 'contains_selected_lsoa']
-    df_regions = self.df_regions
+
+    # Load and parse geometry data
+    # TO DO - change to relative import.
+    # # Relative import from package files:
+    # path_to_file = files('map.data').joinpath('regions_ew.csv')
+    path_to_file = os.path.join('data', 'regions_ew.csv')
+    df_regions = pd.read_csv(path_to_file, index_col=[0, 1])
+
+    # Add an extra column level:
+    # Everything needs two levels: scenario, property.
+    cols_df_regions = [
+        ['any'] * len(df_regions.columns),  # scenario
+        df_regions.columns,                 # property
+    ]
+    # New DataFrame with the extra column level:
+    df_regions = pd.DataFrame(
+        df_regions.values,
+        index=df_regions.index,
+        columns=cols_df_regions
+    )
     # Index column: 'region'.
     # Expected column MultiIndex levels:
     #   - combined: ['scenario', 'property']
     #   - separate: ['{unnamed level}']
 
+    return df_regions
+
+
+def make_new_periphery_data(
+        df_regions, df_units, df_lsoa):
+    """
+    Find units, regions that aren't selected but catch selected LSOA.
+    """
+    # List of scenarios included in the units and LSOA data:
+    scenario_list = sorted(list(set(
+        df_units.columns.get_level_values('scenario'))))
+    scenario_list.remove('any')
+
+    # Load region info for each LSOA:
+    # TO DO - change to relative import.
+    # # Relative import from package files:
+    # path_to_file = files('map.data').joinpath('regions_lsoa_ew.csv')
+    # Import region file:
+    path_to_file = os.path.join('data', 'regions_lsoa_ew.csv')
+    df_lsoa_regions = pd.read_csv(path_to_file, index_col=[0, 1])
+    # Add an extra column level:
+    # Everything needs two levels: scenario, property.
+    cols_df_lsoa_regions = [
+        ['any'] * len(df_lsoa_regions.columns),  # scenario
+        df_lsoa_regions.columns,                 # property
+    ]
+    # New DataFrame with the extra column level:
+    df_lsoa_regions = pd.DataFrame(
+        df_lsoa_regions.values,
+        index=df_lsoa_regions.index,
+        columns=cols_df_lsoa_regions
+    )
+    # Index column: 'region'.
+
+    # Merge region info into LSOA data:
+    df_lsoa = pd.merge(df_lsoa.copy(), df_lsoa_regions,
+                       left_index=True, right_index=True, how='left')
+
+    # Reset index for easier column selection:
+    df_regions = df_regions.reset_index()
+
+    # Input dataframes should contain multiple scenarios in a
+    # MultiIndex column heading. Pick out each one in turn
+    # and calculate the periphery units and regions.
+    for scenario in scenario_list:
+        # Names of selected LSOA:
+
+        mask = (df_lsoa[(scenario, 'selected')] == 1)
+        lsoa_selected = list(
+            df_lsoa.loc[mask].copy().reset_index()['lsoa_code'])
+
+        # Names of selected units:
+        units_selected = df_units[
+            df_units[(scenario, 'selected')] == 1].index.values
+
+        df_lsoa_here = df_lsoa[['any', scenario]].copy().droplevel('scenario', axis='columns')
+
+        d = link_pathway_geography(
+            df_lsoa_here, df_units['any'],
+            units_selected, lsoa_selected
+            )
+
+        # Add these results to the starting dataframes:
+        df_units[(scenario, 'periphery_unit')] = 0
+        mask = df_units.index.isin(d['periphery_units'])
+        df_units.loc[mask, (scenario, 'periphery_unit')] = 1
+
+        df_regions[(scenario, 'contains_periphery_lsoa')] = 0
+        mask = df_regions['region_code'].isin(
+            d['regions_containing_lsoa'])
+        df_regions.loc[mask, (scenario, 'contains_periphery_lsoa')] = 1
+
+        df_regions[(scenario, 'contains_periphery_unit')] = 0
+        mask = df_regions['region_code'].isin(
+            d['regions_with_periphery_units'])
+        df_regions.loc[mask, (scenario, 'contains_periphery_unit')] = 1
+
+    # Set index back to how it was earlier:
+    df_regions = df_regions.set_index(['region', 'region_code'])
+    return df_regions, df_units
+
+
+def link_pathway_geography(
+        df_lsoa, df_units,
+        units_selected, lsoa_selected
+        ):
+    """
+    Find:
+    + regions containing selected LSOA
+    + regions containing selected units
+    + LSOA in regions containing selected units
+    + stroke units catching those LSOA (periphery units)
+    + regions containing periphery units
+
+    periphery units catching any LSOA in selected regions.
+
+    TO DO - what about sometimes combined, sometimes not files? ---------------------
+    # Run the following on the "any" part of the dataframes only.
+
+    """
+    # Mask for selected LSOA:
+    mask_lsoa_selected = df_lsoa.copy().reset_index()['lsoa_code'].isin(lsoa_selected).values
+    # Find list of regions containing LSOA caught by selected units.
+    regions_containing_lsoa = sorted(list(set(
+        df_lsoa.loc[mask_lsoa_selected, 'region_code'])))
+
+    # Reset index for easier access to values:
+    df_units = df_units.copy().reset_index()
+    # Mask for selected units:
+    mask_units_selected = df_units['postcode'].isin(units_selected)
+    # Find list of regions containing selected units:
+    regions_containing_units = list(df_units['region_code'][mask_units_selected])
+
+    # Mask for LSOA in regions containing selected units:
+    mask_lsoa_in_regions_containing_units = (
+        df_lsoa['region_code'].isin(regions_containing_units))
+    # Find list of periphery units:
+    periphery_units = sorted(list(set(
+        df_lsoa.loc[mask_lsoa_in_regions_containing_units, 'unit_postcode'])))
+
+    # Mask for regions containing periphery units:
+    mask_regions_periphery_units = (
+        df_units['postcode'].isin(periphery_units))
+    # Find list of periphery regions:
+    regions_with_periphery_units = list(
+        df_units.loc[mask_regions_periphery_units, 'region_code'])
+
+    to_return = {
+        'periphery_units': periphery_units,
+        'regions_containing_lsoa': regions_containing_lsoa,
+        'regions_with_periphery_units': regions_with_periphery_units
+    }
+    return to_return
+
+
+# ########################
+# ##### COMBINE DATA #####
+# ########################
+def make_all_geometry_data(
+        df_lsoa, df_units, df_regions,
+        df_transfer=None, df_lsoa_results=None
+        ):
+
+    df_regions = load_regions()
+    df_regions, df_units = make_new_periphery_data(
+        df_regions, df_units, df_lsoa)
+
+    gdf_boundaries_regions = _load_geometry_regions(df_regions)
+    gdf_units = _load_geometry_stroke_units(df_units)
+    if df_transfer is None:
+        gdf_lines_transfer = pd.DataFrame()  # Leave blank.
+    else:
+        gdf_lines_transfer = _load_geometry_transfer_units(df_transfer)
+    gdf_boundaries_lsoa = _load_geometry_lsoa(df_lsoa, df_lsoa_results)
+
+    # # Merge many LSOA into one big blob of catchment area.
+    # gdf_boundaries_catchment = _load_geometry_catchment(gdf_boundaries_lsoa)
+
+    to_return = (
+        gdf_boundaries_regions,
+        gdf_units,
+        gdf_lines_transfer,
+        gdf_boundaries_lsoa,
+        # gdf_boundaries_catchment
+    )
+
+    return to_return
+
+
+def _load_geometry_regions(df_regions):
+    """
+    Create GeoDataFrames of new geometry and existing DataFrames.
+    """
     # All region polygons:
     gdf_list = []
-    if limit_to_wales is False:
-        gdf_boundaries_regions_e = self.import_geojson('SICBL22NM')
-        gdf_list.append(gdf_boundaries_regions_e)
-    if limit_to_england is False:
-        gdf_boundaries_regions_w = self.import_geojson('LHB20NM')
-        gdf_list.append(gdf_boundaries_regions_w)
-    if len(gdf_list) > 1:
-        # Combine:
-        gdf_boundaries_regions = pd.concat(gdf_list, axis='rows')
-    elif len(gdf_list) == 0:
-        # Haven't loaded any boundaries.
-        # Probably don't want this to happen...
-        err = 'No boundaries loaded - England and Wales both excluded.'
-        raise Exception(err) from None
+    gdf_boundaries_regions_e = import_geojson('SICBL22NM')
+    gdf_list.append(gdf_boundaries_regions_e)
+    gdf_boundaries_regions_w = import_geojson('LHB20NM')
+    gdf_list.append(gdf_boundaries_regions_w)
+    # Combine:
+    gdf_boundaries_regions = pd.concat(gdf_list, axis='rows')
 
     # Index column: 'region'.
     # Always has only one unnamed column index level.
@@ -447,25 +401,15 @@ def _load_geometry_regions(
 
     # ----- Prepare separate data -----
     # Set up column level info for the merged DataFrame.
-    # The "combined" scenario Dataframe will have an extra
-    # column level with the scenario name.
-    if self.data_type == 'combined':
-        # Everything needs two levels: scenario, property.
-        # Geometry:
-        cols_gdf_boundaries_regions = [
-            ['any'] * len(gdf_boundaries_regions.columns),  # scenario
-            gdf_boundaries_regions.columns,                 # property
-        ]
-        # Final data:
-        col_level_names = ['scenario', 'property']
-        col_geometry = ('any', 'geometry')
-    else:
-        # Everything needs one level: property.
-        # Geometry:
-        cols_gdf_boundaries_regions = gdf_boundaries_regions.columns
-        # Final data:
-        col_level_names = ['property']
-        col_geometry = 'geometry'
+    # Everything needs two levels: scenario, property.
+    # Geometry:
+    cols_gdf_boundaries_regions = [
+        ['any'] * len(gdf_boundaries_regions.columns),  # scenario
+        gdf_boundaries_regions.columns,                 # property
+    ]
+    # Final data:
+    col_level_names = ['scenario', 'property']
+    col_geometry = ('any', 'geometry')
 
     # Geometry:
     gdf_boundaries_regions = pd.DataFrame(
@@ -485,15 +429,11 @@ def _load_geometry_regions(
     gdf_boundaries_regions.columns = (
         gdf_boundaries_regions.columns.set_names(col_level_names))
 
-    if self.data_type == 'combined':
-        # Sort the results by scenario (top column index):
-        cols_scen = (
-            gdf_boundaries_regions.columns.get_level_values('scenario'))
-        cols_scen = sorted(list(set(cols_scen)))
-        gdf_boundaries_regions = gdf_boundaries_regions[cols_scen]
-    else:
-        # Don't sort.
-        pass
+    # Sort the results by scenario (top column index):
+    cols_scen = (
+        gdf_boundaries_regions.columns.get_level_values('scenario'))
+    cols_scen = sorted(list(set(cols_scen)))
+    gdf_boundaries_regions = gdf_boundaries_regions[cols_scen]
 
     # Convert to GeoDataFrame:
     gdf_boundaries_regions = geopandas.GeoDataFrame(
@@ -501,17 +441,10 @@ def _load_geometry_regions(
         geometry=col_geometry
         )
 
-    # ----- Save to self -----
-    self.gdf_boundaries_regions = gdf_boundaries_regions
-
-    # Save output to output folder.
-    dir_output = self.dir_output_maps
-    file_name = self.setup.file_gdf_boundaries_regions
-    path_to_file = os.path.join(dir_output, file_name)
-    gdf_boundaries_regions.to_csv(path_to_file)
+    return gdf_boundaries_regions
 
 
-def _load_geometry_stroke_units(self):
+def _load_geometry_stroke_units(df_units):
     """
     Create GeoDataFrames of new geometry and existing DataFrames.
 
@@ -536,42 +469,36 @@ def _load_geometry_stroke_units(self):
                 the file. Columns include unit name and geometry.
     """
     # Selected stroke units names, services, and regions.
-    df_units = self.df_units
     # Index column: Postcode.
     # Expected column MultiIndex levels:
     #   - combined: ['scenario', 'property']
     #   - separate: ['{unnamed level}']
 
     # Load and parse geometry data
-    dir_input = self.setup.dir_reference_data
-    file_input = self.setup.file_input_hospital_coords
-    path_to_file = os.path.join(dir_input, file_input)
+    # TO DO - change to relative import.
+    # # Relative import from package files:
+    # path_to_file = files('map.data').joinpath('unit_postcodes_coords.csv')
+    path_to_file = os.path.join('data', 'unit_postcodes_coords.csv')
     df_coords = pd.read_csv(path_to_file, index_col='postcode')
     # Index: postcode.
     # Columns: BNG_E, BNG_N, Longitude, Latitude.
-    if self.data_type == 'combined':
-        # Add another column level to the coordinates.
-        cols_df_coords = [
-            ['any'] * len(df_coords.columns),  # scenario
-            df_coords.columns,                 # property
-        ]
-        df_coords = pd.DataFrame(
-            df_coords.values,
-            index=df_coords.index,
-            columns=cols_df_coords
-        )
+    # Add another column level to the coordinates.
+    cols_df_coords = [
+        ['any'] * len(df_coords.columns),  # scenario
+        df_coords.columns,                 # property
+    ]
+    df_coords = pd.DataFrame(
+        df_coords.values,
+        index=df_coords.index,
+        columns=cols_df_coords
+    )
     # Merge:
     df_units = pd.merge(
         df_units, df_coords, left_index=True, right_index=True, how='left')
 
-    if self.data_type == 'combined':
-        x_col = ('any', 'BNG_E')
-        y_col = ('any', 'BNG_N')
-        coords_col = ('any', 'geometry')
-    else:
-        x_col = 'BNG_E'
-        y_col = 'BNG_N'
-        coords_col = 'geometry'
+    x_col = ('any', 'BNG_E')
+    y_col = ('any', 'BNG_N')
+    coords_col = ('any', 'geometry')
 
     # Convert to geometry (point):
     # Create coordinates:
@@ -589,55 +516,37 @@ def _load_geometry_stroke_units(self):
     gdf_units = geopandas.GeoDataFrame(
         df_units, geometry=coords_col, crs=crs)
 
-    self.gdf_points_units = gdf_units
-
-    # Save output to output folder.
-    dir_output = self.dir_output_maps
-    file_name = self.setup.file_gdf_points_units
-    path_to_file = os.path.join(dir_output, file_name)
-    gdf_units.to_csv(path_to_file)
+    return gdf_units
 
 
-def _load_geometry_transfer_units(self):
+def _load_geometry_transfer_units(df_transfer):
     """
     Create GeoDataFrames of new geometry and existing DataFrames.
     """
     # Selected stroke units names, coordinates, and services.
-    df_transfer = self.df_transfer
     # Index column: ['postcode', 'name_nearest_mt']
     # Expected column MultiIndex levels:
     #   - combined: ['scenario', 'property']
     #   - separate: ['{unnamed level}']
 
     # Load and parse geometry data
-    dir_input = self.setup.dir_reference_data
-    file_input = self.setup.file_input_hospital_coords
-    path_to_file = os.path.join(dir_input, file_input)
+    # TO DO - change to relative import.
+    # # Relative import from package files:
+    # path_to_file = files('map.data').joinpath('unit_postcodes_coords.csv')
+    path_to_file = os.path.join('data', 'unit_postcodes_coords.csv')
     df_coords = pd.read_csv(path_to_file)
     # Columns: postcode, BNG_E, BNG_N, Longitude, Latitude.
 
-    if self.data_type == 'combined':
-        # From the loaded file:
-        x_col = ('any', 'BNG_E')
-        y_col = ('any', 'BNG_N')
-        x_col_mt = ('any', 'BNG_E_mt')
-        y_col_mt = ('any', 'BNG_N_mt')
-        # To be created here:
-        col_unit = ('any', 'unit_coords')
-        col_tran = ('any', 'transfer_coords')
-        col_line_coords = ('any', 'line_coords')
-        col_line_geometry = ('any', 'geometry')
-    else:
-        # From the loaded file:
-        x_col = 'BNG_E'
-        y_col = 'BNG_N'
-        x_col_mt = 'BNG_E_mt'
-        y_col_mt = 'BNG_N_mt'
-        # To be created here:
-        col_unit = 'unit_coords'
-        col_tran = 'transfer_coords'
-        col_line_coords = 'line_coords'
-        col_line_geometry = 'geometry'
+    # From the loaded file:
+    x_col = ('any', 'BNG_E')
+    y_col = ('any', 'BNG_N')
+    x_col_mt = ('any', 'BNG_E_mt')
+    y_col_mt = ('any', 'BNG_N_mt')
+    # To be created here:
+    col_unit = ('any', 'unit_coords')
+    col_tran = ('any', 'transfer_coords')
+    col_line_coords = ('any', 'line_coords')
+    col_line_geometry = ('any', 'geometry')
 
     # DataFrame of just the arrival and transfer units:
     df_arrival_transfer = df_transfer.index.to_frame(index=False)
@@ -657,28 +566,27 @@ def _load_geometry_transfer_units(self):
         )
     m2 = pd.merge(
         m1, df_coords,
-        left_on='name_nearest_mt', right_on='postcode',
+        left_on='transfer_unit_postcode', right_on='postcode',
         how='left', suffixes=(None, '_mt')
         )
     df_arrival_transfer = m2.drop(['postcode_mt'], axis='columns')
     # Set the index columns to match the main DataFrame's:
     df_arrival_transfer = df_arrival_transfer.set_index(
-        ['postcode', 'name_nearest_mt'])
+        ['postcode', 'transfer_unit_postcode'])
     # Index: 'postcode', 'name_nearest_mt'
     # Columns: BNG_E, BNG_N, Longitude, Latitude,
     #          BNG_E_mt, BNG_N_mt, Longitude_mt, Latitude_mt
 
-    if self.data_type == 'combined':
-        # Add another column level to the coordinates.
-        cols_df_arrival_transfer = [
-            ['any'] * len(df_arrival_transfer.columns),  # scenario
-            df_arrival_transfer.columns,                 # property
-        ]
-        df_arrival_transfer = pd.DataFrame(
-            df_arrival_transfer.values,
-            index=df_arrival_transfer.index,
-            columns=cols_df_arrival_transfer
-        )
+    # Add another column level to the coordinates.
+    cols_df_arrival_transfer = [
+        ['any'] * len(df_arrival_transfer.columns),  # scenario
+        df_arrival_transfer.columns,                 # property
+    ]
+    df_arrival_transfer = pd.DataFrame(
+        df_arrival_transfer.values,
+        index=df_arrival_transfer.index,
+        columns=cols_df_arrival_transfer
+    )
 
     # Merge this into the main DataFrame:
     df_transfer = pd.merge(
@@ -693,106 +601,68 @@ def _load_geometry_transfer_units(self):
     df_transfer[col_tran] = xy_mt.values.tolist()
 
     # Convert to geometry (line).
-    gdf_transfer = self.create_lines_from_coords(
+    gdf_transfer = create_lines_from_coords(
         df_transfer,
         [col_unit, col_tran],
         col_line_coords,
         col_line_geometry
         )
 
-    self.gdf_lines_transfer = gdf_transfer
-
-    # Save output to output folder.
-    dir_output = self.dir_output_maps
-    file_name = self.setup.file_gdf_lines_transfer
-    path_to_file = os.path.join(dir_output, file_name)
-    gdf_transfer.to_csv(path_to_file)
+    return gdf_transfer
 
 
-def _load_geometry_lsoa(self):
+def _load_geometry_lsoa(df_lsoa, df_results_by_lsoa=None):
     """
     Create GeoDataFrames of new geometry and existing DataFrames.
-    """
-    # ----- Gather data -----
-    # Selected LSOA names, codes.
-    # ['lsoa', 'LSOA11CD', 'postcode_nearest', 'time_nearest', 'Use']
-    df_lsoa = self.df_lsoa
-    # Index column: LSOA11NM.
-    # Expected column MultiIndex levels:
-    #   - combined: ['scenario', 'property']
-    #   - separate: ['{unnamed level}']
 
-    # All LSOA shapes:
-    gdf_boundaries_lsoa = self.import_geojson('LSOA11NM')
-    # Index column: LSOA11CD.
-    # Always has only one unnamed column index level.
-
-    if hasattr(self, 'df_regions'):
-        # TO DO - shorten LSOA geojson load time by separating big file into multiple smaller ones,
-        # e.g. one file per region of the UK (South West, West Midlands...)
-        # or one file per SICBL / LHB (too many files?)
-        # then work out which ones should be loaded and only load those ones.
-        # Will almost never want to load in Newcastle LSOA when we're looking at Cornwall.
-        pass
-    else:
-        # Just load in the whole lot.
-        pass
-
-    # Results by LSOA.
-    results_exist = False
-    try:
-        # If the file wasn't loaded, this gives AttributeError:
-        df_lsoa_results = self.df_results_by_lsoa
+        df_lsoa_results = df_results_by_lsoa
         # Index column: lsoa.
         # Expected column MultiIndex levels:
         #   - combined: ['scenario', 'property', 'subtype']
         #   - separate: ['property', 'subtype]
+    """
+
+    # All LSOA shapes:
+    gdf_boundaries_lsoa = import_geojson('LSOA11NM')
+    # Index column: LSOA11CD.
+    # Always has only one unnamed column index level.
+    gdf_boundaries_lsoa = gdf_boundaries_lsoa.reset_index()
+    gdf_boundaries_lsoa = gdf_boundaries_lsoa.rename(columns={'LSOA11NM': 'lsoa', 'LSOA11CD': 'lsoa_code'})
+    gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_index(['lsoa', 'lsoa_code'])
+
+    # TO DO - shorten LSOA geojson load time by separating big file into multiple smaller ones,
+    # e.g. one file per region of the UK (South West, West Midlands...)
+    # or one file per SICBL / LHB (too many files?)
+    # then work out which ones should be loaded and only load those ones.
+    # Will almost never want to load in Newcastle LSOA when we're looking at Cornwall.
+
+    # Results by LSOA.
+    if df_results_by_lsoa is None:
+        results_exist = False
+    else:
         results_exist = True
-    except AttributeError:
-        # Continue without the results data.
-        # Some plots don't need it, e.g. LSOA catchment areas.
-        pass
 
     # ----- Prepare separate data -----
     # Set up column level info for the merged DataFrame.
-    # The "combined" scenario Dataframe will have an extra
-    # column level with the scenario name.
-    if self.data_type == 'combined':
-        # Everything needs three levels: scenario, property, subtype.
-        # LSOA names:
-        cols_lsoa = df_lsoa.columns
-        df_lsoa_column_arr = np.array(
-            [[n for n in c] for c in cols_lsoa])
-        cols_df_lsoa = [
-            df_lsoa_column_arr[:, 0],                    # scenario
-            df_lsoa_column_arr[:, 1],                    # property
-            [''] * len(cols_lsoa),                       # subtype
-        ]
-        # Geometry:
-        cols_gdf_boundaries_lsoa = [
-            ['any'] * len(gdf_boundaries_lsoa.columns),  # scenario
-            gdf_boundaries_lsoa.columns,                 # property
-            [''] * len(gdf_boundaries_lsoa.columns),     # subtype
-        ]
-        # Final data:
-        col_level_names = ['scenario', 'property', 'subtype']
-        col_geometry = ('any', 'geometry', '')
-    else:
-        # Everything needs two levels: property, subtype.
-        # LSOA names:
-        cols_lsoa = df_lsoa.columns
-        cols_df_lsoa = [
-            cols_lsoa,                                   # property
-            [''] * len(cols_lsoa),                       # subtype
-        ]
-        # Geometry:
-        cols_gdf_boundaries_lsoa = [
-            gdf_boundaries_lsoa.columns,                 # property
-            [''] * len(gdf_boundaries_lsoa.columns),     # subtype
-        ]
-        # Final data:
-        col_level_names = ['property', 'subtype']
-        col_geometry = ('geometry', '')
+    # Everything needs three levels: scenario, property, subtype.
+    # LSOA names:
+    cols_lsoa = df_lsoa.columns
+    df_lsoa_column_arr = np.array(
+        [[n for n in c] for c in cols_lsoa])
+    cols_df_lsoa = [
+        df_lsoa_column_arr[:, 0],                    # scenario
+        df_lsoa_column_arr[:, 1],                    # property
+        [''] * len(cols_lsoa),                       # subtype
+    ]
+    # Geometry:
+    cols_gdf_boundaries_lsoa = [
+        ['any'] * len(gdf_boundaries_lsoa.columns),  # scenario
+        gdf_boundaries_lsoa.columns,                 # property
+        [''] * len(gdf_boundaries_lsoa.columns),     # subtype
+    ]
+    # Final data:
+    col_level_names = ['scenario', 'property', 'subtype']
+    col_geometry = ('any', 'geometry', '')
 
     # Make all data to be combined have the same column levels.
     # LSOA names:
@@ -817,22 +687,18 @@ def _load_geometry_lsoa(self):
     )
     if results_exist:
         gdf_boundaries_lsoa = pd.merge(
-            gdf_boundaries_lsoa, df_lsoa_results,
+            gdf_boundaries_lsoa, df_results_by_lsoa,
             left_index=True, right_index=True, how='left'
         )
     # Name the column levels:
     gdf_boundaries_lsoa.columns = (
         gdf_boundaries_lsoa.columns.set_names(col_level_names))
 
-    if self.data_type == 'combined':
-        # Sort the results by scenario (top column index):
-        cols_scen = (
-            gdf_boundaries_lsoa.columns.get_level_values('scenario'))
-        cols_scen = sorted(list(set(cols_scen)))
-        gdf_boundaries_lsoa = gdf_boundaries_lsoa[cols_scen]
-    else:
-        # Don't sort.
-        pass
+    # Sort the results by scenario (top column index):
+    cols_scen = (
+        gdf_boundaries_lsoa.columns.get_level_values('scenario'))
+    cols_scen = sorted(list(set(cols_scen)))
+    gdf_boundaries_lsoa = gdf_boundaries_lsoa[cols_scen]
 
     # Convert to GeoDataFrame:
     gdf_boundaries_lsoa = geopandas.GeoDataFrame(
@@ -840,32 +706,65 @@ def _load_geometry_lsoa(self):
         geometry=col_geometry
         )
 
-    # ----- Save to self -----
-    self.gdf_boundaries_lsoa = gdf_boundaries_lsoa
-
-    # Save output to output folder.
-    dir_output = self.dir_output_maps
-    file_name = self.setup.file_gdf_boundaries_lsoa
-    path_to_file = os.path.join(dir_output, file_name)
-    gdf_boundaries_lsoa.to_csv(path_to_file)
+    return gdf_boundaries_lsoa
 
 
-def _remove_excess_heading_from_gdf(
-        self, gdf, level_to_drop, col_geometry):
+def _load_geometry_catchment(gdf_boundaries_lsoa):
+    # List of scenarios included in the LSOA data:
+    scenario_list = sorted(list(set(
+        gdf_boundaries_lsoa.columns.get_level_values('scenario'))))
+    scenario_list.remove('any')
+
+    # Store resulting polygons in here:
+    dfs_to_merge = []
+
+    # For each scenario:
+    for scenario in scenario_list:
+        # Find the catchment polygons for this scenario:
+        df = _combine_lsoa_into_catchment_shapes(
+            gdf_boundaries_lsoa,
+            col_to_dissolve=(scenario, 'unit_postcode'),
+            col_geometry=('any', 'geometry')
+            )
+        # Add a "use" column:
+        df = df.assign(**{(scenario, 'use'): 1})
+        # Store in the main list:
+        dfs_to_merge.append(df)
+
+    # Can't concat without index columns.
+    gdf_boundaries_catchment = pd.concat(
+        dfs_to_merge.values(),
+        axis='columns',
+        keys=dfs_to_merge.keys()  # Names for extra index row
+        )
+
+    # Set geometry column:
+    gdf_boundaries_catchment = gdf_boundaries_catchment.set_geometry(
+        ('any', 'geometry'))
+
+    return gdf_boundaries_catchment
+
+
+def _combine_lsoa_into_catchment_shapes(
+        gdf, col_to_dissolve, col_geometry='geometry'):
     """
-    TO DO - write me.
+    # Combine LSOA geometry - from separate polygon per LSOA to one
+    # big polygon for all LSOAs in catchment area.
     """
-    gdf = gdf.droplevel(level_to_drop, axis='columns')
-    # The geometry column is still defined with the excess
-    # heading, so update which column is geometry:
-    gdf = gdf.set_geometry(col_geometry)
+    # Copy to avoid pandas shenanigans.
+    gdf = gdf.copy()
+    # Assuming that index contains stuff to be dissolved,
+    # it doesn't make sense to keep it afterwards.
+    # Make it a normal column so it can be neglected.
+    gdf = gdf.reset_index()
+    gdf = gdf[[col_to_dissolve, col_geometry]].dissolve(by=col_to_dissolve)
     return gdf
+
 
 # ############################
 # ##### HELPER FUNCTIONS #####
 # ############################
 def create_lines_from_coords(
-        self,
         df,
         cols_with_coords,
         col_coord,
@@ -913,7 +812,7 @@ def create_lines_from_coords(
     return gdf
 
 
-def create_combo_cols(self, gdf, scenario):
+def create_combo_cols(gdf, scenario):
     """
     TO DO - write me
     When dataframe doesn't have the diff_this_minus_that columns,
@@ -946,7 +845,10 @@ def create_combo_cols(self, gdf, scenario):
     return gdf
 
 
-def assign_colours_to_regions(self, gdf, region_type, col_col):
+# ###################
+# ##### COLOURS #####
+# ###################
+def assign_colours_to_regions(gdf, region_type, col_col):
     """
     wip, this version pretty useless.
     """
@@ -963,16 +865,16 @@ def assign_colours_to_regions(self, gdf, region_type, col_col):
     return gdf
 
 
-def assign_colours_to_regions_BROKEN(self, gdf, region_type):
+def assign_colours_to_regions_BROKEN(gdf, region_type):
 
     colours = ['ForestGreen', 'LimeGreen', 'RebeccaPurple', 'Teal']
 
     # TO DO - this neighbours function isn't working right -----------------------------
     # currently says that Gloucestershire doesn't border Bristol or Bath regions -------
-    gdf = self.find_neighbours_for_regions(gdf, self.region_type)
+    gdf = find_neighbours_for_regions(gdf, region_type)
     gdf = gdf.sort_values('total_neighbours', ascending=False)
 
-    neighbour_list = gdf[self.region_type].tolist()
+    neighbour_list = gdf[region_type].tolist()
 
     neighbour_grid = np.full((len(gdf), len(gdf)), False)
     for row, neighbour_list_here in enumerate(gdf['neighbour_list']):
@@ -1018,7 +920,7 @@ def assign_colours_to_regions_BROKEN(self, gdf, region_type):
     return gdf
 
 
-def round_coordinates(self, df_geojson):
+def round_coordinates(df_geojson):
     from shapely.geometry import shape, mapping  # For conversion from shapely polygon to geojson and back
     # Remove floating point errors
     for i in range(len(df_geojson)):
@@ -1047,7 +949,7 @@ def round_coordinates(self, df_geojson):
         return df_geojson
 
 
-def find_neighbours_for_regions(self, df_geojson, region_type='ICG22NM'):
+def find_neighbours_for_regions(df_geojson, region_type='ICG22NM'):
     import shapely
 
     def split_multipolygons(df_geojson):
@@ -1124,206 +1026,11 @@ def find_neighbours_for_regions(self, df_geojson, region_type='ICG22NM'):
             df.at[i, 'neighbour_list'] = list_of_neighbours
         return df
 
-    df_geojson = self.round_coordinates(df_geojson)
+    df_geojson = round_coordinates(df_geojson)
     df_new = split_multipolygons(df_geojson)
-    df_neighbours = find_neighbours(df_new, self.region_type)
+    df_neighbours = find_neighbours(df_new, region_type)
     df = unsplit_multipolygons(df_geojson, df_neighbours)
 
     # Record the number of neighbours:
     df['total_neighbours'] = df['neighbour_list'].str.len()
     return df
-
-
-def get_selected_area_extent(
-        self,
-        gdf_selected,
-        leeway=20000,
-        ):
-    """
-    What is the spatial extent of everything in this GeoDataFrame?
-    """
-    minx, miny, maxx, maxy = gdf_selected.geometry.total_bounds
-    # Give this some leeway:
-    minx -= leeway
-    miny -= leeway
-    maxx += leeway
-    maxy += leeway
-    map_extent = [minx, maxx, miny, maxy]
-    # Turn the points into a box:
-    box = Polygon((
-        (minx, miny),
-        (minx, maxy),
-        (maxx, maxy),
-        (maxx, miny),
-        (minx, miny),
-    ))
-    return box, map_extent
-
-
-def _keep_only_geometry_in_box(self, gdf, box):
-    mask = gdf.geometry.intersects(box)
-    gdf = gdf[mask]
-    return gdf
-
-
-def _restrict_geometry_edges_to_box(self, gdf, box):
-    gdf['geometry'] = gdf.geometry.intersection(box)
-    return gdf
-
-
-def _assign_labels_and_points_to_regions(
-        self, gdf, cols_to_sort, col_label, col_point_label):
-    # Firstly sort the regions so that selected regions appear first,
-    # then both selected/not subsets are sorted by most northernly
-    # first.
-    gdf = gdf.sort_values(
-        cols_to_sort, ascending=False
-    )
-    # Give each region a number.
-    # The most-northernly selected region is 1,
-    # and the least-northernly not-selected region is n.
-    gdf[col_label] = np.arange(
-        1, len(gdf) + 1).astype(str)
-    # Get coordinates for where to plot each label:
-    point_label = ([poly.representative_point() for
-                    poly in gdf.geometry])
-    gdf[col_point_label] = point_label
-    return gdf
-
-
-def _assign_labels_and_points_to_units(
-        self,
-        gdf_points_units,
-        cols_to_sort,
-        make_new_list=False
-        ):
-    """
-    TO DO - write me.
-
-    TO DO - add option to import this list from file
-    or otherwise set custom labels.
-    """
-    if make_new_list:
-        pass
-    else:
-        try:
-            # If it exists, load in the existing labels DataFrame.
-            df_unit_labels = self.df_unit_labels
-            # Are there enough labels?
-            gdf_points_units = pd.merge(
-                gdf_points_units,
-                df_unit_labels[['label', 'legend_order']],
-                left_index=True, right_index=True, how='left')
-            mask_missing = gdf_points_units['label'].isna()
-            if mask_missing.any():
-                # Missing some labels, so make more.
-                used_labels = gdf_points_units['label'][~mask_missing].values
-                units_without_labels = gdf_points_units.index[mask_missing].values
-                # Remove the "labels" columns again.
-                gdf_points_units = gdf_points_units.drop(
-                    ['label', 'legend_order'], axis='columns')
-            else:
-                # Just sort the order of units:
-                gdf_points_units = gdf_points_units.sort_values(
-                    'legend_order')
-                return gdf_points_units
-        except AttributeError:
-            # Make new labels instead.
-            make_new_list = True
-
-    if make_new_list:
-        df_unit_labels = gdf_points_units[cols_to_sort].copy()
-        df_unit_labels = df_unit_labels.sort_values(
-            cols_to_sort, ascending=False
-        )
-        df_unit_labels['label'] = pd.NA
-        df_unit_labels['legend_order'] = pd.NA
-        used_labels = []
-        units_without_labels = df_unit_labels.index.values
-
-    new_labels = []
-    # Do we need any extra labels?
-    # Add a label letter for each unit.
-    # List ['A', 'B', 'C', ..., 'Z']:
-    new_labels = list(string.ascii_uppercase)
-    # Remove anything already used:
-    new_labels = [n for n in new_labels if n not in used_labels]
-
-    if len(new_labels) < len(units_without_labels):
-        # Add more letters at the end starting with
-        # ['AA', 'AB', 'AC', ... 'AZ'].
-        i = 0
-        str_labels_orig = list(string.ascii_uppercase)
-        while len(new_labels) < len(units_without_labels):
-            str_labels2 = [f'{str_labels_orig[i]}{s}' for s in str_labels_orig]
-            new_labels += str_labels2
-            # Remove anything already used:
-            new_labels = [n for n in new_labels if n not in used_labels]
-            i += 1
-    else:
-        pass
-
-    # Make a DataFrame of the new labels.
-    new_labels = new_labels[:len(units_without_labels)]
-    if df_unit_labels['legend_order'].isna().all():
-        legend_order = np.arange(len(new_labels), dtype=int)
-    else:
-        start = 1 + df_unit_labels['legend_order'].max()
-        legend_order = np.arange(start, start + len(new_labels), dtype=int)
-    df_new_labels = pd.DataFrame(
-        np.array([units_without_labels, new_labels, legend_order]).T,
-        columns=['postcode', 'label', 'legend_order'])
-    df_new_labels = df_new_labels.set_index('postcode')
-
-    # Merge in these new labels:
-    df_unit_labels = df_unit_labels.combine_first(df_new_labels)
-
-    # Merge in to the starting DataFrame:
-    gdf_units = pd.merge(
-        gdf_points_units, df_unit_labels[['label', 'legend_order']],
-        left_index=True, right_index=True, how='left')
-    # Sort the order of units so the legend is alphabetical:
-    gdf_units = gdf_units.sort_values('legend_order')
-    self.df_unit_labels = df_unit_labels
-    return gdf_units
-
-
-def _combine_lsoa_into_catchment_shapes(self, gdf, col_to_dissolve):
-    """
-    # Combine LSOA geometry - from separate polygon per LSOA to one
-    # big polygon for all LSOAs in catchment area.
-    """
-    # Assuming that index contains stuff to be dissolved,
-    # it doesn't make sense to keep it afterwards.
-    # Make it a normal column so it can be neglected.
-    gdf = gdf.reset_index()
-    gdf = gdf[[col_to_dissolve, 'geometry']].dissolve(by=col_to_dissolve)
-    return gdf
-
-
-def find_catchment_info_regions_and_units(
-        self, df_catchment, df_units_regions
-        ):
-    """
-    """
-    # Find list of regions containing LSOA caught by selected units.
-    regions_containing_lsoa = sorted(list(set(
-        df_catchment['region_code'])))
-
-    # Find list of units catching any LSOA in selected regions:
-    units_catching_lsoa = sorted(list(set(
-        df_catchment['unit_postcode'])))
-
-    # Limit the units data:
-    mask = df_units_regions['Postcode'].isin(units_catching_lsoa)
-    df_units_regions = df_units_regions[mask]
-    # Find list of regions containing these units:
-    regions_containing_units_catching_lsoa = (
-        df_units_regions['region_code'].tolist())
-
-    to_return = (
-        regions_containing_lsoa,
-        units_catching_lsoa,
-        regions_containing_units_catching_lsoa
-    )
-    return to_return

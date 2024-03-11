@@ -133,7 +133,7 @@ class Model(object):
         # Group by LSOA, then take only the columns relating to time,
         # then take only their means and standard deviations.
         self.results_summary_by_lsoa = self.results_all.copy().groupby(
-            by=['lsoa', 'LSOA11CD'])[aggregate_cols].agg(['mean', 'std'])
+            by=['lsoa', 'lsoa_code'])[aggregate_cols].agg(['mean', 'std'])
         # Rename the MultiIndex column names:
         self.results_summary_by_lsoa.columns = (
             self.results_summary_by_lsoa.columns.set_names(
