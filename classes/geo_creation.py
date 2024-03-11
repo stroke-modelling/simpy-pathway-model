@@ -721,11 +721,18 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
     # For each scenario:
     for scenario in scenario_list:
         # Find the catchment polygons for this scenario:
-        df = _combine_lsoa_into_catchment_shapes(
-            gdf_boundaries_lsoa,
-            col_to_dissolve=(scenario, 'unit_postcode'),
-            col_geometry=('any', 'geometry')
-            )
+        if 'subtype' in gdf_boundaries_lsoa.columns.names:
+            df = _combine_lsoa_into_catchment_shapes(
+                gdf_boundaries_lsoa,
+                col_to_dissolve=(scenario, 'unit_postcode', ''),
+                col_geometry=('any', 'geometry', '')
+                )
+        else:
+            df = _combine_lsoa_into_catchment_shapes(
+                gdf_boundaries_lsoa,
+                col_to_dissolve=(scenario, 'unit_postcode'),
+                col_geometry=('any', 'geometry')
+                )
         # Add a "use" column:
         df = df.assign(**{(scenario, 'use'): 1})
         # Store in the main list:
