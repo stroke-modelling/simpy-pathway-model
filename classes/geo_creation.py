@@ -364,15 +364,15 @@ def make_all_geometry_data(
         gdf_lines_transfer = _load_geometry_transfer_units(df_transfer)
     gdf_boundaries_lsoa = _load_geometry_lsoa(df_lsoa, df_lsoa_results)
 
-    # # Merge many LSOA into one big blob of catchment area.
-    # gdf_boundaries_catchment = _load_geometry_catchment(gdf_boundaries_lsoa)
+    # Merge many LSOA into one big blob of catchment area.
+    gdf_boundaries_catchment = _load_geometry_catchment(gdf_boundaries_lsoa)
 
     to_return = (
         gdf_boundaries_regions,
         gdf_units,
         gdf_lines_transfer,
         gdf_boundaries_lsoa,
-        # gdf_boundaries_catchment
+        gdf_boundaries_catchment
     )
 
     return to_return
@@ -716,27 +716,39 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
     scenario_list.remove('any')
 
     # Store resulting polygons in here:
-    dfs_to_merge = []
+    dfs_to_merge = {}
 
     # For each scenario:
     for scenario in scenario_list:
-        # Find the catchment polygons for this scenario:
-        if 'subtype' in gdf_boundaries_lsoa.columns.names:
-            df = _combine_lsoa_into_catchment_shapes(
-                gdf_boundaries_lsoa,
-                col_to_dissolve=(scenario, 'unit_postcode', ''),
-                col_geometry=('any', 'geometry', '')
-                )
+        if scenario.startswith('diff'):
+            pass
         else:
+            if 'subtype' in gdf_boundaries_lsoa.columns.names:
+                col_to_dissolve = (scenario, 'unit_postcode', '')
+                col_geometry = ('any', 'geometry', '')
+            else:
+                col_to_dissolve = (scenario, 'unit_postcode')
+                col_geometry = ('any', 'geometry')
             df = _combine_lsoa_into_catchment_shapes(
                 gdf_boundaries_lsoa,
-                col_to_dissolve=(scenario, 'unit_postcode'),
-                col_geometry=('any', 'geometry')
+                col_to_dissolve=col_to_dissolve,
+                col_geometry=col_geometry,
+                col_after_dissolve='unit'
                 )
-        # Add a "use" column:
-        df = df.assign(**{(scenario, 'use'): 1})
-        # Store in the main list:
-        dfs_to_merge.append(df)
+            # Which ones are selected?
+            selected_units = gdf_boundaries_lsoa[col_to_dissolve][
+                gdf_boundaries_lsoa[scenario]['selected'] == 1]
+            df['selected'] = 0
+            mask = df.index.isin(selected_units)
+            df.loc[mask, 'selected'] = 1
+            # Which ones are used in this scenario?
+            df['use'] = 1
+
+            # Set index column:
+            df = df.reset_index()
+            df = df.set_index(['unit', 'geometry'])
+            # Store in the main list:
+            dfs_to_merge[scenario] = df
 
     # Can't concat without index columns.
     gdf_boundaries_catchment = pd.concat(
@@ -744,16 +756,19 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
         axis='columns',
         keys=dfs_to_merge.keys()  # Names for extra index row
         )
-
+    gdf_boundaries_catchment = gdf_boundaries_catchment.rename(
+        index={gdf_boundaries_catchment.index.name:(col_to_dissolve)})
+    gdf_boundaries_catchment = gdf_boundaries_catchment.reset_index()
     # Set geometry column:
     gdf_boundaries_catchment = gdf_boundaries_catchment.set_geometry(
-        ('any', 'geometry'))
+        'geometry')
 
     return gdf_boundaries_catchment
 
 
 def _combine_lsoa_into_catchment_shapes(
-        gdf, col_to_dissolve, col_geometry='geometry'):
+        gdf, col_to_dissolve, col_geometry='geometry',
+        col_after_dissolve='dissolve'):
     """
     # Combine LSOA geometry - from separate polygon per LSOA to one
     # big polygon for all LSOAs in catchment area.
@@ -764,8 +779,14 @@ def _combine_lsoa_into_catchment_shapes(
     # it doesn't make sense to keep it afterwards.
     # Make it a normal column so it can be neglected.
     gdf = gdf.reset_index()
-    gdf = gdf[[col_to_dissolve, col_geometry]].dissolve(by=col_to_dissolve)
-    return gdf
+    # Make a fresh dataframe with no column multiindex:
+    gdf2 = pd.DataFrame(
+        gdf[[col_to_dissolve, col_geometry]].values,
+        columns=[col_after_dissolve, 'geometry']
+    )
+    gdf2 = geopandas.GeoDataFrame(gdf2, geometry='geometry')
+    gdf2 = gdf2.dissolve(by=col_after_dissolve)
+    return gdf2
 
 
 # ############################

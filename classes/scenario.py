@@ -276,6 +276,9 @@ class Scenario(object):
             units['selected'] == 1, 'region_code'])))
         units_selected = units.index[units['selected'] == 1].tolist()
 
+        # Teams providing IVT:
+        teams_with_services = units[units['use_ivt'] == 1].index.tolist()
+
         if self.lsoa_catchment_type == 'island':
             # Only use the selected stroke units:
             teams_to_limit = units_selected
@@ -285,13 +288,16 @@ class Scenario(object):
             teams_to_limit = []
             regions_to_limit = []
 
+        # Only keep selected teams that offer IVT:
+        teams_to_limit = list(set(teams_with_services + units_selected))
+
         # For all LSOA:
         df_catchment = self.find_lsoa_catchment(teams_to_limit)
 
         # Mark selected LSOA:
         df_catchment = self.limit_lsoa_catchment_to_selected_units(
             df_catchment,
-            regions_selected,
+            # regions_selected,
             regions_to_limit=regions_to_limit,
             units_to_limit=units_selected,
             limit_to_england=self.limit_to_england,
@@ -343,7 +349,7 @@ class Scenario(object):
     def limit_lsoa_catchment_to_selected_units(
             self,
             df_catchment,
-            regions_selected,
+            # regions_selected,
             regions_to_limit=[],
             units_to_limit=[],
             limit_to_england=False,
