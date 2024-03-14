@@ -346,6 +346,21 @@ def draw_labels_short(ax, points, map_labels, leg_labels, **kwargs):
     # Update this with anything from the input dict:
     marker_kwargs = marker_kwargs | kwargs
 
+    from PIL import ImageFont
+    from matplotlib import font_manager
+    font = font_manager.FontProperties()#family='sans-serif')#, weight='bold')
+    file = font_manager.findfont(font)
+    font = ImageFont.truetype(file, marker_kwargs['s'])
+
+    left, top, right, bottom = font.getbbox('B')
+    ref_height = bottom - top  # Yes really
+    ref_width = right - left
+    ref_area = ref_width * ref_height
+    scale_s = marker_kwargs['s'] / ref_area
+    # size_base = marker_kwargs['s']
+    # from matplotlib.transforms import Affine2D
+    # from matplotlib.markers import MarkerStyle
+
     markers_for_legend = []
     labels_for_legend = []
 
@@ -362,9 +377,20 @@ def draw_labels_short(ax, points, map_labels, leg_labels, **kwargs):
         if len(map_label) == 1:
             # Add an empty space after it.
             map_label = f'{map_label}~'
+        # Adjust size based on number of characters:
+        # size = size_base * len(map_label)
+        # marker_kwargs['s'] = size
+        # label = r'$\mathdefault{' + f'{map_label}' + '}$'
+        # t = Affine2D().rotate_deg(90)
+        width = font.getlength(map_label)
+        area = width * ref_height
+        s = scale_s * area
+        marker_kwargs['s'] = s
+
         m = ax.scatter(
             x, y,
             marker=r'$\mathdefault{' + f'{map_label}' + '}$',
+            # marker=MarkerStyle(label, 'left', t),
             # label=leg_label,
             zorder=5,
             **marker_kwargs
@@ -456,7 +482,7 @@ def plot_map_selected_regions(
         ax,
         gdf_boundaries_regions,
         kwargs_with_nowt=kwargs_with_nowt,
-        kwargs_with_lsoa={},
+        kwargs_with_lsoa=kwargs_with_nowt,
         kwargs_with_unit=kwargs_with_unit,
         # kwargs_selected=kwargs_selected,
         # kwargs_not_selected=kwargs_not_selected
@@ -659,7 +685,7 @@ def plot_map_selected_units(
         ax,
         gdf_boundaries_regions,
         kwargs_with_nowt=kwargs_region_with_nowt,
-        kwargs_with_lsoa={},
+        kwargs_with_lsoa=kwargs_region_with_nowt,
         kwargs_with_unit=kwargs_region_with_unit,
         # kwargs_selected=kwargs_selected,
         # kwargs_not_selected=kwargs_not_selected
