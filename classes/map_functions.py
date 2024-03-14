@@ -102,12 +102,12 @@ def draw_boundaries_by_contents(
     # Regions containing neither LSOAs nor stroke units here:
     try:
         mask = (
-            (gdf_boundaries_regions['selected'] == 0) &
-            (gdf_boundaries_regions['contains_selected_lsoa'] == 0)
+            (gdf_boundaries_regions['contains_unit'] == 0) &
+            (gdf_boundaries_regions['contains_periphery_lsoa'] == 0)
         )
         try:
             mask = mask & (
-                (gdf_boundaries_regions['contains_unit_catching_lsoa'] == 0)
+                (gdf_boundaries_regions['contains_periphery_unit'] == 0)
             )
         except KeyError:
             # The regions-containing-unit column doesn't exist.
@@ -115,7 +115,7 @@ def draw_boundaries_by_contents(
     except KeyError:
         # Assume the LSOA column doesn't exist.
         mask = (
-            (gdf_boundaries_regions['selected'] == 0)
+            (gdf_boundaries_regions['contains_unit'] == 0)
         )
     gdf_boundaries_with_nowt = gdf_boundaries_regions.loc[mask]
     if len(gdf_boundaries_with_nowt) > 0:
@@ -133,16 +133,16 @@ def draw_boundaries_by_contents(
     # they contain an extra stroke unit or catch the LSOA.
     try:
         mask = (
-            (gdf_boundaries_regions['selected'] == 0) &
-            ((gdf_boundaries_regions['contains_selected_lsoa'] == 1) |
-             (gdf_boundaries_regions['contains_unit_catching_lsoa'] == 1))
+            (gdf_boundaries_regions['contains_unit'] == 0) &
+            ((gdf_boundaries_regions['contains_periphery_lsoa'] == 1) |
+             (gdf_boundaries_regions['contains_periphery_unit'] == 1))
         )
     except KeyError:
         # Try again without the unit-catching column.
         try:
             mask = (
-                (gdf_boundaries_regions['selected'] == 0) &
-                (gdf_boundaries_regions['contains_selected_lsoa'] == 1)
+                (gdf_boundaries_regions['contains_unit'] == 0) &
+                (gdf_boundaries_regions['contains_periphery_lsoa'] == 1)
             )
         except KeyError:
             # Assume the LSOA column doesn't exist. Don't plot this.
@@ -158,7 +158,7 @@ def draw_boundaries_by_contents(
         pass
 
     # Regions containing selected stroke units:
-    mask = (gdf_boundaries_regions['selected'] == 1)
+    mask = (gdf_boundaries_regions['contains_unit'] == 1)
     gdf_boundaries_with_units = gdf_boundaries_regions.loc[mask]
     if len(gdf_boundaries_with_units) > 0:
         ax = draw_boundaries(
@@ -332,47 +332,6 @@ def plot_lines_between_units(ax, gdf, **line_kwargs):
         ax=ax,
         **kwargs_dict
     )
-    return ax
-
-
-def annotate_unit_labels(ax, gdf):
-    """
-    Draw label for each stroke unit.
-
-    Inputs
-    ------
-    ax     - pyplot axis. Where to draw the scatter markers.
-    gdf    - GeoDataFrame. Stores coordinates and name of each
-            stroke unit.
-
-    Returns
-    -------
-    ax - pyplot axis. Same as input but with scatter markers.
-    """
-    try:
-        mask = gdf['labels_mask']
-        gdf_labels = gdf[mask]
-    except KeyError:
-        # No mask column was given.
-        gdf_labels = gdf
-
-    # Define "z" to shorten following "for" line:
-    z = zip(
-        gdf_labels.geometry.x,
-        gdf_labels.geometry.y,
-        gdf_labels.stroke_team
-        )
-    for x, y, label in z:
-        # Edit the label to put a space in the postcode when displayed:
-        label = f'{label[:-3]} {label[-3:]}'
-        # Place the label slightly offset from the
-        # exact hospital coordinates (x, y).
-        ax.annotate(
-            label, xy=(x, y), xytext=(8, 8),
-            textcoords="offset points",
-            bbox=dict(facecolor='w', edgecolor='k'),
-            fontsize=8
-            )
     return ax
 
 
@@ -554,7 +513,7 @@ def plot_map_selected_regions(
     # in the following label function:
     gdf_boundaries_regions = gdf_boundaries_regions.set_geometry('point_label')
     # In selected regions:
-    mask = gdf_boundaries_regions['selected'] == 1
+    mask = gdf_boundaries_regions['contains_unit'] == 1
     ax, handles_rs, labels_rs = draw_labels_short(
         ax,
         gdf_boundaries_regions[mask].point_label,
@@ -580,7 +539,7 @@ def plot_map_selected_regions(
 
     # Regions:
     # Add a blank handle and a section label:
-    section_labels = ['Selected regions', 'Other regions']
+    section_labels = ['Regions with selected units', 'Other regions']
     handles_r, labels_r = combine_legend_sections(
         section_labels,
         [handles_rs, handles_rns],

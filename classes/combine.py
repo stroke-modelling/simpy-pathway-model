@@ -83,6 +83,9 @@ class Combine(object):
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
 
+        # Put 'property' above 'scenario':
+        df = df.swaplevel('scenario', 'property', axis='columns')
+
         return df
 
     def combine_selected_transfer(
@@ -126,6 +129,9 @@ class Combine(object):
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
 
+        # Put 'property' above 'scenario':
+        df = df.swaplevel('scenario', 'property', axis='columns')
+
         return df
 
     def combine_selected_lsoa(
@@ -166,6 +172,9 @@ class Combine(object):
 
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property'])
+
+        # Put 'property' above 'scenario':
+        df = df.swaplevel('scenario', 'property', axis='columns')
 
         return df
 
@@ -220,6 +229,9 @@ class Combine(object):
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property', 'subtype'])
 
+        # Put 'property' above 'scenario':
+        df = df.swaplevel('scenario', 'property', axis='columns')
+
         return df
 
     def combine_results_summary_by_admitting_unit(
@@ -272,6 +284,9 @@ class Combine(object):
 
         # Rename the MultiIndex column names:
         df.columns = df.columns.set_names(['scenario', 'property', 'subtype'])
+
+        # Put 'property' above 'scenario':
+        df = df.swaplevel('scenario', 'property', axis='columns')
 
         return df
 

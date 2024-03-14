@@ -54,13 +54,10 @@ TO DO - get this ready for packaging.
 import numpy as np
 import pandas as pd
 import geopandas
-import matplotlib.pyplot as plt
 import os
 
 from shapely import LineString  # For creating line geometry.
 
-from classes.setup import Setup
-import classes.map_functions as maps  # for plotting.
 
 
 # #####################
@@ -195,8 +192,8 @@ def load_regions():
     # Add an extra column level:
     # Everything needs two levels: scenario, property.
     cols_df_regions = [
-        ['any'] * len(df_regions.columns),  # scenario
         df_regions.columns,                 # property
+        ['any'] * len(df_regions.columns),  # scenario
     ]
     # New DataFrame with the extra column level:
     df_regions = pd.DataFrame(
@@ -232,8 +229,8 @@ def make_new_periphery_data(
     # Add an extra column level:
     # Everything needs two levels: scenario, property.
     cols_df_lsoa_regions = [
-        ['any'] * len(df_lsoa_regions.columns),  # scenario
         df_lsoa_regions.columns,                 # property
+        ['any'] * len(df_lsoa_regions.columns),  # scenario
     ]
     # New DataFrame with the extra column level:
     df_lsoa_regions = pd.DataFrame(
@@ -256,35 +253,48 @@ def make_new_periphery_data(
     for scenario in scenario_list:
         # Names of selected LSOA:
 
-        mask = (df_lsoa[(scenario, 'selected')] == 1)
+        mask = (df_lsoa[('selected', scenario)] == 1)
         lsoa_selected = list(
             df_lsoa.loc[mask].copy().reset_index()['lsoa_code'])
 
         # Names of selected units:
         units_selected = df_units[
-            df_units[(scenario, 'selected')] == 1].index.values
+            df_units[('selected', scenario)] == 1].index.values
+        # Regions containing selected units:
+        regions_selected = df_units[
+            df_units[('selected', scenario)] == 1]['region_code'].values.flatten()
 
-        df_lsoa_here = df_lsoa[['any', scenario]].copy().droplevel('scenario', axis='columns')
+        # Which columns do we want?
+        cols = df_lsoa.columns.get_level_values('scenario').isin(
+            ['any', scenario])
+        # Subset of only these columns:
+        df_lsoa_here = df_lsoa.loc[:, cols].copy()
+        # # Drop the 'scenario' level
+        df_lsoa_here = df_lsoa_here.droplevel('scenario', axis='columns')
 
         d = link_pathway_geography(
-            df_lsoa_here, df_units['any'],
+            df_lsoa_here, df_units,
             units_selected, lsoa_selected
             )
 
         # Add these results to the starting dataframes:
-        df_units[(scenario, 'periphery_unit')] = 0
+        df_units[('periphery_unit', scenario)] = 0
         mask = df_units.index.isin(d['periphery_units'])
-        df_units.loc[mask, (scenario, 'periphery_unit')] = 1
+        df_units.loc[mask, ('periphery_unit', scenario)] = 1
 
-        df_regions[(scenario, 'contains_periphery_lsoa')] = 0
+        df_regions[('contains_unit', scenario)] = 0
+        mask = df_regions['region_code'].isin(regions_selected)
+        df_regions.loc[mask, ('contains_unit', scenario)] = 1
+
+        df_regions[('contains_periphery_lsoa', scenario)] = 0
         mask = df_regions['region_code'].isin(
             d['regions_containing_lsoa'])
-        df_regions.loc[mask, (scenario, 'contains_periphery_lsoa')] = 1
+        df_regions.loc[mask, ('contains_periphery_lsoa', scenario)] = 1
 
-        df_regions[(scenario, 'contains_periphery_unit')] = 0
+        df_regions[('contains_periphery_unit', scenario)] = 0
         mask = df_regions['region_code'].isin(
             d['regions_with_periphery_units'])
-        df_regions.loc[mask, (scenario, 'contains_periphery_unit')] = 1
+        df_regions.loc[mask, ('contains_periphery_unit', scenario)] = 1
 
     # Set index back to how it was earlier:
     df_regions = df_regions.set_index(['region', 'region_code'])
@@ -357,7 +367,7 @@ def make_all_geometry_data(
         df_regions, df_units, df_lsoa)
 
     gdf_boundaries_regions = _load_geometry_regions(df_regions)
-    gdf_units = _load_geometry_stroke_units(df_units)
+    gdf_points_units = _load_geometry_stroke_units(df_units)
     if df_transfer is None:
         gdf_lines_transfer = pd.DataFrame()  # Leave blank.
     else:
@@ -367,9 +377,48 @@ def make_all_geometry_data(
     # Merge many LSOA into one big blob of catchment area.
     gdf_boundaries_catchment = _load_geometry_catchment(gdf_boundaries_lsoa)
 
+    # Only keep separate LSOA that have been selected.
+    df_select = gdf_boundaries_lsoa.xs(
+        'selected', axis='columns', level='property', drop_level=False)
+    mask = (df_select == 1).any(axis='columns')
+    gdf_boundaries_lsoa = gdf_boundaries_lsoa.loc[mask].copy()
+
+    # # Make columns in regions and transfer that can be used for any
+    # # scenario created in the LSOA data using diff.
+    # # e.g. 'diff_drip-and-ship_minus_mothership' scenario wasn't
+    # # run directly in the pathway and so its regions and units info
+    # # doesn't exist yet.
+    # scenario_list = sorted(list(set(
+    #     gdf_boundaries_lsoa.columns.get_level_values('scenario'))))
+    # scenario_list.remove('any')
+    # for scenario in scenario_list:
+    #     if 'diff' in scenario:
+    #         # Add any other columns that these expect.
+    #         gdf_boundaries_regions = create_combo_cols(
+    #             gdf_boundaries_regions, scenario)
+    #         gdf_points_units = create_combo_cols(
+    #             gdf_points_units, scenario)
+    #     else:
+    #         # The data for non-diff scenarios should already exist.
+    #         pass
+    # TO DO - fixing to create_combo_cols required ----------------------------------
+
+    # For each gdf, reset the index so that the index columns
+    # appear in a saved .geojson and label the new index column.
+    def make_new_index(gdf):
+        gdf = gdf.reset_index()
+        gdf.index.name = 'id'
+        return gdf
+
+    gdf_boundaries_regions = make_new_index(gdf_boundaries_regions)
+    gdf_points_units = make_new_index(gdf_points_units)
+    gdf_lines_transfer = make_new_index(gdf_lines_transfer)
+    gdf_boundaries_lsoa = make_new_index(gdf_boundaries_lsoa)
+    gdf_boundaries_catchment = make_new_index(gdf_boundaries_catchment)
+
     to_return = (
         gdf_boundaries_regions,
-        gdf_units,
+        gdf_points_units,
         gdf_lines_transfer,
         gdf_boundaries_lsoa,
         gdf_boundaries_catchment
@@ -404,12 +453,12 @@ def _load_geometry_regions(df_regions):
     # Everything needs two levels: scenario, property.
     # Geometry:
     cols_gdf_boundaries_regions = [
-        ['any'] * len(gdf_boundaries_regions.columns),  # scenario
         gdf_boundaries_regions.columns,                 # property
+        ['any'] * len(gdf_boundaries_regions.columns),  # scenario
     ]
     # Final data:
-    col_level_names = ['scenario', 'property']
-    col_geometry = ('any', 'geometry')
+    col_level_names = ['property', 'scenario']
+    col_geometry = ('geometry', 'any')
 
     # Geometry:
     gdf_boundaries_regions = pd.DataFrame(
@@ -429,11 +478,9 @@ def _load_geometry_regions(df_regions):
     gdf_boundaries_regions.columns = (
         gdf_boundaries_regions.columns.set_names(col_level_names))
 
-    # Sort the results by scenario (top column index):
-    cols_scen = (
-        gdf_boundaries_regions.columns.get_level_values('scenario'))
-    cols_scen = sorted(list(set(cols_scen)))
-    gdf_boundaries_regions = gdf_boundaries_regions[cols_scen]
+    # Sort the results by scenario:
+    gdf_boundaries_regions = gdf_boundaries_regions.sort_index(
+        axis='columns', level='scenario')
 
     # Convert to GeoDataFrame:
     gdf_boundaries_regions = geopandas.GeoDataFrame(
@@ -484,8 +531,8 @@ def _load_geometry_stroke_units(df_units):
     # Columns: BNG_E, BNG_N, Longitude, Latitude.
     # Add another column level to the coordinates.
     cols_df_coords = [
-        ['any'] * len(df_coords.columns),  # scenario
         df_coords.columns,                 # property
+        ['any'] * len(df_coords.columns),  # scenario
     ]
     df_coords = pd.DataFrame(
         df_coords.values,
@@ -496,9 +543,9 @@ def _load_geometry_stroke_units(df_units):
     df_units = pd.merge(
         df_units, df_coords, left_index=True, right_index=True, how='left')
 
-    x_col = ('any', 'BNG_E')
-    y_col = ('any', 'BNG_N')
-    coords_col = ('any', 'geometry')
+    x_col = 'BNG_E'
+    y_col = 'BNG_N'
+    coords_col = 'geometry'
 
     # Convert to geometry (point):
     # Create coordinates:
@@ -538,23 +585,23 @@ def _load_geometry_transfer_units(df_transfer):
     # Columns: postcode, BNG_E, BNG_N, Longitude, Latitude.
 
     # From the loaded file:
-    x_col = ('any', 'BNG_E')
-    y_col = ('any', 'BNG_N')
-    x_col_mt = ('any', 'BNG_E_mt')
-    y_col_mt = ('any', 'BNG_N_mt')
+    x_col = 'BNG_E'
+    y_col = 'BNG_N'
+    x_col_mt = 'BNG_E_mt'
+    y_col_mt = 'BNG_N_mt'
     # To be created here:
-    col_unit = ('any', 'unit_coords')
-    col_tran = ('any', 'transfer_coords')
-    col_line_coords = ('any', 'line_coords')
-    col_line_geometry = ('any', 'geometry')
+    col_unit = 'unit_coords'
+    col_tran = 'transfer_coords'
+    col_line_coords = ('line_coords', 'any')
+    col_line_geometry = ('geometry', 'any')
 
     # DataFrame of just the arrival and transfer units:
     df_arrival_transfer = df_transfer.index.to_frame(index=False)
     # If there are multiple column levels, only keep the lowest.
-    if df_arrival_transfer.columns.nlevels > 1:
+    if 'scenario' in df_arrival_transfer.columns.names:
         # TO DO - drop by level name. --------------------------------------------------
         df_arrival_transfer = (
-            df_arrival_transfer.droplevel(0, axis='columns'))
+            df_arrival_transfer.droplevel('scenario', axis='columns'))
     # Index: {generic numbers}
     # Columns: 'from_postcode', 'name_nearest_mt'
 
@@ -579,8 +626,8 @@ def _load_geometry_transfer_units(df_transfer):
 
     # Add another column level to the coordinates.
     cols_df_arrival_transfer = [
-        ['any'] * len(df_arrival_transfer.columns),  # scenario
         df_arrival_transfer.columns,                 # property
+        ['any'] * len(df_arrival_transfer.columns),  # scenario
     ]
     df_arrival_transfer = pd.DataFrame(
         df_arrival_transfer.values,
@@ -650,19 +697,19 @@ def _load_geometry_lsoa(df_lsoa, df_results_by_lsoa=None):
     df_lsoa_column_arr = np.array(
         [[n for n in c] for c in cols_lsoa])
     cols_df_lsoa = [
-        df_lsoa_column_arr[:, 0],                    # scenario
-        df_lsoa_column_arr[:, 1],                    # property
+        df_lsoa_column_arr[:, 0],                    # property
+        df_lsoa_column_arr[:, 1],                    # scenario
         [''] * len(cols_lsoa),                       # subtype
     ]
     # Geometry:
     cols_gdf_boundaries_lsoa = [
-        ['any'] * len(gdf_boundaries_lsoa.columns),  # scenario
         gdf_boundaries_lsoa.columns,                 # property
+        ['any'] * len(gdf_boundaries_lsoa.columns),  # scenario
         [''] * len(gdf_boundaries_lsoa.columns),     # subtype
     ]
     # Final data:
-    col_level_names = ['scenario', 'property', 'subtype']
-    col_geometry = ('any', 'geometry', '')
+    col_level_names = ['property', 'scenario', 'subtype']
+    col_geometry = ('geometry', 'any', '')
 
     # Make all data to be combined have the same column levels.
     # LSOA names:
@@ -694,11 +741,9 @@ def _load_geometry_lsoa(df_lsoa, df_results_by_lsoa=None):
     gdf_boundaries_lsoa.columns = (
         gdf_boundaries_lsoa.columns.set_names(col_level_names))
 
-    # Sort the results by scenario (top column index):
-    cols_scen = (
-        gdf_boundaries_lsoa.columns.get_level_values('scenario'))
-    cols_scen = sorted(list(set(cols_scen)))
-    gdf_boundaries_lsoa = gdf_boundaries_lsoa[cols_scen]
+    # Sort the results by scenario:
+    gdf_boundaries_lsoa = gdf_boundaries_lsoa.sort_index(
+        axis='columns', level='scenario')
 
     # Convert to GeoDataFrame:
     gdf_boundaries_lsoa = geopandas.GeoDataFrame(
@@ -723,12 +768,8 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
         if scenario.startswith('diff'):
             pass
         else:
-            if 'subtype' in gdf_boundaries_lsoa.columns.names:
-                col_to_dissolve = (scenario, 'unit_postcode', '')
-                col_geometry = ('any', 'geometry', '')
-            else:
-                col_to_dissolve = (scenario, 'unit_postcode')
-                col_geometry = ('any', 'geometry')
+            col_to_dissolve = ('unit_postcode', scenario, '')
+            col_geometry = ('geometry', 'any', '')
             df = _combine_lsoa_into_catchment_shapes(
                 gdf_boundaries_lsoa,
                 col_to_dissolve=col_to_dissolve,
@@ -737,7 +778,7 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
                 )
             # Which ones are selected?
             selected_units = gdf_boundaries_lsoa[col_to_dissolve][
-                gdf_boundaries_lsoa[scenario]['selected'] == 1]
+                gdf_boundaries_lsoa[('selected', scenario)] == 1]
             df['selected'] = 0
             mask = df.index.isin(selected_units)
             df.loc[mask, 'selected'] = 1
@@ -759,6 +800,14 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
     gdf_boundaries_catchment = gdf_boundaries_catchment.rename(
         index={gdf_boundaries_catchment.index.name:(col_to_dissolve)})
     gdf_boundaries_catchment = gdf_boundaries_catchment.reset_index()
+    # Give the new, useless index a name.
+    gdf_boundaries_catchment.index.name = 'id'
+
+    col_level_names = ['property', 'scenario']
+    # Name the column levels:
+    gdf_boundaries_catchment.columns = (
+        gdf_boundaries_catchment.columns.set_names(col_level_names))
+
     # Set geometry column:
     gdf_boundaries_catchment = gdf_boundaries_catchment.set_geometry(
         'geometry')
@@ -857,6 +906,8 @@ def create_combo_cols(gdf, scenario):
     # Assume scenario = diff_scenario1_minus_scenario2:
     scen1 = scen_bits[1]
     scen2 = scen_bits[3]
+
+    # TO DO - this needs big fixing now that 'scenario' level isn't at the top -----------------------
 
     cols_to_combine = gdf[scen1].columns.to_list()
     for col in cols_to_combine:
