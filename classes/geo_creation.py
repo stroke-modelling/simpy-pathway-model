@@ -327,6 +327,10 @@ def link_pathway_geography(
 
     # Reset index for easier access to values:
     df_units = df_units.copy().reset_index()
+    # Remove 'scenario' column level:
+    # (only need columns that belong in "any" scenario)
+    df_units = df_units.droplevel('scenario', axis='columns')
+
     # Mask for selected units:
     mask_units_selected = df_units['postcode'].isin(units_selected)
     # Find list of regions containing selected units:
@@ -797,6 +801,10 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
         axis='columns',
         keys=dfs_to_merge.keys()  # Names for extra index row
         )
+    # The combo dataframe contains only columns for scenario / property,
+    # so switch them round to property / scenario:
+    gdf_boundaries_catchment.columns = gdf_boundaries_catchment.columns.swaplevel(0, 1)
+    # Rename index so it can be made into a normal column:
     gdf_boundaries_catchment = gdf_boundaries_catchment.rename(
         index={gdf_boundaries_catchment.index.name:(col_to_dissolve)})
     gdf_boundaries_catchment = gdf_boundaries_catchment.reset_index()

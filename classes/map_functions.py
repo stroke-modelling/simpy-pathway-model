@@ -103,15 +103,9 @@ def draw_boundaries_by_contents(
     try:
         mask = (
             (gdf_boundaries_regions['contains_unit'] == 0) &
-            (gdf_boundaries_regions['contains_periphery_lsoa'] == 0)
-        )
-        try:
-            mask = mask & (
-                (gdf_boundaries_regions['contains_periphery_unit'] == 0)
+            (gdf_boundaries_regions['contains_periphery_lsoa'] == 0) &
+            (gdf_boundaries_regions['contains_periphery_unit'] == 0)
             )
-        except KeyError:
-            # The regions-containing-unit column doesn't exist.
-            pass
     except KeyError:
         # Assume the LSOA column doesn't exist.
         mask = (
@@ -326,7 +320,7 @@ def plot_lines_between_units(ax, gdf, **line_kwargs):
         kwargs_dict[key] = val
 
     # Draw a line connecting each unit to its MT unit.
-    mask = gdf['Use'] == 1
+    mask = gdf['selected'] == 1
     lines = gdf[mask]
     lines.plot(
         ax=ax,
@@ -490,7 +484,7 @@ def plot_map_selected_regions(
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
-        gdf_points_units[mask].label,
+        gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
         s=20,
         color='k',
@@ -501,7 +495,7 @@ def plot_map_selected_regions(
     ax, handles_uns, labels_uns = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
-        gdf_points_units[mask].label,
+        gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
         s=20,
         color='DimGray',
@@ -517,7 +511,7 @@ def plot_map_selected_regions(
     ax, handles_rs, labels_rs = draw_labels_short(
         ax,
         gdf_boundaries_regions[mask].point_label,
-        gdf_boundaries_regions[mask].label,
+        gdf_boundaries_regions[mask].short_code,
         gdf_boundaries_regions[mask].region,
         # weight='bold',
         s=50,
@@ -528,7 +522,7 @@ def plot_map_selected_regions(
     ax, handles_rns, labels_rns = draw_labels_short(
         ax,
         gdf_boundaries_regions[mask].point_label,
-        gdf_boundaries_regions[mask].label,
+        gdf_boundaries_regions[mask].short_code,
         gdf_boundaries_regions[mask].region,
         # weight='bold',
         s=50,
@@ -704,7 +698,7 @@ def plot_map_selected_units(
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
-        gdf_points_units[mask].label,
+        gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
         s=20,
         color='k'
@@ -714,7 +708,7 @@ def plot_map_selected_units(
     ax, handles_uns, labels_uns = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
-        gdf_points_units[mask].label,
+        gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
         s=20,
         color='DimGray'
@@ -767,7 +761,7 @@ def plot_map_selected_units(
 
 
 def plot_map_catchment(
-        gdf_boundaries_lsoa,
+        gdf_boundaries_catchment,
         gdf_boundaries_regions,  # TO DO - make this optional...?
         gdf_points_units,
         gdf_lines_transfer,
@@ -840,8 +834,10 @@ def plot_map_catchment(
         fig, ax = plt.subplots(figsize=(12, 8))
 
     # LSOAs:
+    mask = (gdf_boundaries_catchment['selected'] == 1)
     ax = draw_boundaries(
-        ax, gdf_boundaries_lsoa,
+        ax,
+        gdf_boundaries_catchment[mask],
         **boundary_kwargs
         )
 
@@ -879,7 +875,7 @@ def plot_map_catchment(
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    mask = gdf_points_units['selected'] == 1
+    mask = (gdf_points_units['selected'] == 1)
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
@@ -888,7 +884,10 @@ def plot_map_catchment(
         return_handle=True
         )
     # Outside selected regions:
-    mask = gdf_points_units['selected'] == 0
+    mask = (
+        (gdf_points_units['selected'] == 0) &
+        (gdf_points_units['periphery_unit'] == 1)
+    )
     ax, handles_scatter_uns = scatter_units(
         ax,
         gdf_points_units[mask],
@@ -903,17 +902,20 @@ def plot_map_catchment(
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
-        gdf_points_units[mask].label,
+        gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
         s=20,
         color='Gainsboro'
     )
     # Outside selected regions:
-    mask = ~mask
+    mask = (
+        (gdf_points_units['selected'] == 0) &
+        (gdf_points_units['periphery_unit'] == 1)
+    )
     ax, handles_uns, labels_uns = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
-        gdf_points_units[mask].label,
+        gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
         s=20,
         color='WhiteSmoke'
@@ -1041,8 +1043,11 @@ def plot_map_outcome(
         fig, ax = plt.subplots(figsize=(10, 10))
 
     # LSOAs:
+    # The column to use for colour selection is defined in
+    # boundary_kwargs which should be set up in another function.
     ax = draw_boundaries(
-        ax, gdf_boundaries_lsoa,
+        ax,
+        gdf_boundaries_lsoa,
         **boundary_kwargs
         )
 
@@ -1096,7 +1101,7 @@ def plot_map_outcome(
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units[mask].geometry,
-        gdf_points_units[mask].label,
+        gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
         s=20,
         color='k'

@@ -60,7 +60,9 @@ def crop_data_to_shared_extent(
         gdf_points_units,
         gdf_boundaries_catchment,
         gdf_boundaries_lsoa,
-        gdf_lines_transfer
+        gdf_lines_transfer,
+        box,
+        map_extent
         )
     return to_return
 
@@ -240,7 +242,7 @@ def _setup_plot_map_outcome(
     vmin = all_mean_vals.min().values[0]
 
     lsoa_boundary_kwargs = {
-        'column': outcome,
+        'column': (outcome, 'mean'),
         'edgecolor': 'face',
         # Adjust size of colourmap key, and add label
         'legend_kwds': {
@@ -271,16 +273,46 @@ def _setup_plot_map_outcome(
     return lsoa_boundary_kwargs
 
 
+def drop_other_scenarios(df, scenario):
+    scenario_list = list(set(df.columns.get_level_values('scenario')))
+    scenarios_to_keep = [s for s in scenario_list if (
+        (s == scenario) |
+        (s == '') |
+        (s == 'any') |
+        (s.startswith('Unnamed'))
+    )]
+
+    # Which columns do we want?
+    cols = df.columns.get_level_values('scenario').isin(scenarios_to_keep)
+    # Subset of only these columns:
+    df_selected = df.loc[:, cols].copy()
+
+    # Drop the 'scenario' column level:
+    df_selected = df_selected.droplevel('scenario', axis='columns')
+    # Set geometry:
+    col = df_selected.columns[
+        df_selected.columns.get_level_values('property').isin(['geometry'])].values[0]
+
+    df_selected = df_selected.set_geometry(col)
+
+    return df_selected
+
+
 # #######################
 # ##### PYPLOT MAPS #####
 # #######################
 def plot_map_selected_regions(
         gdf_boundaries_regions,
         gdf_points_units,
+        scenario: str,
         map_extent=[],
         path_to_file='',
-        show=False
+        show=True
         ):
+    # Drop everything that belongs to other scenarios:
+    gdf_boundaries_regions = drop_other_scenarios(gdf_boundaries_regions, scenario)
+    gdf_points_units = drop_other_scenarios(gdf_points_units, scenario)
+
     fig, ax = plt.subplots(figsize=(8, 5))
 
     ax, extra_artists = maps.plot_map_selected_regions(
@@ -316,10 +348,16 @@ def plot_map_selected_units(
         gdf_boundaries_regions,
         gdf_points_units,
         gdf_lines_transfer,
+        scenario: str,
         map_extent=[],
         path_to_file='',
-        show=False
+        show=True
         ):
+    # Drop everything that belongs to other scenarios:
+    gdf_boundaries_regions = drop_other_scenarios(gdf_boundaries_regions, scenario)
+    gdf_points_units = drop_other_scenarios(gdf_points_units, scenario)
+    gdf_lines_transfer = drop_other_scenarios(gdf_lines_transfer, scenario)
+
     fig, ax = plt.subplots(figsize=(6, 5))
 
     ax, extra_artists = maps.plot_map_selected_units(
@@ -348,16 +386,25 @@ def plot_map_selected_units(
 
 
 def plot_map_catchment(
-        gdf_boundaries_lsoa,
+        gdf_boundaries_catchment,
         gdf_boundaries_regions,
         gdf_points_units,
         gdf_lines_transfer,
+        scenario: str,
         title='',
         lsoa_boundary_kwargs={},
         map_extent=[],
-        show=False,
+        show=True,
         path_to_file=''
         ):
+    """
+    """
+    # Drop everything that belongs to other scenarios:
+    gdf_boundaries_regions = drop_other_scenarios(gdf_boundaries_regions, scenario)
+    gdf_points_units = drop_other_scenarios(gdf_points_units, scenario)
+    gdf_lines_transfer = drop_other_scenarios(gdf_lines_transfer, scenario)
+    gdf_boundaries_catchment = drop_other_scenarios(gdf_boundaries_catchment, scenario)
+
     boundary_kwargs = {
         'cmap': 'Blues',
         'edgecolor': 'face'
@@ -369,7 +416,7 @@ def plot_map_catchment(
     ax.set_title(title)
 
     ax, extra_artists = maps.plot_map_catchment(
-        gdf_boundaries_lsoa,
+        gdf_boundaries_catchment,
         gdf_boundaries_regions,
         gdf_points_units,
         gdf_lines_transfer,
@@ -402,16 +449,25 @@ def plot_map_outcome(
         outcome,
         title='',
         lsoa_boundary_kwargs={},
+        map_extent=[],
         draw_region_boundaries=True,
-        show=False,
+        show=True,
         path_to_file=None
         ):
+    """
+    """
+
     lsoa_boundary_kwargs = _setup_plot_map_outcome(
         gdf_boundaries_lsoa,
         scenario,
         outcome,
         boundary_kwargs=lsoa_boundary_kwargs,
         )
+
+    # Drop everything that belongs to other scenarios:
+    gdf_boundaries_regions = drop_other_scenarios(gdf_boundaries_regions, scenario)
+    gdf_points_units = drop_other_scenarios(gdf_points_units, scenario)
+    gdf_boundaries_lsoa = drop_other_scenarios(gdf_boundaries_lsoa, scenario)
 
     fig, ax = plt.subplots(figsize=(7, 5))
     ax.set_title(title)
@@ -421,6 +477,7 @@ def plot_map_outcome(
         gdf_boundaries_regions,
         gdf_points_units,
         ax=ax,
+        map_extent=map_extent,
         boundary_kwargs=lsoa_boundary_kwargs,
         draw_region_boundaries=draw_region_boundaries,
     )
