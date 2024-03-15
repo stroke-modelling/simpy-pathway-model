@@ -57,6 +57,7 @@ import geopandas
 import os
 
 from shapely import LineString  # For creating line geometry.
+from pandas.api.types import is_numeric_dtype  # For checking dtype.
 
 
 
@@ -387,24 +388,24 @@ def make_all_geometry_data(
     mask = (df_select == 1).any(axis='columns')
     gdf_boundaries_lsoa = gdf_boundaries_lsoa.loc[mask].copy()
 
-    # # Make columns in regions and transfer that can be used for any
-    # # scenario created in the LSOA data using diff.
-    # # e.g. 'diff_drip-and-ship_minus_mothership' scenario wasn't
-    # # run directly in the pathway and so its regions and units info
-    # # doesn't exist yet.
-    # scenario_list = sorted(list(set(
-    #     gdf_boundaries_lsoa.columns.get_level_values('scenario'))))
-    # scenario_list.remove('any')
-    # for scenario in scenario_list:
-    #     if 'diff' in scenario:
-    #         # Add any other columns that these expect.
-    #         gdf_boundaries_regions = create_combo_cols(
-    #             gdf_boundaries_regions, scenario)
-    #         gdf_points_units = create_combo_cols(
-    #             gdf_points_units, scenario)
-    #     else:
-    #         # The data for non-diff scenarios should already exist.
-    #         pass
+    # Make columns in regions and transfer that can be used for any
+    # scenario created in the LSOA data using diff.
+    # e.g. 'diff_drip-and-ship_minus_mothership' scenario wasn't
+    # run directly in the pathway and so its regions and units info
+    # doesn't exist yet.
+    scenario_list = sorted(list(set(
+        gdf_boundaries_lsoa.columns.get_level_values('scenario'))))
+    scenario_list.remove('any')
+    for scenario in scenario_list:
+        if 'diff' in scenario:
+            # Add any other columns that these expect.
+            gdf_boundaries_regions = create_combo_cols(
+                gdf_boundaries_regions, scenario)
+            gdf_points_units = create_combo_cols(
+                gdf_points_units, scenario)
+        else:
+            # The data for non-diff scenarios should already exist.
+            pass
     # TO DO - fixing to create_combo_cols required ----------------------------------
 
     # For each gdf, reset the index so that the index columns
@@ -419,6 +420,9 @@ def make_all_geometry_data(
     gdf_lines_transfer = make_new_index(gdf_lines_transfer)
     gdf_boundaries_lsoa = make_new_index(gdf_boundaries_lsoa)
     gdf_boundaries_catchment = make_new_index(gdf_boundaries_catchment)
+
+    # Sort units by short code:
+    gdf_points_units = gdf_points_units.sort_values(('short_code', 'any'))
 
     to_return = (
         gdf_boundaries_regions,
@@ -915,20 +919,33 @@ def create_combo_cols(gdf, scenario):
     scen1 = scen_bits[1]
     scen2 = scen_bits[3]
 
-    # TO DO - this needs big fixing now that 'scenario' level isn't at the top -----------------------
+    cols_to_combine = gdf.xs(scen1, axis='columns', level='scenario',
+                             drop_level=False).columns.to_list()
 
-    cols_to_combine = gdf[scen1].columns.to_list()
+    # Which column levels exist?
+    col_level_names = gdf.columns.names
+    # Where is scenario?
+    i_scen = col_level_names.index('scenario')
+
     for col in cols_to_combine:
-        if isinstance(col, tuple):
-            scen_col = (scenario, *col)
-            scen1_col = (scen1, *col)
-            scen2_col = (scen2, *col)
+        numerical_bool = is_numeric_dtype(gdf[col])
+        if numerical_bool:
+            scen_col = list(col)
+            scen_col[i_scen] = scenario
+            scen_col = tuple(scen_col)
+
+            scen1_col = list(col)
+            scen1_col[i_scen] = scen1
+            scen1_col = tuple(scen1_col)
+
+            scen2_col = list(col)
+            scen2_col[i_scen] = scen2
+            scen2_col = tuple(scen2_col)
+
+            gdf[scen_col] = gdf[[scen1_col, scen2_col]].max(axis='columns')
         else:
-            # Assume it's a string.
-            scen_col = (scenario, col)
-            scen1_col = (scen1, col)
-            scen2_col = (scen2, col)
-        gdf[scen_col] = gdf[[scen1_col, scen2_col]].max(axis='columns')
+            # Don't combine non-numerical columns.
+            pass
     return gdf
 
 
