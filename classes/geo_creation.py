@@ -811,7 +811,7 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
     gdf_boundaries_catchment = pd.concat(
         dfs_to_merge.values(),
         axis='columns',
-        keys=dfs_to_merge.keys()  # Names for extra index row
+        keys=dfs_to_merge.keys(),  # Names for extra index row
         )
     # The combo dataframe contains only columns for scenario / property,
     # so switch them round to property / scenario:
@@ -819,7 +819,7 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
         gdf_boundaries_catchment.columns.swaplevel(0, 1))
     # Rename index so it can be made into a normal column:
     gdf_boundaries_catchment = gdf_boundaries_catchment.rename(
-        index={gdf_boundaries_catchment.index.name:(col_to_dissolve)})
+        index={gdf_boundaries_catchment.index.name: (col_to_dissolve)})
     gdf_boundaries_catchment = gdf_boundaries_catchment.reset_index()
     # Give the new, useless index a name.
     gdf_boundaries_catchment.index.name = 'id'
@@ -832,6 +832,11 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
     # Set geometry column:
     gdf_boundaries_catchment = gdf_boundaries_catchment.set_geometry(
         'geometry')
+
+    # Assign colours:
+    gdf_boundaries_catchment = assign_colours_to_regions(
+        gdf_boundaries_catchment, col_col=('colour_ind', 'any')
+    )
 
     return gdf_boundaries_catchment
 
@@ -961,12 +966,13 @@ def create_combo_cols(gdf, scenario):
 # ###################
 # ##### COLOURS #####
 # ###################
-def assign_colours_to_regions(gdf, region_type, col_col):
+def assign_colours_to_regions(gdf, col_col):
     """
     wip, this version pretty useless.
     """
 
-    colours = ['ForestGreen', 'LimeGreen', 'RebeccaPurple', 'Teal']
+    # colours = ['ForestGreen', 'LimeGreen', 'RebeccaPurple', 'Teal']
+    colours = [0, 1, 2, 3]
 
     # Use any old colours as debug:
     np.random.seed(42)

@@ -802,6 +802,7 @@ def plot_map_catchment(
         ax=None,
         map_extent=[],
         boundary_kwargs={},
+        boundary_periphery_kwargs={}
         # catchment_type=''
         ):
     """
@@ -874,6 +875,7 @@ def plot_map_catchment(
     ax = draw_boundaries(
         ax,
         gdf_boundaries_catchment[mask],
+        color=gdf_boundaries_catchment[mask]['colour'],
         **boundary_kwargs
         )
 
@@ -882,11 +884,11 @@ def plot_map_catchment(
         (gdf_boundaries_catchment['selected'] == 0) &
         (gdf_boundaries_catchment['periphery_unit'] == 1)
     )
-    boundary_kwargs['cmap'] = 'Greys'
     ax = draw_boundaries(
         ax,
         gdf_boundaries_catchment[mask],
-        **boundary_kwargs
+        color=gdf_boundaries_catchment[mask]['colour_periphery'],
+        **boundary_periphery_kwargs
         )
 
     # Region boundaries:
@@ -971,8 +973,7 @@ def plot_map_catchment(
 
     # Units:
     if len(labels_uns) > 0:
-        section_labels = ['Selected units',
-                          'Units catching LSOA in selected regions']
+        section_labels = ['Selected units', 'Periphery units']
         handles_lists = [
             [handles_scatter_us, handles_us],
             [handles_scatter_uns, handles_uns]
@@ -1018,7 +1019,7 @@ def plot_map_catchment(
 
 def plot_map_outcome(
         gdf_boundaries_lsoa,
-        gdf_boundaries_regions,  # TO DO - make this optional
+        gdf_boundaries_regions,  # TO DO - make this optional...?
         gdf_points_units,
         ax=None,
         boundary_kwargs={},

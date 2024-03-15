@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from shapely.geometry import Polygon # For extent box.
 import geopandas
+import numpy as np
+
 
 import classes.map_functions as maps  # for plotting.
 
@@ -273,6 +275,46 @@ def _setup_plot_map_outcome(
     return lsoa_boundary_kwargs
 
 
+def make_colours_for_catchment(
+        gdf_boundaries_catchment,
+        colour_list_units=[],
+        colour_list_periphery_units=[]
+        ):
+
+    def make_colour_list(cmap='Blues', inds_cmap=[0.2, 0.4, 0.6, 0.8]):
+        # Pick out colours from the cmap.
+        colour_list_units = plt.get_cmap(cmap)(inds_cmap)
+        # Convert from (0.0 to 1.0) to (0 to 255):
+        colour_list_units = (colour_list_units * 255.0).astype(int)
+        # Convert to string:
+        colour_list_units = np.array([
+            '#%02x%02x%02x%02x' % tuple(c) for c in colour_list_units])
+        return colour_list_units
+
+    if len(colour_list_units) == 0:
+        colour_list_units = make_colour_list(
+            cmap='Blues', inds_cmap=[0.2, 0.4, 0.6, 0.8])
+    else:
+        pass
+    # Assign colours by colour index column values:
+    colours_units = colour_list_units[
+        gdf_boundaries_catchment['colour_ind'].values]
+    # Place in the GeoDataFrame:
+    gdf_boundaries_catchment['colour'] = colours_units
+
+    if len(colour_list_periphery_units) == 0:
+        colour_list_periphery_units = make_colour_list(
+            cmap='Greys', inds_cmap=[0.1, 0.2, 0.3, 0.4])
+    else:
+        pass
+    # Assign colours by colour index column values:
+    colours_periphery_units = colour_list_periphery_units[
+        gdf_boundaries_catchment['colour_ind'].values]
+    # Place in the GeoDataFrame:
+    gdf_boundaries_catchment['colour_periphery'] = colours_periphery_units
+    return gdf_boundaries_catchment
+
+
 def drop_other_scenarios(df, scenario):
     scenario_list = list(set(df.columns.get_level_values('scenario')))
     scenarios_to_keep = [s for s in scenario_list if (
@@ -392,7 +434,10 @@ def plot_map_catchment(
         gdf_lines_transfer,
         scenario: str,
         title='',
+        colour_list_units=[],
+        colour_list_periphery_units=[],
         lsoa_boundary_kwargs={},
+        lsoa_boundary_periphery_kwargs={},
         map_extent=[],
         show=True,
         path_to_file=''
@@ -406,11 +451,26 @@ def plot_map_catchment(
     gdf_boundaries_catchment = drop_other_scenarios(gdf_boundaries_catchment, scenario)
 
     boundary_kwargs = {
-        'cmap': 'Blues',
-        'edgecolor': 'face'
+        # 'cmap': 'Blues',
+        'edgecolor': 'face',
+        # 'color': 'colour'
     }
     # Update this with anything from the input dict:
     lsoa_boundary_kwargs = boundary_kwargs | lsoa_boundary_kwargs
+
+    boundary_periphery_kwargs = {
+        # 'cmap': 'Greys',
+        'edgecolor': 'face',
+        # 'color': 'colour'
+    }
+    # Update this with anything from the input dict:
+    lsoa_boundary_periphery_kwargs = boundary_periphery_kwargs | lsoa_boundary_periphery_kwargs
+
+    gdf_boundaries_catchment = make_colours_for_catchment(
+        gdf_boundaries_catchment,
+        colour_list_units,
+        colour_list_periphery_units
+        )
 
     fig, ax = plt.subplots(figsize=(6, 5))
     ax.set_title(title)
@@ -423,6 +483,7 @@ def plot_map_catchment(
         ax=ax,
         map_extent=map_extent,
         boundary_kwargs=lsoa_boundary_kwargs,
+        boundary_periphery_kwargs=lsoa_boundary_periphery_kwargs
     )
 
     if path_to_file is None:
