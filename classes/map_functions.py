@@ -346,20 +346,13 @@ def draw_labels_short(ax, points, map_labels, leg_labels, **kwargs):
     # Update this with anything from the input dict:
     marker_kwargs = marker_kwargs | kwargs
 
+    ref_s = marker_kwargs['s']
+
     from PIL import ImageFont
     from matplotlib import font_manager
     font = font_manager.FontProperties()#family='sans-serif')#, weight='bold')
     file = font_manager.findfont(font)
     font = ImageFont.truetype(file, marker_kwargs['s'])
-
-    left, top, right, bottom = font.getbbox('B')
-    ref_height = bottom - top  # Yes really
-    ref_width = right - left
-    ref_area = ref_width * ref_height
-    scale_s = marker_kwargs['s'] / ref_area
-    # size_base = marker_kwargs['s']
-    # from matplotlib.transforms import Affine2D
-    # from matplotlib.markers import MarkerStyle
 
     markers_for_legend = []
     labels_for_legend = []
@@ -377,14 +370,25 @@ def draw_labels_short(ax, points, map_labels, leg_labels, **kwargs):
         if len(map_label) == 1:
             # Add an empty space after it.
             map_label = f'{map_label}~'
-        # Adjust size based on number of characters:
-        # size = size_base * len(map_label)
-        # marker_kwargs['s'] = size
-        # label = r'$\mathdefault{' + f'{map_label}' + '}$'
-        # t = Affine2D().rotate_deg(90)
-        width = font.getlength(map_label)
-        area = width * ref_height
-        s = scale_s * area
+
+        # Adjust label size based on its width.
+        # Only need the ratio of height to width,
+        # so find that for the same font outside the plot:
+        left, top, right, bottom = font.getbbox(map_label)
+        ref_height = bottom - top  # Yes really
+        ref_width = right - left
+        if ref_height >= ref_width:
+            # If the label is taller than it is wide,
+            # just use the normal marker size:
+            s = ref_s
+        else:
+            # The label is too wide.
+            # Using the reference s will mean the text is shrunk.
+            # Scale up the marker size so that its height matches
+            # the reference marker height
+            # (squared because s is an area):
+            s = ref_s * (ref_width / ref_height)**2.0
+        # Update the kwargs with this marker size:
         marker_kwargs['s'] = s
 
         m = ax.scatter(
