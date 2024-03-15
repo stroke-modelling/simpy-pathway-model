@@ -381,6 +381,15 @@ def make_all_geometry_data(
 
     # Merge many LSOA into one big blob of catchment area.
     gdf_boundaries_catchment = _load_geometry_catchment(gdf_boundaries_lsoa)
+    # Label periphery units:
+    scenario_list = sorted(list(set(
+        gdf_boundaries_catchment['selected'].columns.get_level_values('scenario'))))
+    for scenario in scenario_list:
+        gdf_boundaries_catchment[('periphery_unit', scenario)] = 0
+        mask_units = df_units[('periphery_unit', scenario)] == 1
+        units = df_units.loc[mask_units].index.values
+        mask = gdf_boundaries_catchment['unit'].isin(units)
+        gdf_boundaries_catchment.loc[mask.values, ('periphery_unit', scenario)] = 1
 
     # Only keep separate LSOA that have been selected.
     df_select = gdf_boundaries_lsoa.xs(
@@ -406,7 +415,6 @@ def make_all_geometry_data(
         else:
             # The data for non-diff scenarios should already exist.
             pass
-    # TO DO - fixing to create_combo_cols required ----------------------------------
 
     # For each gdf, reset the index so that the index columns
     # appear in a saved .geojson and label the new index column.
@@ -419,7 +427,7 @@ def make_all_geometry_data(
     gdf_points_units = make_new_index(gdf_points_units)
     gdf_lines_transfer = make_new_index(gdf_lines_transfer)
     gdf_boundaries_lsoa = make_new_index(gdf_boundaries_lsoa)
-    gdf_boundaries_catchment = make_new_index(gdf_boundaries_catchment)
+    # gdf_boundaries_catchment = make_new_index(gdf_boundaries_catchment)
 
     # Sort units by short code:
     gdf_points_units = gdf_points_units.sort_values(('short_code', 'any'))
@@ -807,7 +815,8 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
         )
     # The combo dataframe contains only columns for scenario / property,
     # so switch them round to property / scenario:
-    gdf_boundaries_catchment.columns = gdf_boundaries_catchment.columns.swaplevel(0, 1)
+    gdf_boundaries_catchment.columns = (
+        gdf_boundaries_catchment.columns.swaplevel(0, 1))
     # Rename index so it can be made into a normal column:
     gdf_boundaries_catchment = gdf_boundaries_catchment.rename(
         index={gdf_boundaries_catchment.index.name:(col_to_dissolve)})

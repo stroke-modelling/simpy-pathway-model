@@ -478,6 +478,9 @@ def plot_map_selected_regions(
         'facecolor': 'WhiteSmoke'
         }
 
+    label_size_units = 15
+    label_size_regions = 30
+
     if ax is None:
         # Make max dimensions XxY inch:
         fig, ax = plt.subplots(figsize=(12, 8))
@@ -516,7 +519,7 @@ def plot_map_selected_regions(
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
-        s=20,
+        s=label_size_units,
         color='k',
         # bbox=dict(facecolor='WhiteSmoke', edgecolor='r'),
     )
@@ -527,7 +530,7 @@ def plot_map_selected_regions(
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
-        s=20,
+        s=label_size_units,
         color='DimGray',
         # bbox=dict(facecolor='GhostWhite', edgecolor='DimGray'),
     )
@@ -544,7 +547,7 @@ def plot_map_selected_regions(
         gdf_boundaries_regions[mask].short_code,
         gdf_boundaries_regions[mask].region,
         # weight='bold',
-        s=50,
+        s=label_size_regions,
         color='k'
     )
     # Outside selected regions:
@@ -555,7 +558,7 @@ def plot_map_selected_regions(
         gdf_boundaries_regions[mask].short_code,
         gdf_boundaries_regions[mask].region,
         # weight='bold',
-        s=50,
+        s=label_size_regions,
         color='DimGray'
     )
 
@@ -680,6 +683,7 @@ def plot_map_selected_units(
         'linewidth': 0.5,
         'facecolor': 'WhiteSmoke'
         }
+    label_size_units = 15
 
     if ax is None:
         # Make max dimensions XxY inch:
@@ -730,7 +734,7 @@ def plot_map_selected_units(
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
-        s=20,
+        s=label_size_units,
         color='k'
     )
     # Outside selected regions:
@@ -740,7 +744,7 @@ def plot_map_selected_units(
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
-        s=20,
+        s=label_size_units,
         color='DimGray'
     )
 
@@ -859,12 +863,26 @@ def plot_map_catchment(
     + file_mothership_map
     + file_msu_map
     """
+    label_size_units = 15
+
     if ax is None:
         # Make max dimensions XxY inch:
         fig, ax = plt.subplots(figsize=(12, 8))
 
-    # LSOAs:
+    # LSOAs in selected units catchment:
     mask = (gdf_boundaries_catchment['selected'] == 1)
+    ax = draw_boundaries(
+        ax,
+        gdf_boundaries_catchment[mask],
+        **boundary_kwargs
+        )
+
+    # LSOAs in periphery units catchment:
+    mask = (
+        (gdf_boundaries_catchment['selected'] == 0) &
+        (gdf_boundaries_catchment['periphery_unit'] == 1)
+    )
+    boundary_kwargs['cmap'] = 'Greys'
     ax = draw_boundaries(
         ax,
         gdf_boundaries_catchment[mask],
@@ -934,7 +952,7 @@ def plot_map_catchment(
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
-        s=20,
+        s=label_size_units,
         color='Gainsboro'
     )
     # Outside selected regions:
@@ -947,7 +965,7 @@ def plot_map_catchment(
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
-        s=20,
+        s=label_size_units,
         color='WhiteSmoke'
     )
 
@@ -1068,6 +1086,8 @@ def plot_map_outcome(
     + file_mothership_map
     + file_msu_map
     """
+    label_size_units = 15
+
     if ax is None:
         # Make max dimensions XxY inch:
         fig, ax = plt.subplots(figsize=(10, 10))
@@ -1133,7 +1153,7 @@ def plot_map_outcome(
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
-        s=20,
+        s=label_size_units,
         color='k'
     )
 
