@@ -291,25 +291,27 @@ def make_colours_for_catchment(
             '#%02x%02x%02x%02x' % tuple(c) for c in colour_list_units])
         return colour_list_units
 
+    n_colours = len(list(set(gdf_boundaries_catchment['colour_ind'])))
+
     if len(colour_list_units) == 0:
         colour_list_units = make_colour_list(
-            cmap='Blues', inds_cmap=[0.2, 0.4, 0.6, 0.8])
+            cmap='Blues', inds_cmap=np.linspace(0.2, 0.8, n_colours))
     else:
         pass
     # Assign colours by colour index column values:
     colours_units = colour_list_units[
-        gdf_boundaries_catchment['colour_ind'].values]
+        gdf_boundaries_catchment['colour_ind'].astype(int).values]
     # Place in the GeoDataFrame:
     gdf_boundaries_catchment['colour'] = colours_units
 
     if len(colour_list_periphery_units) == 0:
         colour_list_periphery_units = make_colour_list(
-            cmap='Greys', inds_cmap=[0.1, 0.2, 0.3, 0.4])
+            cmap='Greys', inds_cmap=np.linspace(0.1, 0.4, n_colours))
     else:
         pass
     # Assign colours by colour index column values:
     colours_periphery_units = colour_list_periphery_units[
-        gdf_boundaries_catchment['colour_ind'].values]
+        gdf_boundaries_catchment['colour_ind'].astype(int).values]
     # Place in the GeoDataFrame:
     gdf_boundaries_catchment['colour_periphery'] = colours_periphery_units
     return gdf_boundaries_catchment
@@ -449,6 +451,9 @@ def plot_map_catchment(
     gdf_points_units = drop_other_scenarios(gdf_points_units, scenario)
     gdf_lines_transfer = drop_other_scenarios(gdf_lines_transfer, scenario)
     gdf_boundaries_catchment = drop_other_scenarios(gdf_boundaries_catchment, scenario)
+    # Drop catchment areas from other scenarios:
+    gdf_boundaries_catchment = gdf_boundaries_catchment.dropna(
+        subset='colour_ind')
 
     boundary_kwargs = {
         # 'cmap': 'Blues',

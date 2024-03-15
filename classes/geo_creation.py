@@ -803,7 +803,12 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
 
             # Set index column:
             df = df.reset_index()
+
+            # Assign colours:
+            df = assign_colours_to_regions(df, col_col='colour_ind')
+
             df = df.set_index(['unit', 'geometry'])
+
             # Store in the main list:
             dfs_to_merge[scenario] = df
 
@@ -832,11 +837,6 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
     # Set geometry column:
     gdf_boundaries_catchment = gdf_boundaries_catchment.set_geometry(
         'geometry')
-
-    # Assign colours:
-    gdf_boundaries_catchment = assign_colours_to_regions(
-        gdf_boundaries_catchment, col_col=('colour_ind', 'any')
-    )
 
     return gdf_boundaries_catchment
 
@@ -966,7 +966,7 @@ def create_combo_cols(gdf, scenario):
 # ###################
 # ##### COLOURS #####
 # ###################
-def assign_colours_to_regions(gdf, col_col):
+def assign_colours_to_regions_DEBUG(gdf, col_col):
     """
     wip, this version pretty useless.
     """
@@ -984,171 +984,101 @@ def assign_colours_to_regions(gdf, col_col):
     return gdf
 
 
-def assign_colours_to_regions_BROKEN(gdf, region_type):
-
-    colours = ['ForestGreen', 'LimeGreen', 'RebeccaPurple', 'Teal']
+def assign_colours_to_regions(gdf, col_col):
 
     # TO DO - this neighbours function isn't working right -----------------------------
     # currently says that Gloucestershire doesn't border Bristol or Bath regions -------
-    gdf = find_neighbours_for_regions(gdf, region_type)
+    gdf = find_neighbours_for_regions(gdf)
     gdf = gdf.sort_values('total_neighbours', ascending=False)
+    
+    def fill_colour_grid(n_colours=4):
+        colours = range(n_colours)
 
-    neighbour_list = gdf[region_type].tolist()
 
-    neighbour_grid = np.full((len(gdf), len(gdf)), False)
-    for row, neighbour_list_here in enumerate(gdf['neighbour_list']):
-        for n in neighbour_list_here:
-            col = neighbour_list.index(n)
-            neighbour_grid[row, col] = True
-            neighbour_grid[col, row] = True
+        neighbour_list = gdf['unit'].tolist()
 
-    # Make a grid. One column per colour, one row per region.
-    colour_grid = np.full((len(gdf), len(colours)), True)
-    # To index row x: colour_grid[x, :]
-    # To index col x: colour_grid[:, x]
+        neighbour_grid = np.full((len(gdf), len(gdf)), False)
+        for row, neighbour_list_here in enumerate(gdf['neighbour_list']):
+            for n in neighbour_list_here:
+                col = neighbour_list.index(n)
+                neighbour_grid[row, col] = True
+                neighbour_grid[col, row] = True
 
-    for row, region in enumerate(neighbour_list):
-        # Which colours can this be?
-        colours_here = colour_grid[row, :]
+        # Make a grid. One column per colour, one row per region.
+        colour_grid = np.full((len(gdf), len(colours)), True)
+        # To index row x: colour_grid[x, :]
+        # To index col x: colour_grid[:, x]
 
-        # Pick the first available colour.
-        ind_to_pick = np.where(colours_here == True)[0][0]
+        for row, region in enumerate(neighbour_list):
+            # Which colours can this be?
+            colours_here = colour_grid[row, :]
 
-        # Update its neighbours' colour information.
-        rows_neighbours = np.where(neighbour_grid[row, :] == True)[0]
-        # Only keep these rows when we haven't checked them yet:
-        rows_neighbours = [r for r in rows_neighbours if r > row]
-        colour_grid[rows_neighbours, ind_to_pick] = False
+            # Pick the first available colour.
+            ind_to_pick = np.where(colours_here == True)[0][0]
 
-        # Update its own colour information.
-        colour_grid[row, :] = False
-        colour_grid[row, ind_to_pick] = True
+            # Update its neighbours' colour information.
+            rows_neighbours = np.where(neighbour_grid[row, :] == True)[0]
+            # Only keep these rows when we haven't checked them yet:
+            rows_neighbours = [r for r in rows_neighbours if r > row]
+            colour_grid[rows_neighbours, ind_to_pick] = False
+
+            # Update its own colour information.
+            colour_grid[row, :] = False
+            colour_grid[row, ind_to_pick] = True
+        return colour_grid
+
+    n_attempts = 0
+    n_colours = 4
+    success = False
+    while success is False:
+        try:
+            colour_grid = fill_colour_grid(n_colours)
+            success = True
+        except IndexError:
+            n_attempts += 1
+            # Shuffle the units order:
+            gdf['random'] = np.random.rand(len(gdf))
+            gdf = gdf.sort_values(['total_neighbours', 'random'], ascending=False)
+        if n_attempts > 10:
+            # Use way more colours.
+            n_colours = len(gdf)
+            colour_grid = fill_colour_grid(n_colours)
+            success = True
 
     # Use the bool colour grid to assign colours:
-    colour_arr = np.full(len(neighbour_list), colours[0], dtype=object)
+    colours = range(n_colours)
+    colour_arr = np.full(len(gdf), colours[0], dtype=object)
     for i, colour in enumerate(colours):
         colour_arr[np.where(colour_grid[:, i] == True)] = colour
 
     # Add to the DataFrame:
-    gdf['colour'] = colour_arr
-
-    # Use any old colours as debug:
-    # np.random.seed(42)
-    # colour_arr = np.random.choice(colours, size=len(gdf))
+    gdf[col_col] = colour_arr
 
     return gdf
 
 
-def round_coordinates(df_geojson):
-    from shapely.geometry import shape, mapping  # For conversion from shapely polygon to geojson and back
-    # Remove floating point errors
-    for i in range(len(df_geojson)):
-        poly = df_geojson['geometry'][i]
-        # Convert shapely object to geojson object
-        gpoly = mapping(poly)
-        if len(gpoly['coordinates']) == 1:
-            # This is probably a normal polygon.
-            a_coords = np.array(gpoly['coordinates'])
-            new_coords = np.round(a_coords, 3)
-        else:
-            # This is probably a multipolygon but could be a polygon
-            # that has multiple sets of coordinates for some reason
-            # (maybe a hole, doughnut-shaped polygon?).
-            new_coords = []
-            for c, coords in enumerate(gpoly['coordinates']):
-                a_coords = np.array(gpoly['coordinates'][c])
-                a_coords = np.round(a_coords, 3)
-                new_coords.append(a_coords)
-        gpoly['coordinates'] = new_coords
+def find_neighbours_for_regions(df):
 
-        # Convert back to shapely object
-        poly = shape(gpoly)
-        # Place back into the DataFrame
-        df_geojson['geometry'][i] = poly
-        return df_geojson
+    dict_neighbours = {}
 
+    for index, row in df.iterrows():
+        unit_here = row['unit']
+        geometry_here = row['geometry']
+        # Does this intersect any other polygon in the list?
+        intersect = df['geometry'].intersects(geometry_here)
+        # Get the unit names of those it intersects:
+        units_intersect = df.loc[(intersect == 1), 'unit'].values.tolist()
+        # Remove itself from the list:
+        units_intersect.remove(unit_here)
+        # Store unit list in dict:
+        dict_neighbours[unit_here] = units_intersect
 
-def find_neighbours_for_regions(df_geojson, region_type='ICG22NM'):
-    import shapely
-
-    def split_multipolygons(df_geojson):
-        # Expand the dataframe - need a separate row for each polygon, so split apart any multipolygons.
-        df = df_geojson.copy()
-        df_new = pd.DataFrame(columns=df.columns)
-
-        r = 0
-        for i in range(len(df)):
-            row = df.iloc[i]
-            if isinstance(row['geometry'], shapely.geometry.polygon.Polygon):
-                # All ok here, copy row contents exactly:
-                df_new.loc[r] = df.iloc[i]
-                r += 1
-            else:
-                # MultiPolygon! Split it.
-                # Place each Polygon on its own row.
-                multipoly = row['geometry']
-                for poly in list(multipoly.geoms):
-                    row_new = row.copy()
-                    row_new['geometry'] = poly
-                    df_new.loc[r] = row_new
-                    r += 1
-
-        # Convert this to a GeoDataFrame to match the input df_geojson:
-        df_new = geopandas.GeoDataFrame(
-            df_new, geometry=df_new['geometry']#, crs="EPSG:4326"
-        )
-        return df_new
-
-    def find_neighbours(df_new, region_type):
-        df = df_new.copy()
-        df['my_neighbors'] = [[]] * len(df)
-
-        for index, row in df.iterrows():
-            if isinstance(row['geometry'], shapely.geometry.polygon.Polygon): 
-                neighbors = df[df.geometry.touches(row['geometry'])][region_type].tolist()
-            elif not isinstance(row['geometry'], shapely.geometry.point.Point):
-                # This is a MultiPolygon. Check each Polygon separately.
-                multipoly = row['geometry']
-                neighbors = []
-                for polygon in list(multipoly.geoms):
-                    neighbours_here = df[df.geometry.intersects(polygon)].index.tolist()
-                    neighbors += neighbours_here
-            else:
-                # It's a point! Ignore.
-                pass
-            try:
-                # Don't let the place be its own neighbour.
-                neighbors = neighbors.remove(row.name)
-            except ValueError:
-                # Its own name is not in the list of neighbours.
-                pass
-            df.at[index, 'my_neighbors'] = neighbors
-            # df.loc[index]['my_neighbors'] = neighbors #", ".join([f'{n}' for n in neighbors])
-
-        df_neighbours = df.copy()
-        return df_neighbours
-
-    def unsplit_multipolygons(df_geojson, df_neighbours):
-        df = df_geojson.copy()
-        df['neighbour_list'] = [[]] * len(df)
-
-        for i in range(len(df)):
-            # What is this called in the original dataframe?
-            objectid = df.iloc[i]['OBJECTID']
-            # region_name = df.iloc[i]['CCG19CD']
-            # Where did this end up in the polygon dataframe?
-            df_here = df_neighbours[df_neighbours['OBJECTID'] == objectid]
-            # Combine multiple lists of neighbours into one list:
-            list_of_neighbours = np.concatenate(df_here['my_neighbors'].values)
-            # Remove any repeats:
-            list_of_neighbours = list(set(list_of_neighbours))
-            df.at[i, 'neighbour_list'] = list_of_neighbours
-        return df
-
-    df_geojson = round_coordinates(df_geojson)
-    df_new = split_multipolygons(df_geojson)
-    df_neighbours = find_neighbours(df_new, region_type)
-    df = unsplit_multipolygons(df_geojson, df_neighbours)
+    # Convert dict to Series:
+    series_n = pd.Series(dict_neighbours, name='neighbour_list')
+    series_n.index = series_n.index.set_names('unit')
+    series_n = series_n.reset_index()
+    # Merge into the main dataframe:
+    df = pd.merge(df, series_n, on='unit')
 
     # Record the number of neighbours:
     df['total_neighbours'] = df['neighbour_list'].str.len()
