@@ -322,10 +322,30 @@ def plot_lines_between_units(ax, gdf, **line_kwargs):
     # Draw a line connecting each unit to its MT unit.
     mask = gdf['selected'] == 1
     lines = gdf[mask]
-    lines.plot(
-        ax=ax,
-        **kwargs_dict
-    )
+
+    if 'colour_lines' in lines.columns:
+        edgecolour = kwargs_dict['edgecolor']
+        # Different colour for each line.
+        for row in lines.index:
+            gdf_m = lines.loc[[row]]
+            print(gdf_m['colour_lines'].values[0])
+            if len(gdf_m['colour_lines'].values[0]) < 7:
+                # Not in the format #rrggbb or #rrggbbaa.
+                # Use input default value.
+                colour = edgecolour
+            else:
+                colour = gdf_m['colour_lines']
+            kwargs_dict['edgecolor'] = colour
+            # Plot this single line as usual:
+            gdf_m.plot(
+                ax=ax,
+                **kwargs_dict
+            )
+    else:
+        lines.plot(
+            ax=ax,
+            **kwargs_dict
+        )
     return ax
 
 

@@ -307,6 +307,7 @@ def make_colours_for_catchment(
     # Selected units.
     # Start with blank colours:
     colours_units = np.array(['#00000000'] * len(gdf_boundaries_catchment))
+    colours_transfer = np.array(['#00000000'] * len(gdf_boundaries_catchment))
 
     if 'transfer_colour_ind' in gdf_boundaries_catchment.columns:
         # Use a different colour map for each MT unit and its feeders.
@@ -319,34 +320,40 @@ def make_colours_for_catchment(
                 cmap = colour_lists_units[b]
                 colour_list_units = make_colour_list(
                     cmap=cmap, inds_cmap=np.linspace(0.2, 0.8, n_colours))
+                # Pick out a dark colour for transfer unit line:
+                colour_transfer = make_colour_list(
+                    cmap=cmap, inds_cmap=[0.95])[0]
             except ValueError:
                 # No colourmap of that name.
-                colour_list_units = colour_lists_units[b]
+                colour_list_units = colour_lists_units[b][:-1]
+                colour_transfer = colour_lists_units[b][-1]
             # Pick out only the areas in this band:
             mask = gdf_boundaries_catchment['transfer_colour_ind'] == band
             # Assign colours by colour index column values:
             colours_units[np.where(mask == 1)[0]] = colour_list_units[
                 gdf_boundaries_catchment.loc[mask, 'colour_ind'].astype(int).values]
+            colours_transfer[np.where(mask == 1)[0]] = colour_transfer
 
     else:
-        if len(colour_lists_units) == 0:
-            cmap = cmaps_list[0]
+        try:
+            cmap = colour_lists_units[0]
             colour_list_units = make_colour_list(
                 cmap=cmap, inds_cmap=np.linspace(0.2, 0.8, n_colours))
-        else:
-            try:
-                cmap = colour_lists_units[0]
-                colour_list_units = make_colour_list(
-                    cmap=cmap, inds_cmap=np.linspace(0.2, 0.8, n_colours))
-            except ValueError:
-                # No colourmap of that name.
-                colour_list_units = colour_lists_units
+            # Pick out a dark colour for transfer unit line:
+            colour_transfer = make_colour_list(
+                cmap=cmap, inds_cmap=[0.95])[0]
+        except ValueError:
+            # No colourmap of that name.
+            colour_list_units = colour_lists_units[b][:-1]
+            colour_transfer = colour_lists_units[b][-1]
         # Assign colours by colour index column values:
         colours_units = colour_list_units[
             gdf_boundaries_catchment['colour_ind'].astype(int).values]
+        colours_transfer = np.array([colour_transfer] * len(gdf_boundaries_catchment))
 
     # Place in the GeoDataFrame:
     gdf_boundaries_catchment['colour'] = colours_units
+    gdf_boundaries_catchment['colour_lines'] = colours_transfer
 
     # Periphery units
     if len(colour_list_periphery_units) == 0:
@@ -521,6 +528,12 @@ def plot_map_catchment(
         colour_list_units,
         colour_list_periphery_units
         )
+    if 'colour_lines' in gdf_boundaries_catchment.columns:
+        # Move colours over to the transfer unit gdf.
+        gdf_lines_transfer = pd.merge(
+            gdf_lines_transfer, gdf_boundaries_catchment[['unit', 'colour_lines']],
+            left_on='postcode', right_on='unit', how='left')
+        gdf_lines_transfer = gdf_lines_transfer.drop('unit', axis='columns')
 
     fig, ax = plt.subplots(figsize=(6, 5))
     ax.set_title(title)
