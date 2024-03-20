@@ -60,6 +60,17 @@ from shapely import LineString  # For creating line geometry.
 from pandas.api.types import is_numeric_dtype  # For checking dtype.
 
 
+# #####################
+# ##### LOAD DATA #####
+# #####################
+
+# TO DO 
+
+# load gdf from file (csv with multiindex)
+
+# save gdf to file (csv with multiindex)
+
+# add scenario header if not already there
 
 # #####################
 # ##### LOAD DATA #####
@@ -362,10 +373,14 @@ def link_pathway_geography(
 # ########################
 # ##### COMBINE DATA #####
 # ########################
-def make_all_geometry_data(
+def main(
         df_lsoa, df_units, df_regions,
         df_transfer=None, df_lsoa_results=None
         ):
+    # TO DO - 
+    # Check whether the input DataFrames have a 'scenario' column level.
+    # If not, add one now with a placeholder scenario name.
+    # ========================================================================================
 
     df_regions = load_regions()
     df_regions, df_units = make_new_periphery_data(
@@ -380,7 +395,8 @@ def make_all_geometry_data(
     gdf_boundaries_lsoa = _load_geometry_lsoa(df_lsoa, df_lsoa_results)
 
     # Merge many LSOA into one big blob of catchment area.
-    gdf_boundaries_catchment = _load_geometry_catchment(gdf_boundaries_lsoa)
+    gdf_boundaries_catchment = _load_geometry_catchment(
+        gdf_boundaries_lsoa, df_transfer)
     # Label periphery units:
     scenario_list = sorted(list(set(
         gdf_boundaries_catchment['selected'].columns.get_level_values('scenario'))))
@@ -770,7 +786,10 @@ def _load_geometry_lsoa(df_lsoa, df_results_by_lsoa=None):
     return gdf_boundaries_lsoa
 
 
-def _load_geometry_catchment(gdf_boundaries_lsoa):
+def _load_geometry_catchment(
+        gdf_boundaries_lsoa,
+        df_transfer=None
+        ):
     # List of scenarios included in the LSOA data:
     scenario_list = sorted(list(set(
         gdf_boundaries_lsoa.columns.get_level_values('scenario'))))
@@ -806,6 +825,46 @@ def _load_geometry_catchment(gdf_boundaries_lsoa):
 
             # Assign colours:
             df = assign_colours_to_regions(df, col_col='colour_ind')
+
+            if df_transfer is None:
+                pass
+            else:
+                df_transfer_here = df_transfer.copy().reset_index()
+                # Only keep this scenario:
+                df_transfer_here = df_transfer_here[
+                    [('postcode', ''), ('transfer_unit_postcode', ''), ('selected', scenario)]]
+                # Drop the 'scenario' level
+                df_transfer_here = df_transfer_here.droplevel('scenario', axis='columns')
+                # Only keep used postcodes:
+                mask = ~df_transfer_here['selected'].isna()  # == 1
+                df_transfer_here = df_transfer_here.loc[mask].copy()
+                # Add the transfer unit postcodes to the main df.
+                df = pd.merge(
+                    df, df_transfer_here[['postcode', 'transfer_unit_postcode']],
+                    left_on='unit', right_on='postcode', how='left'
+                )
+                df = df.drop('postcode', axis='columns')
+                # Group shapes by transfer unit and then assign colours
+                # to the groups.
+                # Only run this on selected rows of df.
+                col_to_dissolve = 'transfer_unit_postcode'
+                col_geometry = 'geometry'
+                df_feeders = _combine_lsoa_into_catchment_shapes(
+                    df[df['use'] == 1].copy(),
+                    col_to_dissolve=col_to_dissolve,
+                    col_geometry=col_geometry,
+                    col_after_dissolve='transfer_unit_postcode'
+                    )
+                df_feeders = df_feeders.reset_index()
+                # print(df_feeders)
+                # Assign colours:
+                df_feeders = assign_colours_to_regions(
+                    df_feeders, col_col='transfer_colour_ind', col_units='transfer_unit_postcode')
+                # Link these colours back to the original dataframe:
+                df = pd.merge(
+                    df, df_feeders[['transfer_unit_postcode', 'transfer_colour_ind']],
+                    on='transfer_unit_postcode', how='left'
+                )
 
             df = df.set_index(['unit', 'geometry'])
 
@@ -966,36 +1025,15 @@ def create_combo_cols(gdf, scenario):
 # ###################
 # ##### COLOURS #####
 # ###################
-def assign_colours_to_regions_DEBUG(gdf, col_col):
-    """
-    wip, this version pretty useless.
-    """
+def assign_colours_to_regions(gdf, col_col, col_units='unit'):
 
-    # colours = ['ForestGreen', 'LimeGreen', 'RebeccaPurple', 'Teal']
-    colours = [0, 1, 2, 3]
-
-    # Use any old colours as debug:
-    np.random.seed(42)
-    colour_arr = np.random.choice(colours, size=len(gdf))
-
-    # Add to the DataFrame:
-    gdf[col_col] = colour_arr
-
-    return gdf
-
-
-def assign_colours_to_regions(gdf, col_col):
-
-    # TO DO - this neighbours function isn't working right -----------------------------
-    # currently says that Gloucestershire doesn't border Bristol or Bath regions -------
-    gdf = find_neighbours_for_regions(gdf)
+    gdf = find_neighbours_for_regions(gdf, col_units)
     gdf = gdf.sort_values('total_neighbours', ascending=False)
-    
+
     def fill_colour_grid(n_colours=4):
         colours = range(n_colours)
 
-
-        neighbour_list = gdf['unit'].tolist()
+        neighbour_list = gdf[col_units].tolist()
 
         neighbour_grid = np.full((len(gdf), len(gdf)), False)
         for row, neighbour_list_here in enumerate(gdf['neighbour_list']):
@@ -1054,20 +1092,27 @@ def assign_colours_to_regions(gdf, col_col):
     # Add to the DataFrame:
     gdf[col_col] = colour_arr
 
+    # If the 'random' column was created, delete it:
+    try:
+        gdf = gdf.drop('random', axis='columns')
+    except KeyError:
+        # Nothing to delete.
+        pass
+
     return gdf
 
 
-def find_neighbours_for_regions(df):
+def find_neighbours_for_regions(df, col_units='unit'):
 
     dict_neighbours = {}
 
     for index, row in df.iterrows():
-        unit_here = row['unit']
+        unit_here = row[col_units]
         geometry_here = row['geometry']
         # Does this intersect any other polygon in the list?
         intersect = df['geometry'].intersects(geometry_here)
         # Get the unit names of those it intersects:
-        units_intersect = df.loc[(intersect == 1), 'unit'].values.tolist()
+        units_intersect = df.loc[(intersect == 1), col_units].values.tolist()
         # Remove itself from the list:
         units_intersect.remove(unit_here)
         # Store unit list in dict:
@@ -1075,10 +1120,10 @@ def find_neighbours_for_regions(df):
 
     # Convert dict to Series:
     series_n = pd.Series(dict_neighbours, name='neighbour_list')
-    series_n.index = series_n.index.set_names('unit')
+    series_n.index = series_n.index.set_names(col_units)
     series_n = series_n.reset_index()
     # Merge into the main dataframe:
-    df = pd.merge(df, series_n, on='unit')
+    df = pd.merge(df, series_n, on=col_units)
 
     # Record the number of neighbours:
     df['total_neighbours'] = df['neighbour_list'].str.len()

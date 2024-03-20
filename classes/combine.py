@@ -39,34 +39,87 @@ class Combine(object):
     # ####################
     # ##### WRAPPERS #####
     # ####################
+    def combine_inputs_and_results(
+            self, df_input, df_results, col_input, col_results, how='left'):
+        """
+        Wrapper for pd.merge().
+
+        Expect df_input to have only one unnamed column level.
+        Expect df_results to have column levels named
+        'property' and 'subtype'.
+        """
+        # Target column heading level names:
+        headers = df_results.columns.names
+
+        # Create column levels for the input dataframe.
+        # Create the correct total number of column names and leave
+        # them blank.
+        df_input_cols = [[''] * len(df_input.columns)] * len(headers)
+
+        if isinstance(df_input.columns, pd.MultiIndex):
+            # Already have multiple column levels.
+            # Check names...
+            if np.any(np.array(df_input.columns.names) == None):
+                # Can't check the column header names.
+                err = ''.join([
+                    'Please set the column header names of df_input ',
+                    'with `df_input.columns.names = headers`.'
+                    ])
+                raise KeyError(err) from None
+            else:
+                for header in np.array(df_input.columns.names):
+                    # Find where this column level needs to be
+                    # to match df_results.
+                    ind = headers.index(header)
+                    # Update the new column array with column names from
+                    # the input dataframe.
+                    df_input_cols[ind] = df_input.columns
+
+        # Set up a new input DataFrame with the required column levels.
+        df_input = pd.DataFrame(
+            df_input.values,
+            index=df_input.index,
+            columns=df_input_cols
+            )
+        df_input_cols.columns.names = headers
+
+        # Now that the column header levels match, merge:
+        df = pd.merge(df_input, df_results,
+                      left_on=col_input, right_on=col_results, how=how)
+        return df
+
     def combine_selected_units(
             self, dict_scenario_df_to_merge):
         """
         Combine selected units.
 
         Each file input:
-        +------+-----+---------+--------------+
-        | Unit | ... | use_ivt |    coords    |   property
-        +------+-----+---------+--------------+
-        |    1 | ... |       1 | -x.xx, yy.yy |
-        |    2 | ... |       1 | -x.xx, yy.yy |
-        |    3 | ... |       1 | -x.xx, yy.yy |
-        |  ... | ... |     ... |      ...     |
-        |    n | ... |       0 | -x.xx, yy.yy |
-        +------+-----+---------+--------------+
+        +------+-------------+-------------+
+        |      |   time_1    |    shift_1  |    property
+        +------+------+------+------+------+
+        | Unit | mean |  std | mean |  std |    subtype
+        +------+------+------+------+------+
+        |    1 | x.xx | x.xx | y.yy | y.yy |
+        |    2 | x.xx | x.xx | y.yy | y.yy |
+        |    3 | x.xx | x.xx | y.yy | y.yy |
+        |  ... |  ... |  ... |  ... |  ... |
+        |    n | x.xx | x.xx | y.yy | y.yy |
+        +------+------+------+------+------+
 
         Resulting DataFrame:
-                                    +------------+------------+
-                                    | scenario_1 | scenario_2 |    scenario
-        +------+-----+--------------+------------+------------+
-        | Unit | ... |    coords    |   use_ivt  |   use_ivt  |    property
-        +------+-----+--------------+------------+------------+
-        |    1 | ... | -x.xx, yy.yy |          1 |          0 |
-        |    2 | ... | -x.xx, yy.yy |          1 |          0 |
-        |    3 | ... | -x.xx, yy.yy |          1 |          1 |
-        |  ... | ... |      ...     |        ... |        ... |
-        |    n | ... | -x.xx, yy.yy |            |          1 |
-        +------+-----+--------------+------------+------------+
+        +------+------+------+------+------+------+------+
+        |  any |  scenario_1 |  scenario_2 |    diff     |    scenario
+        +------+------+------+------+------+------+------+
+        |      |    shift    |    shift    |    shift    |    property
+        +------+------+------+------+------+------+------+
+        | Unit | mean |  std | mean |  std | mean |  std |    subtype
+        +------+------+------+------+------+------+------+
+        |    1 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        |    2 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        |    3 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        |  ... |  ... |  ... |  ... |  ... |  ... |  ... |
+        |    n | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
+        +------+------+------+------+------+------+------+
         """
         df = self._hstack_multiple_dataframes(
             dict_scenario_df_to_merge,
@@ -74,14 +127,25 @@ class Combine(object):
                 'use_ivt',
                 'use_mt',
                 'use_msu',
-                # 'Use',
                 'selected',
                 'transfer_unit_postcode',
-                # 'catches_lsoa_in_selected_region'
             ])
 
+        # col_to_group = data.columns[0]
+        cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
+        # Same LSOA appearing in multiple files will currently have
+        # multiple mostly-empty rows in the "data" DataFrame.
+        # Group matching rows:
+        # df = self._group_data(data, col_to_group, cols_to_keep)
+
+        # Create new columns of this diff that:
+        df = self._diff_data(df, cols_to_keep)
+
         # Rename the MultiIndex column names:
-        df.columns = df.columns.set_names(['scenario', 'property'])
+        headers = ['scenario', 'property']
+        if len(dict_scenario_df_to_merge.values()[0].columns.names) == 3:
+            headers.append('subtype')
+        df.columns = df.columns.set_names(headers)
 
         # Put 'property' above 'scenario':
         df = df.swaplevel('scenario', 'property', axis='columns')
@@ -140,50 +204,6 @@ class Combine(object):
         Combine selected LSOA.
 
         Each file input:
-        +------+-----+
-        | LSOA | ... |    property
-        +------+-----+
-        |    1 | ... |
-        |    2 | ... |
-        |    3 | ... |
-        |  ... | ... |
-        |    n | ... |
-        +------+-----+
-
-        Resulting DataFrame:
-               +--------------------+--------------------+
-               |     scenario_1     |     scenario_2     |    scenario
-        +------+-----+--------------+-----+--------------+
-        | LSOA | Use | nearest_unit | Use | nearest_unit |    property
-        +------+-----+--------------+-----+--------------+
-        |    1 |   1 |            2 |   1 |            2 |
-        |    2 |   1 |            2 |   0 |              |
-        |    3 |   0 |            2 |   1 |            2 |
-        |  ... | ... |          ... | ... |          ... |
-        |    n |   0 |            9 |   0 |              |
-        +------+-----+--------------+-----+--------------+
-        """
-        df = self._hstack_multiple_dataframes(
-            # TO DO - column name here might change
-            dict_scenario_df_to_merge,
-            # add_use_column=True,
-            cols_for_scenario=['unit_postcode', 'unit_travel_time', 'selected', 'relative_frequency']
-            )
-
-        # Rename the MultiIndex column names:
-        df.columns = df.columns.set_names(['scenario', 'property'])
-
-        # Put 'property' above 'scenario':
-        df = df.swaplevel('scenario', 'property', axis='columns')
-
-        return df
-
-    def combine_results_summary_by_lsoa(
-            self, dict_scenario_df_to_merge):
-        """
-        Group by LSOA summary.
-
-        Each file input:
         +------+-------------+-------------+
         |      |   time_1    |    shift_1  |    property
         +------+------+------+------+------+
@@ -211,7 +231,7 @@ class Combine(object):
         |    n | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
         +------+------+------+------+------+------+------+
         """
-        data = self._hstack_multiple_dataframes(
+        df = self._hstack_multiple_dataframes(
             dict_scenario_df_to_merge,
             cols_for_scenario=':'
             )
@@ -224,66 +244,13 @@ class Combine(object):
         # df = self._group_data(data, col_to_group, cols_to_keep)
 
         # Create new columns of this diff that:
-        df = self._diff_data(data, cols_to_keep)
+        df = self._diff_data(df, cols_to_keep)
 
         # Rename the MultiIndex column names:
-        df.columns = df.columns.set_names(['scenario', 'property', 'subtype'])
-
-        # Put 'property' above 'scenario':
-        df = df.swaplevel('scenario', 'property', axis='columns')
-
-        return df
-
-    def combine_results_summary_by_admitting_unit(
-            self, dict_scenario_df_to_merge):
-        """
-        Group by admitting unit summary.
-
-        Each file input:
-        +------+-------------+-------------+
-        |      |   time_1    |    shift_1  |    property
-        +------+------+------+------+------+
-        | Unit | mean |  std | mean |  std |    subtype
-        +------+------+------+------+------+
-        |    1 | x.xx | x.xx | y.yy | y.yy |
-        |    2 | x.xx | x.xx | y.yy | y.yy |
-        |    3 | x.xx | x.xx | y.yy | y.yy |
-        |  ... |  ... |  ... |  ... |  ... |
-        |    n | x.xx | x.xx | y.yy | y.yy |
-        +------+------+------+------+------+
-
-        Resulting DataFrame:
-        +------+------+------+------+------+------+------+
-        |  any |  scenario_1 |  scenario_2 |    diff     |    scenario
-        +------+------+------+------+------+------+------+
-        |      |    shift    |    shift    |    shift    |    property
-        +------+------+------+------+------+------+------+
-        | Unit | mean |  std | mean |  std | mean |  std |    subtype
-        +------+------+------+------+------+------+------+
-        |    1 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
-        |    2 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
-        |    3 | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
-        |  ... |  ... |  ... |  ... |  ... |  ... |  ... |
-        |    n | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
-        +------+------+------+------+------+------+------+
-        """
-        data = self._hstack_multiple_dataframes(
-            dict_scenario_df_to_merge,
-            cols_for_scenario=':'
-            )
-
-        # col_to_group = data.columns[0]
-        cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
-        # Same LSOA appearing in multiple files will currently have
-        # multiple mostly-empty rows in the "data" DataFrame.
-        # Group matching rows:
-        # df = self._group_data(data, col_to_group, cols_to_keep)
-
-        # Create new columns of this diff that:
-        df = self._diff_data(data, cols_to_keep)
-
-        # Rename the MultiIndex column names:
-        df.columns = df.columns.set_names(['scenario', 'property', 'subtype'])
+        headers = ['scenario', 'property']
+        if len(dict_scenario_df_to_merge.values()[0].columns.names) == 3:
+            headers.append('subtype')
+        df.columns = df.columns.set_names(headers)
 
         # Put 'property' above 'scenario':
         df = df.swaplevel('scenario', 'property', axis='columns')

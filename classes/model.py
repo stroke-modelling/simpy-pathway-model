@@ -139,6 +139,8 @@ class Model(object):
             self.results_summary_by_lsoa.columns.set_names(
                 ['property', 'subtype']))
 
+        # TO DO - merge in input admissions and relative frequency here.
+
     def generate_patient_arrival(self):
         """
         SimPy generator to generate a patient.

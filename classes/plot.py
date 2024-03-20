@@ -5,7 +5,7 @@ import geopandas
 import numpy as np
 
 
-import classes.map_functions as maps  # for plotting.
+import classes.plot_functions as maps  # for plotting.
 
 # ##########################
 # ##### DATA WRANGLING #####
@@ -277,10 +277,12 @@ def _setup_plot_map_outcome(
 
 def make_colours_for_catchment(
         gdf_boundaries_catchment,
-        colour_list_units=[],
-        colour_list_periphery_units=[]
+        colour_lists_units=[],
+        colour_list_periphery_units=[],
         ):
-
+    """
+    write me
+    """
     def make_colour_list(cmap='Blues', inds_cmap=[0.2, 0.4, 0.6, 0.8]):
         # Pick out colours from the cmap.
         colour_list_units = plt.get_cmap(cmap)(inds_cmap)
@@ -291,19 +293,62 @@ def make_colours_for_catchment(
             '#%02x%02x%02x%02x' % tuple(c) for c in colour_list_units])
         return colour_list_units
 
+    # Pick sequential colourmaps that go from light (0.0) to dark (1.0).
+    # Don't include Greys because it's used for periphery units.
+    cmaps_list = [
+        'Blues', 'Greens', 'Oranges', 'Purples', 'Reds',
+        'YlOrBr', 'RdPu', 'BuGn', ' YlOrRd', 'BuPu',
+    ]
+    if len(colour_lists_units) == 0:
+        colour_lists_units = cmaps_list
+
     n_colours = len(list(set(gdf_boundaries_catchment['colour_ind'])))
 
-    if len(colour_list_units) == 0:
-        colour_list_units = make_colour_list(
-            cmap='Blues', inds_cmap=np.linspace(0.2, 0.8, n_colours))
+    # Selected units.
+    # Start with blank colours:
+    colours_units = np.array(['#00000000'] * len(gdf_boundaries_catchment))
+
+    if 'transfer_colour_ind' in gdf_boundaries_catchment.columns:
+        # Use a different colour map for each MT unit and its feeders.
+        mask = ~gdf_boundaries_catchment['transfer_colour_ind'].isna()
+        bands = list(
+            gdf_boundaries_catchment.sort_values('selected', ascending=False).loc[mask, 'transfer_colour_ind'].unique())
+
+        for b, band in enumerate(bands):
+            try:
+                cmap = colour_lists_units[b]
+                colour_list_units = make_colour_list(
+                    cmap=cmap, inds_cmap=np.linspace(0.2, 0.8, n_colours))
+            except ValueError:
+                # No colourmap of that name.
+                colour_list_units = colour_lists_units[b]
+            # Pick out only the areas in this band:
+            mask = gdf_boundaries_catchment['transfer_colour_ind'] == band
+            # Assign colours by colour index column values:
+            colours_units[np.where(mask == 1)[0]] = colour_list_units[
+                gdf_boundaries_catchment.loc[mask, 'colour_ind'].astype(int).values]
+
     else:
-        pass
-    # Assign colours by colour index column values:
-    colours_units = colour_list_units[
-        gdf_boundaries_catchment['colour_ind'].astype(int).values]
+        if len(colour_lists_units) == 0:
+            cmap = cmaps_list[0]
+            colour_list_units = make_colour_list(
+                cmap=cmap, inds_cmap=np.linspace(0.2, 0.8, n_colours))
+        else:
+            try:
+                cmap = colour_lists_units[0]
+                colour_list_units = make_colour_list(
+                    cmap=cmap, inds_cmap=np.linspace(0.2, 0.8, n_colours))
+            except ValueError:
+                # No colourmap of that name.
+                colour_list_units = colour_lists_units
+        # Assign colours by colour index column values:
+        colours_units = colour_list_units[
+            gdf_boundaries_catchment['colour_ind'].astype(int).values]
+
     # Place in the GeoDataFrame:
     gdf_boundaries_catchment['colour'] = colours_units
 
+    # Periphery units
     if len(colour_list_periphery_units) == 0:
         colour_list_periphery_units = make_colour_list(
             cmap='Greys', inds_cmap=np.linspace(0.1, 0.4, n_colours))

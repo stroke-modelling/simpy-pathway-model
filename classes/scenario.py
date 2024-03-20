@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 class Scenario_simpy(object):
     """
@@ -127,6 +128,8 @@ class Scenario_simpy(object):
 
         self.keep_only_selected_in_df(df_units, df_transfer, df_lsoa)
 
+        admissions = self.load_admissions()
+        self.match_admissions_to_selected_lsoa(admissions)
         self.process_admissions()
 
     def keep_only_selected_in_df(self, df_units, df_transfer, df_lsoa):
@@ -137,6 +140,76 @@ class Scenario_simpy(object):
             df_transfer['selected'] == 1].copy()
         self.df_selected_lsoa = df_lsoa[
             df_lsoa['selected'] == 1].copy()
+
+    # ######################
+    # ##### ADMISSIONS #####
+    # ######################
+    def load_admissions(self):
+        """
+        Load admission data on the selected stroke teams.
+
+        Stores
+        ------
+
+        total_admissions:
+            float. Total admissions in a year across selected
+            stroke units.
+
+        lsoa_relative_frequency:
+            np.array. Relative frequency of each considered LSOA
+            in the admissions data. Same order as self.lsoa_names.
+
+        lsoa_names:
+            np.array. Names of all LSOAs considered.
+            Same order as lsoa_relative_frequency.
+
+        inter_arrival_time:
+            float. Average time between admissions in the
+            considered stroke teams.
+        """
+        # TO DO - replace with relative import
+        # Load and parse admissions data
+        # # Relative import from package files:
+        # path_to_file = files('catchment.data').joinpath(
+        #     'admissions_2017-2019.csv')
+        # Load and parse unit data TO DO - change to relative import above
+        path_to_file = './data/admissions_2017-2019.csv'
+        admissions = pd.read_csv(path_to_file)
+
+        admissions = admissions.rename(columns={'area': 'lsoa'})
+        return admissions
+
+    def match_admissions_to_selected_lsoa(self, admissions):
+        """
+        write me
+        """
+        # Keep only these LSOAs in the admissions data:
+        df_lsoa = self.df_lsoa.copy()
+        df_lsoa = df_lsoa.reset_index()
+        admissions = pd.merge(left=df_lsoa, right=admissions,
+                              on='lsoa', how='left')
+
+        admissions_mask = admissions.loc[admissions['selected'] == 1].copy()
+
+        # Total admissions across these hospitals in a year:
+        # Keep .tolist() to convert from np.float64 to float.
+        total_admissions = np.round(
+            admissions_mask['admissions'].sum(), 0).tolist()
+
+        # Relative frequency of admissions across a year:
+        admissions_mask['relative_frequency'] = (
+            admissions_mask['admissions'] / total_admissions)
+
+        # Merge this info back into the main DataFrame:
+        admissions = pd.merge(
+            admissions, admissions_mask[['lsoa', 'relative_frequency']],
+            on='lsoa', how='left')
+
+        # Set index to both LSOA name and code so that both follow
+        # through to all of the results data.
+        admissions = admissions.set_index(['lsoa', 'lsoa_code'])
+
+        self.df_lsoa = admissions
 
     def process_admissions(self):
         """

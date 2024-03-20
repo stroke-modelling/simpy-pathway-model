@@ -1,5 +1,5 @@
 """
-Scenario class with global parameters for the pathway model.
+Catchment class with global parameters for the pathway model.
 
 set up dataframes that then get passed to pathway for actual setup.
 
@@ -13,14 +13,12 @@ import os
 import yaml
 from importlib_resources import files
 
-# from classes.calculations import Calculations
 
-
-class Scenario(object):
+class Catchment(object):
     """
     Global variables for model.
 
-    class Scenario():
+    class Catchment():
 
     Attributes
     ----------
@@ -41,7 +39,7 @@ class Scenario(object):
         """
         # ----- Directory setup -----
         # Name that will also be used for output directory:
-        self.name = 'scenario'
+        self.name = 'catchment'
         # Load existing data from this dir:
         self.load_dir = None
 
@@ -60,51 +58,45 @@ class Scenario(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-        # ----- Load helper classes -----
-        # Create calculations object:
-        # self.calculations = Calculations({'setup': self.setup})
-
-        # ----- Load Scenario from files -----
-        if self.load_dir is None:
-            pass
+        # ----- Load Catchment from files -----
+        if hasattr(self, 'catchment_yml'):
+            self.load_catchment_from_files(self.catchment_yml)
         else:
-            self.load_scenario_from_files()
+            pass
 
-    def load_scenario_from_files(self, path_to_scenario_yml):
+    def load_catchment_from_files(self):
         """
         """
         # Import the kwargs from provided yml file:
-        with open(path_to_scenario_yml, 'r') as f:
-            scenario_vars_imported = yaml.safe_load(f)
+        with open(self.catchment_yml, 'r') as f:
+            catchment_vars_imported = yaml.safe_load(f)
         # Save the imported kwargs to self:
-        for key, val in scenario_vars_imported.items():
+        for key, val in catchment_vars_imported.items():
             setattr(self, key, val)
 
-    def save_to_file(self, file_setup_vars='scenario_output.yml'):
+    def save_to_file(self, file_yml='catchment_output.yml'):
         """Save the variable dict as a .yml file."""
-        scenario_vars = vars(self)
+        catchment_vars = vars(self)
 
         # Only keep a selection of params:
         types_to_keep = [float, int, str]
 
         vars_to_save = {}
-        for key, val in scenario_vars.items():
+        for key, val in catchment_vars.items():
             if any([isinstance(val, t) for t in types_to_keep]):
                 if isinstance(val, np.float64):
                     val = val.tolist()
                 vars_to_save[key] = val
 
-        with open(file_setup_vars, 'w') as f:
+        with open(file_yml, 'w') as f:
             yaml.dump(vars_to_save, f)
 
     # ###############################
     # ##### MAIN SETUP FUNCTION #####
     # ###############################
-    def process_scenario(self, units):
+    def main(self, units):
         """
-        Some of the attributes might already exist depending on how
-        the data has been loaded in, so at each step check if it
-        already exists or not.
+        write me
         """
         self.df_units = units
 
@@ -112,14 +104,11 @@ class Scenario(object):
 
         self.calculate_lsoa_catchment()
 
-        admissions = self.load_admissions()
-        self.match_admissions_to_selected_lsoa(admissions)
-
         return_dict = {
             'df_units': self.df_units,
             'df_transfer': self.df_transfer,
             'df_lsoa': self.df_lsoa,
-        }
+            }
         return return_dict
 
     # #########################
@@ -130,7 +119,7 @@ class Scenario(object):
         write me
         """
         # # Relative import from package files:
-        # path_to_file = files('scenario.data').joinpath(
+        # path_to_file = files('catchment.data').joinpath(
         #     'stroke_units_regions.csv')
         # Load and parse unit data TO DO - change to relative import above
         path_to_file = './data/stroke_units_regions.csv'
@@ -155,10 +144,8 @@ class Scenario(object):
         # Find which IVT units are feeders to each MT unit:
         transfer = self.find_national_mt_feeder_units(self.df_units)
         transfer = transfer.reset_index()
-        # transfer = transfer.rename(columns={'from_postcode': 'postcode'})
-        # transfer = transfer.drop(['time_nearest_mt'], axis='columns')
-        # Index: 'Postcode'
-        # Columns: 'name_nearest_mt'
+        # Index: none
+        # Columns: 'postcode', 'transfer_unit_postcode', 'transfer_unit_travel_time'
 
         units = self.df_units.copy()
         # Index: 'Postcode'
@@ -212,7 +199,7 @@ class Scenario(object):
         # closest to in travel time.
         # Travel time matrix between hospitals:
         # # Relative import from package files:
-        # path_to_file = files('scenario.data').joinpath(
+        # path_to_file = files('catchment.data').joinpath(
         #     'inter_hospital_time_calibrated.csv')
         # Load and parse unit data TO DO - change to relative import above
         path_to_file = './data/inter_hospital_time_calibrated.csv'
@@ -235,7 +222,8 @@ class Scenario(object):
 
         # Make sure the complete list of stroke teams is included:
         df_nearest_mt = df_nearest_mt.reset_index()
-        df_nearest_mt = df_nearest_mt.rename(columns={'from_postcode': 'postcode'})
+        df_nearest_mt = df_nearest_mt.rename(
+            columns={'from_postcode': 'postcode'})
         df_nearest_mt = pd.merge(
             df_nearest_mt, df_stroke_teams['postcode'],
             on='postcode', how='right')
@@ -297,7 +285,6 @@ class Scenario(object):
         # Mark selected LSOA:
         df_catchment = self.limit_lsoa_catchment_to_selected_units(
             df_catchment,
-            # regions_selected,
             regions_to_limit=regions_to_limit,
             units_to_limit=units_selected,
             limit_to_england=self.limit_to_england,
@@ -329,7 +316,7 @@ class Scenario(object):
         # TO DO - change to relative import
         # Load travel time matrix:
         # # Relative import from package files:
-        # path_to_file = files('scenario.data').joinpath(
+        # path_to_file = files('catchment.data').joinpath(
         #     'lsoa_travel_time_matrix_calibrated.csv')
         # Load and parse unit data TO DO - change to relative import above
         path_to_file = './data/lsoa_travel_time_matrix_calibrated.csv'
@@ -349,7 +336,6 @@ class Scenario(object):
     def limit_lsoa_catchment_to_selected_units(
             self,
             df_catchment,
-            # regions_selected,
             regions_to_limit=[],
             units_to_limit=[],
             limit_to_england=False,
@@ -358,7 +344,7 @@ class Scenario(object):
         # TO DO - change to relative import
         # Load in all LSOA names, codes, regions...
         # # Relative import from package files:
-        # path_to_file = files('scenario.data').joinpath(
+        # path_to_file = files('catchment.data').joinpath(
         #     'regions_lsoa_ew.csv')
         # Load and parse unit data TO DO - change to relative import above
         path_to_file = './data/regions_lsoa_ew.csv'
@@ -408,73 +394,3 @@ class Scenario(object):
         df_catchment = df_catchment[cols]
 
         return df_catchment
-
-    # ######################
-    # ##### ADMISSIONS #####
-    # ######################
-    def load_admissions(self):
-        """
-        Load admission data on the selected stroke teams.
-
-        Stores
-        ------
-
-        total_admissions:
-            float. Total admissions in a year across selected
-            stroke units.
-
-        lsoa_relative_frequency:
-            np.array. Relative frequency of each considered LSOA
-            in the admissions data. Same order as self.lsoa_names.
-
-        lsoa_names:
-            np.array. Names of all LSOAs considered.
-            Same order as lsoa_relative_frequency.
-
-        inter_arrival_time:
-            float. Average time between admissions in the
-            considered stroke teams.
-        """
-        # TO DO - replace with relative import
-        # Load and parse admissions data
-        # # Relative import from package files:
-        # path_to_file = files('scenario.data').joinpath(
-        #     'admissions_2017-2019.csv')
-        # Load and parse unit data TO DO - change to relative import above
-        path_to_file = './data/admissions_2017-2019.csv'
-        admissions = pd.read_csv(path_to_file)
-
-        admissions = admissions.rename(columns={'area': 'lsoa'})
-        return admissions
-
-    def match_admissions_to_selected_lsoa(self, admissions):
-        """
-        write me
-        """
-        # Keep only these LSOAs in the admissions data:
-        df_lsoa = self.df_lsoa.copy()
-        df_lsoa = df_lsoa.reset_index()
-        admissions = pd.merge(left=df_lsoa, right=admissions,
-                              on='lsoa', how='left')
-
-        admissions_mask = admissions.loc[admissions['selected'] == 1].copy()
-
-        # Total admissions across these hospitals in a year:
-        # Keep .tolist() to convert from np.float64 to float.
-        total_admissions = np.round(
-            admissions_mask['admissions'].sum(), 0).tolist()
-
-        # Relative frequency of admissions across a year:
-        admissions_mask['relative_frequency'] = (
-            admissions_mask['admissions'] / total_admissions)
-
-        # Merge this info back into the main DataFrame:
-        admissions = pd.merge(
-            admissions, admissions_mask[['lsoa', 'relative_frequency']],
-            on='lsoa', how='left')
-
-        # Set index to both LSOA name and code so that both follow
-        # through to all of the results data.
-        admissions = admissions.set_index(['lsoa', 'lsoa_code'])
-
-        self.df_lsoa = admissions
