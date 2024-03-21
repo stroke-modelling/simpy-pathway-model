@@ -410,7 +410,8 @@ def make_colours_for_catchment(
     if len(colour_lists_units) == 0:
         colour_lists_units = cmaps_list
 
-    n_colours = len(list(set(gdf_boundaries_catchment[col_colour_ind])))
+    mask = (gdf_boundaries_catchment[col_use] == 1)
+    n_colours = len(list(set(gdf_boundaries_catchment.loc[mask, col_colour_ind])))
 
     # Selected units.
     # Start with blank colours:
@@ -421,6 +422,9 @@ def make_colours_for_catchment(
     if col_transfer_colour_ind in gdf_boundaries_catchment.columns:
         # Use a different colour map for each MT unit and its feeders.
         gdf_boundaries_catchment = gdf_boundaries_catchment.copy().sort_values(col_selected, ascending=False)
+        # Mask to basically select "use" only, but also the periphery
+        # units have NaN instead of an integer value in this column
+        # so use isna() to exclude those.
         mask = ~gdf_boundaries_catchment[col_transfer_colour_ind].isna()
         bands = list(
             gdf_boundaries_catchment.loc[mask, col_transfer_colour_ind].dropna().unique())
