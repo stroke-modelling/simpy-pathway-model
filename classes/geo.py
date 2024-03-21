@@ -445,6 +445,13 @@ def main(
     gdf_boundaries_lsoa = make_new_index(gdf_boundaries_lsoa)
     # gdf_boundaries_catchment = make_new_index(gdf_boundaries_catchment)
 
+    # Replace any blank scenarios with "any":
+    gdf_boundaries_regions = fill_blank_scenario(gdf_boundaries_regions)
+    gdf_points_units = fill_blank_scenario(gdf_points_units)
+    gdf_lines_transfer = fill_blank_scenario(gdf_lines_transfer)
+    gdf_boundaries_lsoa = fill_blank_scenario(gdf_boundaries_lsoa)
+    gdf_boundaries_catchment = fill_blank_scenario(gdf_boundaries_catchment)
+
     # Sort units by short code:
     gdf_points_units = gdf_points_units.sort_values(('short_code', 'any'))
 
@@ -457,6 +464,39 @@ def main(
     )
 
     return to_return
+
+
+def fill_blank_scenario(gdf):
+    # Get level names:
+    level_names = gdf.columns.names
+
+    scenario_list = list(set(gdf.columns.get_level_values('scenario')))
+
+    scenarios_to_update = [scenario for scenario in scenario_list if 
+        ((scenario == '') | (scenario.startswith('Unnamed')))]
+
+    # Which column levels exist?
+    col_level_names = gdf.columns.names
+    # Where is scenario?
+    i_scen = col_level_names.index('scenario')
+
+    new_columns = []
+    for scen_col in gdf.columns:
+        if scen_col[i_scen] in scenarios_to_update:
+            scen_col = list(scen_col)
+            scen_col[i_scen] = 'any'
+            scen_col = tuple(scen_col)
+        else:
+            # Don't update the column name.
+            pass
+
+        # Only store the 'scenario' part:
+        new_columns.append(scen_col)#[i_scen])
+
+    gdf.columns = pd.MultiIndex.from_tuples(new_columns)
+    gdf.columns = gdf.columns.set_names(level_names)
+
+    return gdf
 
 
 def _load_geometry_regions(df_regions):
@@ -631,7 +671,6 @@ def _load_geometry_transfer_units(df_transfer):
     df_arrival_transfer = df_transfer.index.to_frame(index=False)
     # If there are multiple column levels, only keep the lowest.
     if 'scenario' in df_arrival_transfer.columns.names:
-        # TO DO - drop by level name. --------------------------------------------------
         df_arrival_transfer = (
             df_arrival_transfer.droplevel('scenario', axis='columns'))
     # Index: {generic numbers}

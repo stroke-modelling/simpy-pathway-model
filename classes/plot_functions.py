@@ -191,9 +191,6 @@ def scatter_units(
         ax,
         gdf,
         mask_col='',
-        ivt=True,
-        mt=False,
-        msu=False,
         return_handle=False,
         **kwargs
         ):
@@ -209,36 +206,10 @@ def scatter_units(
     -------
     ax - pyplot axis. Same as input but with scatter markers.
     """
-    # if ivt:
-    #     kwargs_dict = dict(
-    #         edgecolor='none',
-    #         facecolor='LightCoral',
-    #         s=50,
-    #         marker='o',
-    #         zorder=2
-    #     )
-    # elif mt:
-    #     kwargs_dict = dict(
-    #         edgecolor='none',
-    #         facecolor='LightCoral',
-    #         s=300,
-    #         marker='*',
-    #         zorder=2
-    #     )
-    # elif msu:
-    #     kwargs_dict = dict(
-    #         edgecolor='none',
-    #         facecolor='LightCoral',
-    #         s=50,
-    #         marker='s',
-    #         zorder=2
-    #     )
-    # else:
-    #     kwargs_dict = {}
-
     kwargs_dict = dict(
         edgecolor='none',
         facecolor='LightCoral',
+        linewidth=0.5,
         s=50,
         marker='o',
         zorder=2
@@ -247,7 +218,35 @@ def scatter_units(
     # Overwrite default dict with user inputs:
     for key, val in kwargs.items():
         kwargs_dict[key] = val
+
     default_marker_size = kwargs_dict['s']
+    default_marker = kwargs_dict['marker']
+
+    # Keep a copy of the default face colour:
+    facecolour = kwargs_dict['facecolor']
+
+    import matplotlib.path as mpath
+
+    # Create an ellipse marker by taking the standard circle
+    # and stretching the x-coordinates.
+    circle = mpath.Path.unit_circle()
+    verts = np.copy(circle.vertices)
+    verts[:, 0] *= 2.0
+    ellipse = mpath.Path(verts, circle.codes)
+
+    # Create a star marker by taking the standard star and pushing
+    # out all coordinates away from the centre.
+    star = mpath.Path.unit_regular_star(numVertices=5)
+    verts = np.copy(star.vertices)
+    radii = np.sqrt(verts[:, 0]**2.0 + verts[:, 1]**2.0)
+    # Radii are either 0.5 (inner corner) or 1.0 (outer point).
+    scale = 0.7 * (1.0 / radii)
+    scale = np.sqrt(scale)
+    verts[:, 0] = verts[:, 0] * scale
+    verts[:, 1] = verts[:, 1] * scale
+    # Also squash the y-axis down a bit:
+    verts[:, 1] = verts[:, 1] * 0.75
+    star_squash = mpath.Path(verts, star.codes)
 
     # Only plot these units:
     if len(mask_col) > 0:
@@ -258,25 +257,40 @@ def scatter_units(
 
     if return_handle:
         # Draw each point separately for use with the legend later.
-        # n.b. this might not be necessary if I can instead work out
-        # how to get separate objects out of a PathCollection object
-        # containing multiple scatter points. TO DO - check this! ----------------
 
         # Need a separate call for each when there is an array of marker shapes.
         handles = []
         for row in masked_gdf.index:
-            gdf_m = masked_gdf.loc[row]
+            gdf_m = masked_gdf.loc[[row]]
+            # Update marker shape and size:
             try:
-                marker = gdf_m['marker']
+                marker = gdf_m['marker'].values[0]
                 kwargs_dict['marker'] = marker
-                if marker == '*':
-                    # Make the star bigger.
-                    kwargs_dict['s'] = 200
-                else:
-                    kwargs_dict['s'] = default_marker_size
-
             except KeyError:
-                pass
+                kwargs_dict['s'] = default_marker_size
+                kwargs_dict['marker'] = default_marker
+
+            if kwargs_dict['marker'] == '*':
+                # Make the star bigger.
+                kwargs_dict['s'] = 150
+                kwargs_dict['marker'] = star_squash
+            elif kwargs_dict['marker'] == 'o':
+                kwargs_dict['s'] = 150
+                kwargs_dict['marker'] = ellipse
+
+            # # Update marker colour:
+            # if 'colour_lines' in gdf_m.columns:
+            #     if gdf_m['selected'].values[0] == 0:
+            #         # Use input default value.
+            #         colour = facecolour
+            #     elif len(gdf_m['colour_lines'].values[0]) < 7:
+            #         # Not in the format #rrggbb or #rrggbbaa.
+            #         # Use input default value.
+            #         colour = facecolour
+            #     else:
+            #         colour = gdf_m['colour_lines']
+            #     kwargs_dict['facecolor'] = colour
+
             handle = ax.scatter(
                 gdf_m.geometry.x,
                 gdf_m.geometry.y,
@@ -328,7 +342,6 @@ def plot_lines_between_units(ax, gdf, **line_kwargs):
         # Different colour for each line.
         for row in lines.index:
             gdf_m = lines.loc[[row]]
-            print(gdf_m['colour_lines'].values[0])
             if len(gdf_m['colour_lines'].values[0]) < 7:
                 # Not in the format #rrggbb or #rrggbbaa.
                 # Use input default value.
@@ -349,7 +362,14 @@ def plot_lines_between_units(ax, gdf, **line_kwargs):
     return ax
 
 
-def draw_labels_short(ax, points, map_labels, leg_labels, **kwargs):
+def draw_labels_short(
+        ax,
+        points,
+        map_labels,
+        leg_labels,
+        colours=[],
+        **kwargs
+        ):
     """
     Draw labels from the geodataframe.
     """
@@ -360,7 +380,7 @@ def draw_labels_short(ax, points, map_labels, leg_labels, **kwargs):
         # fontsize=8,
         # weight=None,
         s=8,
-        edgecolor="none",
+        edgecolor="none",  # to prevent border around text
         color='k'
     )
     # Update this with anything from the input dict:
@@ -377,14 +397,18 @@ def draw_labels_short(ax, points, map_labels, leg_labels, **kwargs):
     markers_for_legend = []
     labels_for_legend = []
 
+    if len(colours) == 0:
+        colours = [marker_kwargs['color']] * len(points)
+
     # Define "z" to shorten following "for" line:
     z = zip(
         points.x,
         points.y,
         map_labels,
-        leg_labels
+        leg_labels,
+        colours
         )
-    for x, y, map_label, leg_label in z:
+    for x, y, map_label, leg_label, colour in z:
         # Place the label slightly offset from the
         # exact hospital coordinates (x, y).
         if len(map_label) == 1:
@@ -410,6 +434,7 @@ def draw_labels_short(ax, points, map_labels, leg_labels, **kwargs):
             s = ref_s * (ref_width / ref_height)**2.0
         # Update the kwargs with this marker size:
         marker_kwargs['s'] = s
+        marker_kwargs['color'] = colour
 
         m = ax.scatter(
             x, y,
@@ -520,7 +545,8 @@ def plot_map_selected_regions(
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
-        return_handle=True
+        return_handle=True,
+        edgecolor='k',
         )
     # Outside selected regions:
     mask = ~mask
@@ -528,7 +554,8 @@ def plot_map_selected_regions(
         ax,
         gdf_points_units[mask],
         facecolor='Pink',
-        return_handle=True
+        return_handle=True,
+        edgecolor='DimGray',
         )
 
     # Label units:
@@ -733,16 +760,17 @@ def plot_map_selected_units(
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
-        # marker=gdf_points_units[mask]['marker'].to_list(),
-        return_handle=True
+        return_handle=True,
+        facecolor='Gainsboro',
+        edgecolor='k'
         )
     # Outside selected regions:
     mask = gdf_points_units['selected'] == 0
     ax, handles_scatter_uns = scatter_units(
         ax,
         gdf_points_units[mask],
-        # marker=gdf_points_units[mask]['marker'].to_list(),
-        facecolor='Pink',
+        facecolor='WhiteSmoke',
+        edgecolor='DimGray',
         return_handle=True
         )
 
@@ -755,7 +783,8 @@ def plot_map_selected_units(
         gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
         s=label_size_units,
-        color='k'
+        colours=gdf_points_units[mask].colour_lines,
+        # color='k'
     )
     # Outside selected regions:
     mask = ~mask
@@ -949,8 +978,8 @@ def plot_map_catchment(
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
-        # marker=gdf_points_units[mask]['marker'].to_list(),
-        facecolor='k',
+        facecolor='Gainsboro',
+        edgecolor='k',
         return_handle=True
         )
     # Outside selected regions:
@@ -961,8 +990,8 @@ def plot_map_catchment(
     ax, handles_scatter_uns = scatter_units(
         ax,
         gdf_points_units[mask],
-        # marker=gdf_points_units[mask]['marker'].to_list(),
-        facecolor='DimGray',
+        facecolor='WhiteSmoke',
+        edgecolor='DimGray',
         return_handle=True
         )
 
@@ -974,8 +1003,8 @@ def plot_map_catchment(
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
+        colours=gdf_points_units[mask].colour_lines,
         s=label_size_units,
-        color='Gainsboro'
     )
     # Outside selected regions:
     mask = (
@@ -987,8 +1016,8 @@ def plot_map_catchment(
         gdf_points_units[mask].geometry,
         gdf_points_units[mask].short_code,
         gdf_points_units[mask].stroke_team,
-        s=label_size_units,
-        color='WhiteSmoke'
+        color='DimGray',
+        s=label_size_units
     )
 
     # Units:
@@ -1161,8 +1190,8 @@ def plot_map_outcome(
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
-        # marker=gdf_points_units[mask]['marker'].to_list(),
         facecolor='Gainsboro',
+        edgecolor='k',
         return_handle=True
         )
 
