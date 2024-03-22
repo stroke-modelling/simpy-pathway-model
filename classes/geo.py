@@ -64,7 +64,7 @@ from pandas.api.types import is_numeric_dtype  # For checking dtype.
 # ##### LOAD DATA #####
 # #####################
 
-# TO DO 
+# TO DO
 
 # load gdf from file (csv with multiindex)
 
@@ -159,7 +159,7 @@ def import_geojson(region_type: 'str'):
             for column in gdf_boundaries.columns:
                 # Casefold turns all UPPER into lower case.
                 match = ((column[:3].casefold() == prefix.casefold()) &
-                            (column[-2:].casefold() == suffix.casefold()))
+                         (column[-2:].casefold() == suffix.casefold()))
                 if match:
                     # Rename this column:
                     col_code = column[:-2] + region_code[-2:]
@@ -265,7 +265,6 @@ def make_new_periphery_data(
     # Reset index for easier column selection:
     df_regions = df_regions.reset_index()
 
-
     # Input dataframes should contain multiple scenarios in a
     # MultiIndex column heading. Pick out each one in turn
     # and calculate the periphery units and regions.
@@ -281,7 +280,8 @@ def make_new_periphery_data(
         lsoa_selected = list(df_lsoa_selected[col_lsoa_code])
 
         # Names of selected units:
-        col_selected = find_multiindex_column_names(df_units, property=['selected'], scenario=[scenario])
+        col_selected = find_multiindex_column_names(
+            df_units, property=['selected'], scenario=[scenario])
 
         units_selected = df_units[
             df_units[col_selected] == 1].index.values
@@ -317,7 +317,7 @@ def make_new_periphery_data(
         col_region_code = find_multiindex_column_names(
             df_regions, property=['region_code'])
 
-        col_unit = tuple(['contains_unit', scenario] +[''] * (nlevels - 2))
+        col_unit = tuple(['contains_unit', scenario] + [''] * (nlevels - 2))
         col_punit = tuple(['contains_periphery_unit', scenario] +
                           [''] * (nlevels - 2))
         col_plsoa = tuple(['contains_periphery_lsoa', scenario] +
@@ -355,17 +355,16 @@ def link_pathway_geography(
 
     periphery units catching any LSOA in selected regions.
 
-    TO DO - what about sometimes combined, sometimes not files? ---------------------
-    # Run the following on the "any" part of the dataframes only.
-
-    TO DO - function up finding the right column -------------------------------------------------------------------------------------
     """
     # Mask for selected LSOA:
     df_lsoa = df_lsoa.copy().reset_index()
-    col_lsoa_code = find_multiindex_column_names(df_lsoa, property=['lsoa_code'])
-    mask_lsoa_selected = df_lsoa.copy().reset_index()[col_lsoa_code].isin(lsoa_selected).values
+    col_lsoa_code = find_multiindex_column_names(
+        df_lsoa, property=['lsoa_code'])
+    mask_lsoa_selected = (
+        df_lsoa.copy().reset_index()[col_lsoa_code].isin(lsoa_selected).values)
     # Find list of regions containing LSOA caught by selected units.
-    col_region_code = find_multiindex_column_names(df_lsoa, property=['region_code'])
+    col_region_code = find_multiindex_column_names(
+        df_lsoa, property=['region_code'])
     regions_containing_lsoa = sorted(list(set(
         df_lsoa.loc[mask_lsoa_selected, col_region_code])))
 
@@ -389,27 +388,32 @@ def link_pathway_geography(
 
     col_unit = find_multiindex_column_names(df_units, property=['unit'])
     mask_units_selected = df_units[col_unit].isin(units_selected)
-  
+
     # Find list of regions containing selected units:
-    col_region_code = find_multiindex_column_names(df_units, property=['region_code'])
+    col_region_code = find_multiindex_column_names(
+        df_units, property=['region_code'])
     regions_containing_units = list(
         df_units.loc[mask_units_selected, col_region_code])
 
     # Mask for LSOA in regions containing selected units:
-    col_region_code = find_multiindex_column_names(df_lsoa, property=['region_code'])
+    col_region_code = find_multiindex_column_names(
+        df_lsoa, property=['region_code'])
     mask_lsoa_in_regions_containing_units = (
         df_lsoa[col_region_code].isin(regions_containing_units))
     # Find list of periphery units:
-    col_unit_postcode = find_multiindex_column_names(df_lsoa, property=['unit_postcode'])
+    col_unit_postcode = find_multiindex_column_names(
+        df_lsoa, property=['unit_postcode'])
     periphery_units = sorted(list(set(
-        df_lsoa.loc[mask_lsoa_in_regions_containing_units, col_unit_postcode])))
+        df_lsoa.loc[mask_lsoa_in_regions_containing_units,
+                    col_unit_postcode])))
 
     # Mask for regions containing periphery units:
     col_unit = find_multiindex_column_names(df_units, property=['unit'])
     mask_regions_periphery_units = (
         df_units[col_unit].isin(periphery_units))
     # Find list of periphery regions:
-    col_region_code = find_multiindex_column_names(df_units, property=['region_code'])
+    col_region_code = find_multiindex_column_names(
+        df_units, property=['region_code'])
     regions_with_periphery_units = list(
         df_units.loc[mask_regions_periphery_units, col_region_code])
 
@@ -455,6 +459,7 @@ def check_scenario_level(df, scenario_name='scenario'):
         )
         return df
 
+
 # ########################
 # ##### COMBINE DATA #####
 # ########################
@@ -488,13 +493,15 @@ def main(
         gdf_boundaries_lsoa, df_transfer)
     # Label periphery units:
     scenario_list = sorted(list(set(
-        gdf_boundaries_catchment['selected'].columns.get_level_values('scenario'))))
+        gdf_boundaries_catchment['selected'
+                                 ].columns.get_level_values('scenario'))))
     for scenario in scenario_list:
         gdf_boundaries_catchment[('periphery_unit', scenario)] = 0
         mask_units = df_units[('periphery_unit', scenario)] == 1
         units = df_units.loc[mask_units].index.values
         mask = gdf_boundaries_catchment['unit'].isin(units)
-        gdf_boundaries_catchment.loc[mask.values, ('periphery_unit', scenario)] = 1
+        gdf_boundaries_catchment.loc[mask.values,
+                                     ('periphery_unit', scenario)] = 1
 
     # Only keep separate LSOA that have been selected.
     df_select = gdf_boundaries_lsoa.xs(
@@ -541,14 +548,20 @@ def main(
     gdf_boundaries_lsoa = fill_blank_level(gdf_boundaries_lsoa)
     gdf_boundaries_catchment = fill_blank_level(gdf_boundaries_catchment)
     # Replace any blank subtypes with "":
-    gdf_boundaries_regions = fill_blank_level(gdf_boundaries_regions, level='subtype', fill_value='')
-    gdf_points_units = fill_blank_level(gdf_points_units, level='subtype', fill_value='')
-    gdf_lines_transfer = fill_blank_level(gdf_lines_transfer, level='subtype', fill_value='')
-    gdf_boundaries_lsoa = fill_blank_level(gdf_boundaries_lsoa, level='subtype', fill_value='')
-    gdf_boundaries_catchment = fill_blank_level(gdf_boundaries_catchment, level='subtype', fill_value='')
+    gdf_boundaries_regions = fill_blank_level(
+        gdf_boundaries_regions, level='subtype', fill_value='')
+    gdf_points_units = fill_blank_level(
+        gdf_points_units, level='subtype', fill_value='')
+    gdf_lines_transfer = fill_blank_level(
+        gdf_lines_transfer, level='subtype', fill_value='')
+    gdf_boundaries_lsoa = fill_blank_level(
+        gdf_boundaries_lsoa, level='subtype', fill_value='')
+    gdf_boundaries_catchment = fill_blank_level(
+        gdf_boundaries_catchment, level='subtype', fill_value='')
 
     # Sort units by short code:
-    col_short_code = find_multiindex_column_names(gdf_points_units, property=['short_code'])
+    col_short_code = find_multiindex_column_names(
+        gdf_points_units, property=['short_code'])
     gdf_points_units = gdf_points_units.sort_values(col_short_code)
 
     to_return = (
@@ -572,8 +585,10 @@ def fill_blank_level(gdf, level='scenario', fill_value='any'):
         # Nothing to do here.
         return gdf
 
-    scenarios_to_update = [scenario for scenario in scenario_list if 
-        ((scenario == '') | (scenario.startswith('Unnamed')))]
+    scenarios_to_update = [
+        scenario for scenario in scenario_list if
+        ((scenario == '') | (scenario.startswith('Unnamed')))
+        ]
 
     # Which column levels exist?
     col_level_names = gdf.columns.names
@@ -591,7 +606,7 @@ def fill_blank_level(gdf, level='scenario', fill_value='any'):
             pass
 
         # Only store the level part:
-        new_columns.append(scen_col)#[i_scen])
+        new_columns.append(scen_col)
 
     gdf.columns = pd.MultiIndex.from_tuples(new_columns)
     gdf.columns = gdf.columns.set_names(level_names)
@@ -843,7 +858,8 @@ def _load_geometry_lsoa(df_lsoa):
     # Index column: LSOA11CD.
     # Always has only one unnamed column index level.
     gdf_boundaries_lsoa = gdf_boundaries_lsoa.reset_index()
-    gdf_boundaries_lsoa = gdf_boundaries_lsoa.rename(columns={'LSOA11NM': 'lsoa', 'LSOA11CD': 'lsoa_code'})
+    gdf_boundaries_lsoa = gdf_boundaries_lsoa.rename(
+        columns={'LSOA11NM': 'lsoa', 'LSOA11CD': 'lsoa_code'})
     gdf_boundaries_lsoa = gdf_boundaries_lsoa.set_index(['lsoa', 'lsoa_code'])
 
     # ----- Prepare separate data -----
@@ -885,11 +901,9 @@ def _load_geometry_lsoa(df_lsoa):
         axis='columns', level='scenario')
 
     # Convert to GeoDataFrame:
-    # print(gdf_boundaries_lsoa.columns)
-    # print(gdf_boundaries_lsoa)
-    # print(gdf_boundaries_lsoa[col_geometry])
     # Set geometry:
-    col_geometry = find_multiindex_column_names(gdf_boundaries_lsoa, property=['geometry'])
+    col_geometry = find_multiindex_column_names(
+        gdf_boundaries_lsoa, property=['geometry'])
     geo_series = gdf_boundaries_lsoa[col_geometry].values.flatten()
     gdf_boundaries_lsoa = geopandas.GeoDataFrame(
         gdf_boundaries_lsoa,
@@ -916,17 +930,19 @@ def _load_geometry_catchment(
         if scenario.startswith('diff'):
             pass
         else:
-            
             col_to_dissolve = find_multiindex_column_names(
-                gdf_boundaries_lsoa, property=['unit_postcode'], scenario=[scenario])
+                gdf_boundaries_lsoa,
+                property=['unit_postcode'], scenario=[scenario])
             col_geometry = find_multiindex_column_names(
                 gdf_boundaries_lsoa, property=['geometry'])
             col_selected = find_multiindex_column_names(
-                gdf_boundaries_lsoa, property=['selected'], scenario=[scenario])
+                gdf_boundaries_lsoa,
+                property=['selected'], scenario=[scenario])
 
             # Which ones are selected?
             mask = gdf_boundaries_lsoa[[col_selected]] == 1
-            selected_units = gdf_boundaries_lsoa.loc[mask.values, [col_to_dissolve]]
+            selected_units = gdf_boundaries_lsoa.loc[
+                mask.values, [col_to_dissolve]]
 
             selected_units = list(set(list(selected_units.values.flatten())))
 
@@ -953,16 +969,20 @@ def _load_geometry_catchment(
             else:
                 df_transfer_here = df_transfer.copy().reset_index()
                 # Only keep this scenario:
+                # TO DO - update these column names? ----------------------------------------------
                 df_transfer_here = df_transfer_here[
-                    [('postcode', ''), ('transfer_unit_postcode', ''), ('selected', scenario)]]
+                    [('postcode', ''), ('transfer_unit_postcode', ''),
+                     ('selected', scenario)]]
                 # Drop the 'scenario' level
-                df_transfer_here = df_transfer_here.droplevel('scenario', axis='columns')
+                df_transfer_here = df_transfer_here.droplevel(
+                    'scenario', axis='columns')
                 # Only keep used postcodes:
                 mask = ~df_transfer_here['selected'].isna()  # == 1
                 df_transfer_here = df_transfer_here.loc[mask].copy()
                 # Add the transfer unit postcodes to the main df.
                 df = pd.merge(
-                    df, df_transfer_here[['postcode', 'transfer_unit_postcode']],
+                    df, df_transfer_here[
+                        ['postcode', 'transfer_unit_postcode']],
                     left_on='unit', right_on='postcode', how='left'
                 )
                 df = df.drop('postcode', axis='columns')
@@ -980,10 +1000,13 @@ def _load_geometry_catchment(
                 df_feeders = df_feeders.reset_index()
                 # Assign colours:
                 df_feeders = assign_colours_to_regions(
-                    df_feeders, col_col='transfer_colour_ind', col_units='transfer_unit_postcode')
+                    df_feeders, col_col='transfer_colour_ind',
+                    col_units='transfer_unit_postcode'
+                    )
                 # Link these colours back to the original dataframe:
                 df = pd.merge(
-                    df, df_feeders[['transfer_unit_postcode', 'transfer_colour_ind']],
+                    df, df_feeders[
+                        ['transfer_unit_postcode', 'transfer_colour_ind']],
                     on='transfer_unit_postcode', how='left'
                 )
 
@@ -1107,7 +1130,7 @@ def create_lines_from_coords(
     df[col_geom] = [LineString(coords) for coords in df[col_coord].values]
 
     # Convert to GeoDataFrame:
-    gdf = geopandas.GeoDataFrame(df, geometry=col_geom)  #, crs="EPSG:4326"
+    gdf = geopandas.GeoDataFrame(df, geometry=col_geom)  # crs="EPSG:4326"
     # if isinstance(col_geom, tuple):
     #     gdf['geometry']
     # TO DO - implement CRS explicitly ---------------------------------------------
@@ -1164,7 +1187,8 @@ def create_combo_cols(gdf, scenario):
                 scen2_col = scen2_col[:-1]
                 gdf_here = gdf.copy()
                 gdf_here.columns = gdf_here.columns.droplevel('subtype')
-                gdf[scen_col] = gdf_here[[scen1_col, scen2_col]].max(axis='columns')                
+                gdf[scen_col] = gdf_here[[scen1_col, scen2_col]
+                                         ].max(axis='columns')
         else:
             # Don't combine non-numerical columns.
             pass
@@ -1214,26 +1238,9 @@ def assign_colours_to_regions(gdf, col_col, col_units='unit'):
             colour_grid[row, ind_to_pick] = True
         return colour_grid
 
-    # Current setup never seems to give only 4 colour solution,
-    # but running multiple times in different orders does randomise
-    # the cmaps assigned somewhat. Unwanted?
-    # n_attempts = 0
-    # n_colours = 4
-    # success = False
-    # while success is False:
-    #     try:
-    #         colour_grid = fill_colour_grid(n_colours)
-    #         success = True
-    #     except IndexError:
-    #         n_attempts += 1
-    #         # Shuffle the units order:
-    #         gdf['random'] = np.random.rand(len(gdf))
-    #         gdf = gdf.sort_values(['total_neighbours', 'random'], ascending=False)
-    #     if n_attempts > 10:
-    # Use way more colours.
+    # Use way more colours than will be needed.
     n_colours = len(gdf)
     colour_grid = fill_colour_grid(n_colours)
-    # success = True
 
     # Use the bool colour grid to assign colours:
     colours = range(n_colours)

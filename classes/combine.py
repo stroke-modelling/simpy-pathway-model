@@ -13,7 +13,6 @@ self.combine_results_summary_by_admitting_unit()
 """
 import numpy as np
 import pandas as pd
-import os
 from itertools import combinations
 
 
@@ -164,7 +163,9 @@ class Combine(object):
 
         # Rename the MultiIndex column names:
         headers = ['scenario', 'property']
-        if 'subtype' in list(dict_scenario_df_to_merge.values())[0].columns.names:
+        headers_ref = list(
+            dict_scenario_df_to_merge.values())[0].columns.names
+        if 'subtype' in headers_ref:
             headers.append('subtype')
         df.columns = df.columns.set_names(headers)
 
@@ -270,7 +271,8 @@ class Combine(object):
 
         # Rename the MultiIndex column names:
         headers = ['scenario', 'property']
-        if 'subtype' in list(dict_scenario_df_to_merge.values())[0].columns.names:
+        h_ref = list(dict_scenario_df_to_merge.values())[0].columns.names
+        if 'subtype' in h_ref:
             headers.append('subtype')
         df.columns = df.columns.set_names(headers)
 
@@ -411,11 +413,12 @@ class Combine(object):
                     df = df[scenario_cols]
 
             if add_use_column:
-                shared_col_is_list = ((type(shared_col_name) == list) |
-                                      (type(shared_col_name) == tuple))
+                shared_col_is_list = ((isinstance(shared_col_name, list)) |
+                                      (isinstance(shared_col_name, tuple)))
                 # TO DO ^ make this more generic.
                 if shared_col_is_list:
-                    use_col = tuple([b for b in shared_col_name[:-1]] + ['Use'])
+                    use_col = tuple(
+                        [b for b in shared_col_name[:-1]] + ['Use'])
                 else:
                     use_col = 'Use'
                 # Make a new column named use_col and set all values to 1:
@@ -453,7 +456,11 @@ class Combine(object):
 
         return data
 
-    def _merge_multiple_dataframes(self, dict_scenario_df_to_merge, merge_col='lsoa_code'):
+    def _merge_multiple_dataframes(
+            self,
+            dict_scenario_df_to_merge,
+            merge_col='lsoa_code'
+            ):
         # Combine multiple DataFrames from different scenarios into here.
         # Stacks all DataFrames one on top of the other with no other
         # change in columns.
@@ -489,25 +496,24 @@ class Combine(object):
         data = data.sort_values(merge_col)
         return data
 
-
-    def find_multiindex_col(self, columns, target):
-        """
-        MOVE ME - currently copied directly from Map()
-        """
-        if (type(columns[0]) == list) | (type(columns[0]) == tuple):
-            # Convert all columns tuples into an ndarray:
-            all_cols = np.array([[n for n in c] for c in columns])
-        else:
-            # No MultiIndex.
-            all_cols = columns.values
-        # Find where the grid matches the target string:
-        inds = np.where(all_cols == target)
-        # If more than one column, select the first.
-        ind = inds[0][0]
-        # Components of column containing the target:
-        bits = all_cols[ind]
-        bits_is_list = (type(columns[0]) == list) | (type(columns[0]) == tuple)
-        # TO DO - make this generic arraylike ^
-        # Convert to tuple for MultiIndex or str for single level.
-        final_col = list((tuple(bits), )) if bits_is_list else bits
-        return final_col
+    # def find_multiindex_col(self, columns, target):
+    #     """
+    #     MOVE ME - currently copied directly from Map()
+    #     """
+    #     if (type(columns[0]) == list) | (type(columns[0]) == tuple):
+    #         # Convert all columns tuples into an ndarray:
+    #         all_cols = np.array([[n for n in c] for c in columns])
+    #     else:
+    #         # No MultiIndex.
+    #         all_cols = columns.values
+    #     # Find where the grid matches the target string:
+    #     inds = np.where(all_cols == target)
+    #     # If more than one column, select the first.
+    #     ind = inds[0][0]
+    #     # Components of column containing the target:
+    #     bits = all_cols[ind]
+    #     bits_is_list = (type(columns[0]) == list) | (type(columns[0]) == tuple)
+    #     # TO DO - make this generic arraylike ^
+    #     # Convert to tuple for MultiIndex or str for single level.
+    #     final_col = list((tuple(bits), )) if bits_is_list else bits
+    #     return final_col

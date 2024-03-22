@@ -24,6 +24,7 @@ def find_multiindex_column_names(gdf, **kwargs):
         cols = ''  # Should throw up a KeyError when used to index.
     return cols
 
+
 # ###################
 # ##### HELPERS #####
 # ###################
@@ -65,7 +66,7 @@ def create_units_legend(
     handles_list = []
     for hlist in handles_lists:
         hlist = np.array(hlist).T.tolist()
-        hlist = [tuple(l) for l in hlist]
+        hlist = [tuple(h) for h in hlist]
         handles_list.append(hlist)
 
     # Add a blank handle and a section label:
@@ -265,7 +266,6 @@ def scatter_units(
     verts[:, 1] = verts[:, 1] * 0.75
     star_squash = mpath.Path(verts, star.codes)
 
-
     # Only plot these units:
     if len(mask_col) > 0:
         mask = gdf[mask_col] == 1
@@ -275,14 +275,17 @@ def scatter_units(
     if return_handle:
         # Draw each point separately for use with the legend later.
 
-        # Need a separate call for each when there is an array of marker shapes.
+        # Need a separate call for each when there is
+        # an array of marker shapes.
         handles = []
         for row in masked_gdf.index:
             gdf_m = masked_gdf.loc[[row]]
-            col_geometry = find_multiindex_column_names(gdf_m, property=['geometry'])
+            col_geometry = find_multiindex_column_names(
+                gdf_m, property=['geometry'])
             # Update marker shape and size:
             try:
-                col_marker = find_multiindex_column_names(gdf_m, property=['marker'])
+                col_marker = find_multiindex_column_names(
+                    gdf_m, property=['marker'])
                 marker = gdf_m[col_marker].values[0]
                 kwargs_dict['marker'] = marker
             except KeyError:
@@ -319,7 +322,8 @@ def scatter_units(
         return ax, handles
     else:
 
-        col_geometry = find_multiindex_column_names(masked_gdf, property=['geometry'])
+        col_geometry = find_multiindex_column_names(
+            masked_gdf, property=['geometry'])
         # Draw all points in one call.
         ax.scatter(
             masked_gdf[col_geometry].x,
@@ -411,7 +415,7 @@ def draw_labels_short(
 
     from PIL import ImageFont
     from matplotlib import font_manager
-    font = font_manager.FontProperties()#family='sans-serif')#, weight='bold')
+    font = font_manager.FontProperties()
     file = font_manager.findfont(font)
     font = ImageFont.truetype(file, marker_kwargs['s'])
 
@@ -562,7 +566,8 @@ def plot_map_selected_regions(
         )
 
     # In selected regions:
-    col_selected = find_multiindex_column_names(gdf_points_units, property=['selected'])
+    col_selected = find_multiindex_column_names(
+        gdf_points_units, property=['selected'])
     mask = gdf_points_units[col_selected] == 1
     ax, handles_scatter_us = scatter_units(
         ax,
@@ -583,9 +588,12 @@ def plot_map_selected_regions(
     # Label units:
     # In selected regions:
     mask = gdf_points_units[col_selected] == 1
-    col_geometry = find_multiindex_column_names(gdf_points_units, property=['geometry'])
-    col_short_code = find_multiindex_column_names(gdf_points_units, property=['short_code'])
-    col_stroke_team = find_multiindex_column_names(gdf_points_units, property=['stroke_team'])
+    col_geometry = find_multiindex_column_names(
+        gdf_points_units, property=['geometry'])
+    col_short_code = find_multiindex_column_names(
+        gdf_points_units, property=['short_code'])
+    col_stroke_team = find_multiindex_column_names(
+        gdf_points_units, property=['stroke_team'])
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units.loc[mask, col_geometry],
@@ -638,7 +646,8 @@ def plot_map_selected_regions(
 
     # Regions:
     # Add a blank handle and a section label:
-    section_labels = ['Regions with selected units' + ' '* 60 + '.', 'Other regions']
+    section_labels = ['Regions with selected units' + ' ' * 60 + '.',
+                      'Other regions']
     handles_r, labels_r = combine_legend_sections(
         section_labels,
         [handles_rs, handles_rns],
@@ -655,14 +664,15 @@ def plot_map_selected_regions(
 
     # Units:
     if len(labels_uns) > 0:
-        section_labels = ['Selected units' + ' '* 70 + '.', 'Other units']
+        section_labels = ['Selected units' + ' ' * 70 + '.',
+                          'Other units']
         handles_lists = [
             [handles_scatter_us, handles_us],
             [handles_scatter_uns, handles_uns]
         ]
         labels_lists = [labels_us, labels_uns]
     else:
-        section_labels = ['Selected units' + ' '* 70 + '.']
+        section_labels = ['Selected units' + ' ' * 70 + '.']
         handles_lists = [
             [handles_scatter_us, handles_us]
         ]
@@ -707,41 +717,7 @@ def plot_map_selected_units(
     """
     Make map of the selected units and the regions containing them.
 
-    Properties of this map:
-    + Each stroke unit is shown with a scatter marker.
-    + Non-MT units are shown as circles and MT units as stars.
-    + Lines are drawn between each non-MT unit and its chosen MT unit.
-    + Each stroke unit is labelled in an offset text box.
-    + The regions that contain the selected units are drawn in
-    the background with each region given a different colour from
-    its neighbours. These regions have an outline.
-
-    Required data files:
-    + geojson file of choice.
-    Must contain:
-    + coordinates of each feature / region boundary shape.
-    + selected stroke unit file
-    Output from Scenario.
-    Must contain:
-    + postcode
-        - for unit name matching.
-        - for labels on the map.
-    + use_mt
-        - for scatter marker choice.
-    + [region]
-        - region names to match the geojson file, for limiting the
-        plotted areas to just those containing the stroke units.
-    + Easting, Northing
-        - for placement of the scatter markers.
-    + national transfer unit file
-    Output from Units.
-    + from_postcode
-        - for unit name matching.
-    + name_nearest_mt
-        - for setting up lines drawn between each stroke unit and
-        its nearest MT unit.
-
-    Result is saved as the name given in setup.file_selected_units_map.
+    TO DO - write me.
     """
     # Set up kwargs.
     # Region boundaries:
@@ -775,14 +751,16 @@ def plot_map_selected_units(
     # Set everything to the IVT marker:
     markers = np.full(len(gdf_points_units), 'o')
     # Update MT units:
-    col_use_mt = find_multiindex_column_names(gdf_points_units, property=['use_mt'])
+    col_use_mt = find_multiindex_column_names(
+        gdf_points_units, property=['use_mt'])
     mask_mt = (gdf_points_units[col_use_mt] == 1)
     markers[mask_mt] = '*'
     # Store in the DataFrame:
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    col_selected = find_multiindex_column_names(gdf_points_units, property=['selected'])
+    col_selected = find_multiindex_column_names(
+        gdf_points_units, property=['selected'])
     mask = gdf_points_units[col_selected] == 1
     ax, handles_scatter_us = scatter_units(
         ax,
@@ -804,10 +782,14 @@ def plot_map_selected_units(
     # Label units:
     # In selected regions:
     mask = gdf_points_units[col_selected] == 1
-    col_geometry = find_multiindex_column_names(gdf_points_units, property=['geometry'])
-    col_short_code = find_multiindex_column_names(gdf_points_units, property=['short_code'])
-    col_stroke_team = find_multiindex_column_names(gdf_points_units, property=['stroke_team'])
-    col_colour_lines = find_multiindex_column_names(gdf_points_units, property=['colour_lines'])
+    col_geometry = find_multiindex_column_names(
+        gdf_points_units, property=['geometry'])
+    col_short_code = find_multiindex_column_names(
+        gdf_points_units, property=['short_code'])
+    col_stroke_team = find_multiindex_column_names(
+        gdf_points_units, property=['stroke_team'])
+    col_colour_lines = find_multiindex_column_names(
+        gdf_points_units, property=['colour_lines'])
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units.loc[mask, col_geometry],
@@ -832,14 +814,14 @@ def plot_map_selected_units(
 
     # Units:
     if len(labels_uns) > 0:
-        section_labels = ['Selected units' + ' '* 70 + '.', 'Other units']
+        section_labels = ['Selected units' + ' ' * 70 + '.', 'Other units']
         handles_lists = [
             [handles_scatter_us, handles_us],
             [handles_scatter_uns, handles_uns]
         ]
         labels_lists = [labels_us, labels_uns]
     else:
-        section_labels = ['Selected units' + ' '* 70 + '.']
+        section_labels = ['Selected units' + ' ' * 70 + '.']
         handles_lists = [
             [handles_scatter_us, handles_us]
         ]
@@ -890,61 +872,7 @@ def plot_map_catchment(
     """
     Map the selected units, containing regions, and catchment areas.
 
-    Creates three maps.
-    + "Drip & Ship" - catchment area of each IVT unit.
-    + "Mothership" - catchment area of each MT unit, no IVT units.
-    + "MSU" - catchment area of each MSU unit.
-
-    Properties of all maps:
-    + Each stroke unit is shown with a scatter marker.
-    + Non-MT units are shown as circles and MT units as stars.
-    + Lines are drawn between each non-MT unit and its chosen MT unit.
-    + Each stroke unit is labelled in an offset text box.
-    + The regions that contain the selected units are drawn in
-    the background with each region given a different colour from
-    its neighbours. These regions have an outline.
-
-    Required data files:
-    + geojson file of choice.
-    Must contain:
-    + coordinates of each feature / region boundary shape.
-    + selected stroke unit file
-    Output from Scenario.
-    Must contain:
-    + postcode
-        - for unit name matching.
-        - for labels on the map.
-    + use_mt
-        - for scatter marker choice.
-    + [region]
-        - region names to match the geojson file, for limiting the
-        plotted areas to just those containing the stroke units.
-    + Easting, Northing
-        - for placement of the scatter markers.
-    + national transfer unit file
-    Output from Units.
-    + from_postcode
-        - for unit name matching.
-    + name_nearest_mt
-        - for setting up lines drawn between each stroke unit and
-        its nearest MT unit.
-    + geojson file of LSOA boundaries.
-    Must contain:
-    + coordinates of each LSOA boundary.
-    + selected LSOA name file.
-    Must contain:
-    + column LSOA11CD, one row per selected LSOA.
-    + national LSOA travel data.
-    Must contain:
-    + column LSOA11CD for name matching.
-    + postcode_nearest_ivt
-    + postcode_nearest_mt
-    + postcode_nearest_msu
-
-    Result is saved as the name given in setup class:
-    + file_drip_ship_map
-    + file_mothership_map
-    + file_msu_map
+    TO DO - write me.
     """
     label_size_units = 15
 
@@ -953,9 +881,12 @@ def plot_map_catchment(
         fig, ax = plt.subplots(figsize=(12, 8))
 
     # LSOAs in selected units catchment:
-    col_selected = find_multiindex_column_names(gdf_boundaries_catchment, property=['selected'])
-    col_periphery_unit = find_multiindex_column_names(gdf_boundaries_catchment, property=['periphery_unit'])
-    col_colour = find_multiindex_column_names(gdf_boundaries_catchment, property=['colour'])
+    col_selected = find_multiindex_column_names(
+        gdf_boundaries_catchment, property=['selected'])
+    col_periphery_unit = find_multiindex_column_names(
+        gdf_boundaries_catchment, property=['periphery_unit'])
+    col_colour = find_multiindex_column_names(
+        gdf_boundaries_catchment, property=['colour'])
     mask = (gdf_boundaries_catchment[col_selected] == 1)
     ax = draw_boundaries(
         ax,
@@ -969,7 +900,8 @@ def plot_map_catchment(
         (gdf_boundaries_catchment[col_selected] == 0) &
         (gdf_boundaries_catchment[col_periphery_unit] == 1)
     )
-    col_colour_periphery = find_multiindex_column_names(gdf_boundaries_catchment, property=['colour_periphery'])
+    col_colour_periphery = find_multiindex_column_names(
+        gdf_boundaries_catchment, property=['colour_periphery'])
     ax = draw_boundaries(
         ax,
         gdf_boundaries_catchment[mask],
@@ -1005,15 +937,18 @@ def plot_map_catchment(
     # Set everything to the IVT marker:
     markers = np.full(len(gdf_points_units), 'o')
     # Update MT units:
-    col_use_mt = find_multiindex_column_names(gdf_points_units, property=['use_mt'])
+    col_use_mt = find_multiindex_column_names(
+        gdf_points_units, property=['use_mt'])
     mask_mt = (gdf_points_units[col_use_mt] == 1)
     markers[mask_mt] = '*'
     # Store in the DataFrame:
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    col_selected = find_multiindex_column_names(gdf_points_units, property=['selected'])
-    col_periphery_unit = find_multiindex_column_names(gdf_points_units, property=['periphery_unit'])
+    col_selected = find_multiindex_column_names(
+        gdf_points_units, property=['selected'])
+    col_periphery_unit = find_multiindex_column_names(
+        gdf_points_units, property=['periphery_unit'])
     mask = (gdf_points_units[col_selected] == 1)
     ax, handles_scatter_us = scatter_units(
         ax,
@@ -1038,10 +973,14 @@ def plot_map_catchment(
     # Label units:
     # In selected regions:
     mask = gdf_points_units[col_selected] == 1
-    col_geometry = find_multiindex_column_names(gdf_points_units, property=['geometry'])
-    col_short_code = find_multiindex_column_names(gdf_points_units, property=['short_code'])
-    col_stroke_team = find_multiindex_column_names(gdf_points_units, property=['stroke_team'])
-    col_colour_lines = find_multiindex_column_names(gdf_points_units, property=['colour_lines'])
+    col_geometry = find_multiindex_column_names(
+        gdf_points_units, property=['geometry'])
+    col_short_code = find_multiindex_column_names(
+        gdf_points_units, property=['short_code'])
+    col_stroke_team = find_multiindex_column_names(
+        gdf_points_units, property=['stroke_team'])
+    col_colour_lines = find_multiindex_column_names(
+        gdf_points_units, property=['colour_lines'])
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units.loc[mask, col_geometry],
@@ -1069,14 +1008,15 @@ def plot_map_catchment(
 
     # Units:
     if len(labels_uns) > 0:
-        section_labels = ['Selected units' + ' '* 70 + '.', 'Periphery units']
+        section_labels = ['Selected units' + ' ' * 70 + '.',
+                          'Periphery units']
         handles_lists = [
             [handles_scatter_us, handles_us],
             [handles_scatter_uns, handles_uns]
         ]
         labels_lists = [labels_us, labels_uns]
     else:
-        section_labels = ['Selected units' + ' '* 70 + '.']
+        section_labels = ['Selected units' + ' ' * 70 + '.']
         handles_lists = [
             [handles_scatter_us, handles_us]
         ]
@@ -1123,65 +1063,9 @@ def plot_map_outcome(
         map_extent=[]
         ):
     """
-    Map the selected units, containing regions, and catchment areas.
+    Map the selected units, containing regions, and LSOA outcomes.
 
-    UPDATE ME
-
-    Creates three maps.
-    + "Drip & Ship" - catchment area of each IVT unit.
-    + "Mothership" - catchment area of each MT unit, no IVT units.
-    + "MSU" - catchment area of each MSU unit.
-
-    Properties of all maps:
-    + Each stroke unit is shown with a scatter marker.
-    + Non-MT units are shown as circles and MT units as stars.
-    + Lines are drawn between each non-MT unit and its chosen MT unit.
-    + Each stroke unit is labelled in an offset text box.
-    + The regions that contain the selected units are drawn in
-    the background with each region given a different colour from
-    its neighbours. These regions have an outline.
-
-    Required data files:
-    + geojson file of choice.
-    Must contain:
-    + coordinates of each feature / region boundary shape.
-    + selected stroke unit file
-    Output from Scenario.
-    Must contain:
-    + postcode
-        - for unit name matching.
-        - for labels on the map.
-    + use_mt
-        - for scatter marker choice.
-    + [region]
-        - region names to match the geojson file, for limiting the
-        plotted areas to just those containing the stroke units.
-    + Easting, Northing
-        - for placement of the scatter markers.
-    + national transfer unit file
-    Output from Units.
-    + from_postcode
-        - for unit name matching.
-    + name_nearest_mt
-        - for setting up lines drawn between each stroke unit and
-        its nearest MT unit.
-    + geojson file of LSOA boundaries.
-    Must contain:
-    + coordinates of each LSOA boundary.
-    + selected LSOA name file.
-    Must contain:
-    + column LSOA11CD, one row per selected LSOA.
-    + national LSOA travel data.
-    Must contain:
-    + column LSOA11CD for name matching.
-    + postcode_nearest_ivt
-    + postcode_nearest_mt
-    + postcode_nearest_msu
-
-    Result is saved as the name given in setup class:
-    + file_drip_ship_map
-    + file_mothership_map
-    + file_msu_map
+    TO DO - write me.
     """
     label_size_units = 15
 
@@ -1227,14 +1111,16 @@ def plot_map_outcome(
     # Set everything to the IVT marker:
     markers = np.full(len(gdf_points_units), 'o')
     # Update MT units:
-    col_use_mt = find_multiindex_column_names(gdf_points_units, property=['use_mt'])
+    col_use_mt = find_multiindex_column_names(
+        gdf_points_units, property=['use_mt'])
     mask_mt = (gdf_points_units[col_use_mt] == 1)
     markers[mask_mt] = '*'
     # Store in the DataFrame:
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    col_selected = find_multiindex_column_names(gdf_points_units, property=['selected'])
+    col_selected = find_multiindex_column_names(
+        gdf_points_units, property=['selected'])
     mask = (gdf_points_units[col_selected] == 1)
     ax, handles_scatter_us = scatter_units(
         ax,
@@ -1247,9 +1133,12 @@ def plot_map_outcome(
     # Label units:
     # In selected regions:
     mask = gdf_points_units[col_selected] == 1
-    col_geometry = find_multiindex_column_names(gdf_points_units, property=['geometry'])
-    col_short_code = find_multiindex_column_names(gdf_points_units, property=['short_code'])
-    col_stroke_team = find_multiindex_column_names(gdf_points_units, property=['stroke_team'])
+    col_geometry = find_multiindex_column_names(
+        gdf_points_units, property=['geometry'])
+    col_short_code = find_multiindex_column_names(
+        gdf_points_units, property=['short_code'])
+    col_stroke_team = find_multiindex_column_names(
+        gdf_points_units, property=['stroke_team'])
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units.loc[mask, col_geometry],
@@ -1261,7 +1150,7 @@ def plot_map_outcome(
     )
 
     # Units:
-    section_labels = ['Stroke units' + ' '* 70 + '.']
+    section_labels = ['Stroke units' + ' ' * 70 + '.']
     handles_lists = [[handles_scatter_us, handles_us]]
     labels_lists = [labels_us]
 

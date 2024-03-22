@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-from shapely.geometry import Polygon # For extent box.
+from shapely.geometry import Polygon  # For extent box.
 import geopandas
 import numpy as np
 
@@ -25,6 +25,7 @@ def find_multiindex_column_names(gdf, **kwargs):
     elif len(cols) == 0:
         cols = ''  # Should throw up a KeyError when used to index.
     return cols
+
 
 # ##########################
 # ##### DATA WRANGLING #####
@@ -61,10 +62,13 @@ def main(
 
     # For each scenario, create colours for unit catchment areas
     # and their transfer units.
-    scenario_list = list(set(gdf_boundaries_catchment.columns.get_level_values('scenario')))
+    scenario_list = list(set(
+        gdf_boundaries_catchment.columns.get_level_values('scenario')))
 
-    col_unit = find_multiindex_column_names(gdf_points_units, property=['unit'])
-    col_postcode = find_multiindex_column_names(gdf_lines_transfer, property=['postcode'])
+    col_unit = find_multiindex_column_names(
+        gdf_points_units, property=['unit'])
+    col_postcode = find_multiindex_column_names(
+        gdf_lines_transfer, property=['postcode'])
 
     gdf_lines_transfer = gdf_lines_transfer.set_index(col_postcode)
     gdf_points_units = gdf_points_units.set_index(col_unit)
@@ -94,8 +98,10 @@ def main(
                 col_output_colour_lines=('colour_lines', scenario),
                 col_output_colour_periphery=('colour_periphery', scenario)
                 )
-            col_unit = find_multiindex_column_names(gdf_boundaries_catchment, property=['unit'])
-            gdf_boundaries_catchment = gdf_boundaries_catchment.set_index(col_unit)
+            col_unit = find_multiindex_column_names(
+                gdf_boundaries_catchment, property=['unit'])
+            gdf_boundaries_catchment = (
+                gdf_boundaries_catchment.set_index(col_unit))
             mask = (gdf_boundaries_catchment[col_use] == 1)
 
             # Move colours over to the transfer unit gdf.
@@ -108,13 +114,15 @@ def main(
                 )
             # Move colours over to the unit scatter markers gdf.
             # Add a blank 'subtype' level to catchment:
-            gdf_here = gdf_boundaries_catchment.copy().loc[mask, [col_output_colour_lines]]
+            gdf_here = gdf_boundaries_catchment.copy().loc[
+                mask, [col_output_colour_lines]]
             gdf_here.columns = [
                 gdf_here.columns.get_level_values('property'),
                 gdf_here.columns.get_level_values('scenario'),
                 [''] * len(gdf_here.columns)
             ]
-            gdf_here.columns = gdf_here.columns.set_names(['property', 'scenario', 'subtype'])
+            gdf_here.columns = gdf_here.columns.set_names(
+                ['property', 'scenario', 'subtype'])
             gdf_here.index.name = 'unit'
 
             gdf_points_units = pd.merge(
@@ -129,8 +137,6 @@ def main(
 
     gdf_lines_transfer = gdf_lines_transfer.reset_index()
     gdf_points_units = gdf_points_units.reset_index()
-
-    # gdf_points_units = gdf_points_units.rename(columns={('unit', '', ''): ('unit', 'any', '')})
 
     return (
         gdf_boundaries_regions,
@@ -220,7 +226,7 @@ def find_shared_map_extent(
         gdf_boundaries_catchment,
         gdf_lines_transfer=None,
         leeway=None
-    ):
+        ):
     """
     # Take map extent from the combined LSOA, region,
     # and stroke unit geometry.
@@ -275,7 +281,8 @@ def find_shared_map_extent(
         col_names = ['selected']
         gdf_lines_reduced = filter_gdf_by_columns(
             gdf_lines_transfer, col_names)
-        # Keep only the 'geometry' column and name it 'geometry' (no MultiIndex):
+        # Keep only the 'geometry' column and name it 'geometry'
+        # (no MultiIndex):
         gdf_lines_reduced = gdf_lines_reduced.reset_index()['geometry']
         gdf_lines_reduced.columns = ['geometry']
         # Set the geometry column again:
@@ -442,7 +449,8 @@ def make_colours_for_catchment(
         colour_lists_units = cmaps_list
 
     mask = (gdf_boundaries_catchment[col_use] == 1)
-    n_colours = len(list(set(gdf_boundaries_catchment.loc[mask, col_colour_ind])))
+    n_colours = len(list(set(
+        gdf_boundaries_catchment.loc[mask, col_colour_ind])))
 
     # Selected units.
     # Start with blank colours:
@@ -452,13 +460,15 @@ def make_colours_for_catchment(
 
     if col_transfer_colour_ind in gdf_boundaries_catchment.columns:
         # Use a different colour map for each MT unit and its feeders.
-        gdf_boundaries_catchment = gdf_boundaries_catchment.copy().sort_values(col_selected, ascending=False)
+        gdf_boundaries_catchment = gdf_boundaries_catchment.copy()
+        gdf_boundaries_catchment = gdf_boundaries_catchment.sort_values(
+            col_selected, ascending=False)
         # Mask to basically select "use" only, but also the periphery
         # units have NaN instead of an integer value in this column
         # so use isna() to exclude those.
         mask = ~gdf_boundaries_catchment[col_transfer_colour_ind].isna()
-        bands = list(
-            gdf_boundaries_catchment.loc[mask, col_transfer_colour_ind].dropna().unique())
+        bands = list(gdf_boundaries_catchment.loc[
+            mask, col_transfer_colour_ind].dropna().unique())
 
         for b, band in enumerate(bands):
             try:
@@ -478,8 +488,9 @@ def make_colours_for_catchment(
                 (gdf_boundaries_catchment[col_use] == 1)
             )
             # Assign colours by colour index column values:
-            colours_units[np.where(mask == 1)[0]] = colour_list_units[
-                gdf_boundaries_catchment.loc[mask, col_colour_ind].astype(int).values]
+            inds = gdf_boundaries_catchment.loc[
+                mask, col_colour_ind].astype(int).values
+            colours_units[np.where(mask == 1)[0]] = colour_list_units[inds]
             colours_transfer[np.where(mask == 1)[0]] = colour_transfer
     else:
         try:
@@ -496,7 +507,8 @@ def make_colours_for_catchment(
         # Assign colours by colour index column values:
         colours_units = colour_list_units[
             gdf_boundaries_catchment[col_colour_ind].astype(int).values]
-        colours_transfer = np.array([colour_transfer] * len(gdf_boundaries_catchment))
+        colours_transfer = np.array(
+            [colour_transfer] * len(gdf_boundaries_catchment))
 
     # Place in the GeoDataFrame:
     gdf_boundaries_catchment[col_output_colour] = colours_units
@@ -534,7 +546,8 @@ def drop_other_scenarios(df, scenario):
     # Drop the 'scenario' column level:
     df_selected = df_selected.droplevel('scenario', axis='columns')
     # Set geometry:
-    col_geometry = find_multiindex_column_names(df_selected, property=['geometry'])
+    col_geometry = find_multiindex_column_names(
+        df_selected, property=['geometry'])
     df_selected = df_selected.set_geometry(col_geometry)
 
     return df_selected
@@ -598,7 +611,8 @@ def plot_map_selected_units(
         show=True
         ):
     # Drop everything that belongs to other scenarios:
-    gdf_boundaries_regions = drop_other_scenarios(gdf_boundaries_regions, scenario)
+    gdf_boundaries_regions = drop_other_scenarios(
+        gdf_boundaries_regions, scenario)
     gdf_points_units = drop_other_scenarios(gdf_points_units, scenario)
     gdf_lines_transfer = drop_other_scenarios(gdf_lines_transfer, scenario)
 
@@ -645,10 +659,12 @@ def plot_map_catchment(
     """
     """
     # Drop everything that belongs to other scenarios:
-    gdf_boundaries_regions = drop_other_scenarios(gdf_boundaries_regions, scenario)
+    gdf_boundaries_regions = drop_other_scenarios(
+        gdf_boundaries_regions, scenario)
     gdf_points_units = drop_other_scenarios(gdf_points_units, scenario)
     gdf_lines_transfer = drop_other_scenarios(gdf_lines_transfer, scenario)
-    gdf_boundaries_catchment = drop_other_scenarios(gdf_boundaries_catchment, scenario)
+    gdf_boundaries_catchment = drop_other_scenarios(
+        gdf_boundaries_catchment, scenario)
     # Drop catchment areas from other scenarios:
     gdf_boundaries_catchment = gdf_boundaries_catchment.dropna(
         subset='colour_ind')
@@ -667,7 +683,8 @@ def plot_map_catchment(
         # 'color': 'colour'
     }
     # Update this with anything from the input dict:
-    lsoa_boundary_periphery_kwargs = boundary_periphery_kwargs | lsoa_boundary_periphery_kwargs
+    lsoa_boundary_periphery_kwargs = (boundary_periphery_kwargs |
+                                      lsoa_boundary_periphery_kwargs)
 
     fig, ax = plt.subplots(figsize=(6, 5))
     ax.set_title(title)
@@ -723,7 +740,8 @@ def plot_map_outcome(
         )
 
     # Drop everything that belongs to other scenarios:
-    gdf_boundaries_regions = drop_other_scenarios(gdf_boundaries_regions, scenario)
+    gdf_boundaries_regions = drop_other_scenarios(
+        gdf_boundaries_regions, scenario)
     gdf_points_units = drop_other_scenarios(gdf_points_units, scenario)
     gdf_boundaries_lsoa = drop_other_scenarios(gdf_boundaries_lsoa, scenario)
 

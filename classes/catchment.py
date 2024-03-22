@@ -9,7 +9,6 @@ TO DO --------------------------------------------------------------------------
 """
 import numpy as np
 import pandas as pd
-import os
 import yaml
 from importlib_resources import files
 
@@ -145,7 +144,8 @@ class Catchment(object):
         transfer = self.find_national_mt_feeder_units(self.df_units)
         transfer = transfer.reset_index()
         # Index: none
-        # Columns: 'postcode', 'transfer_unit_postcode', 'transfer_unit_travel_time'
+        # Columns: 'postcode', 'transfer_unit_postcode',
+        # 'transfer_unit_travel_time'
 
         units = self.df_units.copy()
         # Index: 'Postcode'
