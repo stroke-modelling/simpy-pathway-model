@@ -620,7 +620,7 @@ def plot_map_selected_regions(
 
     # Regions:
     # Add a blank handle and a section label:
-    section_labels = ['Regions with selected units', 'Other regions']
+    section_labels = ['Regions with selected units' + ' '* 60 + '.', 'Other regions']
     handles_r, labels_r = combine_legend_sections(
         section_labels,
         [handles_rs, handles_rns],
@@ -637,14 +637,14 @@ def plot_map_selected_regions(
 
     # Units:
     if len(labels_uns) > 0:
-        section_labels = ['Selected units', 'Other units']
+        section_labels = ['Selected units' + ' '* 50 + '.', 'Other units']
         handles_lists = [
             [handles_scatter_us, handles_us],
             [handles_scatter_uns, handles_uns]
         ]
         labels_lists = [labels_us, labels_uns]
     else:
-        section_labels = ['Selected units']
+        section_labels = ['Selected units' + ' '* 50 + '.']
         handles_lists = [
             [handles_scatter_us, handles_us]
         ]
@@ -814,14 +814,14 @@ def plot_map_selected_units(
 
     # Units:
     if len(labels_uns) > 0:
-        section_labels = ['Selected units', 'Other units']
+        section_labels = ['Selected units' + ' '* 50 + '.', 'Other units']
         handles_lists = [
             [handles_scatter_us, handles_us],
             [handles_scatter_uns, handles_uns]
         ]
         labels_lists = [labels_us, labels_uns]
     else:
-        section_labels = ['Selected units']
+        section_labels = ['Selected units' + ' '* 50 + '.']
         handles_lists = [
             [handles_scatter_us, handles_us]
         ]
@@ -1053,14 +1053,14 @@ def plot_map_catchment(
 
     # Units:
     if len(labels_uns) > 0:
-        section_labels = ['Selected units', 'Periphery units']
+        section_labels = ['Selected units' + ' '* 50 + '.', 'Periphery units']
         handles_lists = [
             [handles_scatter_us, handles_us],
             [handles_scatter_uns, handles_uns]
         ]
         labels_lists = [labels_us, labels_uns]
     else:
-        section_labels = ['Selected units']
+        section_labels = ['Selected units' + ' '* 50 + '.']
         handles_lists = [
             [handles_scatter_us, handles_us]
         ]
@@ -1246,7 +1246,7 @@ def plot_map_outcome(
     )
 
     # Units:
-    section_labels = ['Stroke units']
+    section_labels = ['Stroke units' + ' '* 50 + '.']
     handles_lists = [[handles_scatter_us, handles_us]]
     labels_lists = [labels_us]
 
