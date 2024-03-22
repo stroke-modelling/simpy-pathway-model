@@ -8,6 +8,24 @@ import numpy as np
 import classes.plot_functions as maps  # for plotting.
 
 
+def find_multiindex_column_names(gdf, **kwargs):
+    """
+    kwargs are level_name=column_name
+    , e.g.
+    find_multiindex_column_name(gdf, scenario='any', property='geometry')
+    """
+    masks = [
+        gdf.columns.get_level_values(level).isin(col_list)
+        for level, col_list in kwargs.items()
+    ]
+    mask = np.all(masks, axis=0)
+    cols = gdf.columns[mask]
+    if len(cols) == 1:
+        cols = cols.values[0]
+    elif len(cols) == 0:
+        cols = ''  # Should throw up a KeyError when used to index.
+    return cols
+
 # ##########################
 # ##### DATA WRANGLING #####
 # ##########################
@@ -45,11 +63,8 @@ def main(
     # and their transfer units.
     scenario_list = list(set(gdf_boundaries_catchment.columns.get_level_values('scenario')))
 
-    # col_unit = ('unit', 'any', '')
-    col_postcode = ('postcode', 'any')
-
-    col_unit = gdf_points_units.columns[
-        gdf_points_units.columns.get_level_values('property').isin(['unit'])].values[0]
+    col_unit = find_multiindex_column_names(gdf_points_units, property=['unit'])
+    col_postcode = find_multiindex_column_names(gdf_lines_transfer, property=['postcode'])
 
     gdf_lines_transfer = gdf_lines_transfer.set_index(col_postcode)
     gdf_points_units = gdf_points_units.set_index(col_unit)
@@ -79,8 +94,7 @@ def main(
                 col_output_colour_lines=('colour_lines', scenario),
                 col_output_colour_periphery=('colour_periphery', scenario)
                 )
-            col_unit = gdf_boundaries_catchment.columns[
-                gdf_boundaries_catchment.columns.get_level_values('property').isin(['unit'])].values[0]
+            col_unit = find_multiindex_column_names(gdf_boundaries_catchment, property=['unit'])
             gdf_boundaries_catchment = gdf_boundaries_catchment.set_index(col_unit)
             mask = (gdf_boundaries_catchment[col_use] == 1)
 
@@ -356,9 +370,7 @@ def _setup_plot_map_outcome(
         (gdf_boundaries_lsoa.columns.get_level_values('subtype') == 'mean') &
         (gdf_boundaries_lsoa.columns.get_level_values('property') == outcome)
     )
-    print(mask)
     all_mean_vals = gdf_boundaries_lsoa.iloc[:, mask]
-    print(all_mean_vals)
     vlim_abs = all_mean_vals.abs().max().values[0]
     vmax = all_mean_vals.max().values[0]
     vmin = all_mean_vals.min().values[0]
@@ -522,10 +534,8 @@ def drop_other_scenarios(df, scenario):
     # Drop the 'scenario' column level:
     df_selected = df_selected.droplevel('scenario', axis='columns')
     # Set geometry:
-    col = df_selected.columns[
-        df_selected.columns.get_level_values('property').isin(['geometry'])].values[0]
-
-    df_selected = df_selected.set_geometry(col)
+    col_geometry = find_multiindex_column_names(df_selected, property=['geometry'])
+    df_selected = df_selected.set_geometry(col_geometry)
 
     return df_selected
 

@@ -6,6 +6,24 @@ import matplotlib.patches as mpatches
 import numpy as np
 
 
+def find_multiindex_column_names(gdf, **kwargs):
+    """
+    kwargs are level_name=column_name
+    , e.g.
+    find_multiindex_column_name(gdf, scenario='any', property='geometry')
+    """
+    masks = [
+        gdf.columns.get_level_values(level).isin(col_list)
+        for level, col_list in kwargs.items()
+    ]
+    mask = np.all(masks, axis=0)
+    cols = gdf.columns[mask]
+    if len(cols) == 1:
+        cols = cols.values[0]
+    elif len(cols) == 0:
+        cols = ''  # Should throw up a KeyError when used to index.
+    return cols
+
 # ###################
 # ##### HELPERS #####
 # ###################
@@ -261,13 +279,13 @@ def scatter_units(
         handles = []
         for row in masked_gdf.index:
             gdf_m = masked_gdf.loc[[row]]
-            col_geometry = gdf_m.columns[gdf_m.columns.get_level_values('property').isin(['geometry'])].values[0]
+            col_geometry = find_multiindex_column_names(gdf_m, property=['geometry'])
             # Update marker shape and size:
             try:
-                col_marker = gdf_m.columns[gdf_m.columns.get_level_values('property').isin(['marker'])].values[0]
+                col_marker = find_multiindex_column_names(gdf_m, property=['marker'])
                 marker = gdf_m[col_marker].values[0]
                 kwargs_dict['marker'] = marker
-            except IndexError:
+            except KeyError:
                 kwargs_dict['s'] = default_marker_size
                 kwargs_dict['marker'] = default_marker
 
@@ -301,7 +319,7 @@ def scatter_units(
         return ax, handles
     else:
 
-        col_geometry = masked_gdf.columns[masked_gdf.columns.get_level_values('property').isin(['geometry'])].values[0]
+        col_geometry = find_multiindex_column_names(masked_gdf, property=['geometry'])
         # Draw all points in one call.
         ax.scatter(
             masked_gdf[col_geometry].x,
@@ -544,7 +562,7 @@ def plot_map_selected_regions(
         )
 
     # In selected regions:
-    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
+    col_selected = find_multiindex_column_names(gdf_points_units, property=['selected'])
     mask = gdf_points_units[col_selected] == 1
     ax, handles_scatter_us = scatter_units(
         ax,
@@ -565,9 +583,9 @@ def plot_map_selected_regions(
     # Label units:
     # In selected regions:
     mask = gdf_points_units[col_selected] == 1
-    col_geometry = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['geometry'])].values[0]
-    col_short_code = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['short_code'])].values[0]
-    col_stroke_team = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['stroke_team'])].values[0]
+    col_geometry = find_multiindex_column_names(gdf_points_units, property=['geometry'])
+    col_short_code = find_multiindex_column_names(gdf_points_units, property=['short_code'])
+    col_stroke_team = find_multiindex_column_names(gdf_points_units, property=['stroke_team'])
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units.loc[mask, col_geometry],
@@ -637,14 +655,14 @@ def plot_map_selected_regions(
 
     # Units:
     if len(labels_uns) > 0:
-        section_labels = ['Selected units' + ' '* 50 + '.', 'Other units']
+        section_labels = ['Selected units' + ' '* 70 + '.', 'Other units']
         handles_lists = [
             [handles_scatter_us, handles_us],
             [handles_scatter_uns, handles_uns]
         ]
         labels_lists = [labels_us, labels_uns]
     else:
-        section_labels = ['Selected units' + ' '* 50 + '.']
+        section_labels = ['Selected units' + ' '* 70 + '.']
         handles_lists = [
             [handles_scatter_us, handles_us]
         ]
@@ -757,14 +775,14 @@ def plot_map_selected_units(
     # Set everything to the IVT marker:
     markers = np.full(len(gdf_points_units), 'o')
     # Update MT units:
-    col_use_mt = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['use_mt'])].values[0]
+    col_use_mt = find_multiindex_column_names(gdf_points_units, property=['use_mt'])
     mask_mt = (gdf_points_units[col_use_mt] == 1)
     markers[mask_mt] = '*'
     # Store in the DataFrame:
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
+    col_selected = find_multiindex_column_names(gdf_points_units, property=['selected'])
     mask = gdf_points_units[col_selected] == 1
     ax, handles_scatter_us = scatter_units(
         ax,
@@ -786,10 +804,10 @@ def plot_map_selected_units(
     # Label units:
     # In selected regions:
     mask = gdf_points_units[col_selected] == 1
-    col_geometry = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['geometry'])].values[0]
-    col_short_code = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['short_code'])].values[0]
-    col_stroke_team = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['stroke_team'])].values[0]
-    col_colour_lines = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['colour_lines'])].values[0]
+    col_geometry = find_multiindex_column_names(gdf_points_units, property=['geometry'])
+    col_short_code = find_multiindex_column_names(gdf_points_units, property=['short_code'])
+    col_stroke_team = find_multiindex_column_names(gdf_points_units, property=['stroke_team'])
+    col_colour_lines = find_multiindex_column_names(gdf_points_units, property=['colour_lines'])
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units.loc[mask, col_geometry],
@@ -814,14 +832,14 @@ def plot_map_selected_units(
 
     # Units:
     if len(labels_uns) > 0:
-        section_labels = ['Selected units' + ' '* 50 + '.', 'Other units']
+        section_labels = ['Selected units' + ' '* 70 + '.', 'Other units']
         handles_lists = [
             [handles_scatter_us, handles_us],
             [handles_scatter_uns, handles_uns]
         ]
         labels_lists = [labels_us, labels_uns]
     else:
-        section_labels = ['Selected units' + ' '* 50 + '.']
+        section_labels = ['Selected units' + ' '* 70 + '.']
         handles_lists = [
             [handles_scatter_us, handles_us]
         ]
@@ -935,9 +953,9 @@ def plot_map_catchment(
         fig, ax = plt.subplots(figsize=(12, 8))
 
     # LSOAs in selected units catchment:
-    col_selected = gdf_boundaries_catchment.columns[gdf_boundaries_catchment.columns.get_level_values('property').isin(['selected'])].values[0]
-    col_periphery_unit = gdf_boundaries_catchment.columns[gdf_boundaries_catchment.columns.get_level_values('property').isin(['periphery_unit'])].values[0]
-    col_colour = gdf_boundaries_catchment.columns[gdf_boundaries_catchment.columns.get_level_values('property').isin(['colour'])].values[0]
+    col_selected = find_multiindex_column_names(gdf_boundaries_catchment, property=['selected'])
+    col_periphery_unit = find_multiindex_column_names(gdf_boundaries_catchment, property=['periphery_unit'])
+    col_colour = find_multiindex_column_names(gdf_boundaries_catchment, property=['colour'])
     mask = (gdf_boundaries_catchment[col_selected] == 1)
     ax = draw_boundaries(
         ax,
@@ -951,7 +969,7 @@ def plot_map_catchment(
         (gdf_boundaries_catchment[col_selected] == 0) &
         (gdf_boundaries_catchment[col_periphery_unit] == 1)
     )
-    col_colour_periphery = gdf_boundaries_catchment.columns[gdf_boundaries_catchment.columns.get_level_values('property').isin(['colour_periphery'])].values[0]
+    col_colour_periphery = find_multiindex_column_names(gdf_boundaries_catchment, property=['colour_periphery'])
     ax = draw_boundaries(
         ax,
         gdf_boundaries_catchment[mask],
@@ -987,15 +1005,15 @@ def plot_map_catchment(
     # Set everything to the IVT marker:
     markers = np.full(len(gdf_points_units), 'o')
     # Update MT units:
-    col_use_mt = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['use_mt'])].values[0]
+    col_use_mt = find_multiindex_column_names(gdf_points_units, property=['use_mt'])
     mask_mt = (gdf_points_units[col_use_mt] == 1)
     markers[mask_mt] = '*'
     # Store in the DataFrame:
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
-    col_periphery_unit = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['periphery_unit'])].values[0]
+    col_selected = find_multiindex_column_names(gdf_points_units, property=['selected'])
+    col_periphery_unit = find_multiindex_column_names(gdf_points_units, property=['periphery_unit'])
     mask = (gdf_points_units[col_selected] == 1)
     ax, handles_scatter_us = scatter_units(
         ax,
@@ -1019,12 +1037,11 @@ def plot_map_catchment(
 
     # Label units:
     # In selected regions:
-    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
     mask = gdf_points_units[col_selected] == 1
-    col_geometry = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['geometry'])].values[0]
-    col_short_code = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['short_code'])].values[0]
-    col_stroke_team = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['stroke_team'])].values[0]
-    col_colour_lines = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['colour_lines'])].values[0]
+    col_geometry = find_multiindex_column_names(gdf_points_units, property=['geometry'])
+    col_short_code = find_multiindex_column_names(gdf_points_units, property=['short_code'])
+    col_stroke_team = find_multiindex_column_names(gdf_points_units, property=['stroke_team'])
+    col_colour_lines = find_multiindex_column_names(gdf_points_units, property=['colour_lines'])
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units.loc[mask, col_geometry],
@@ -1036,7 +1053,6 @@ def plot_map_catchment(
         # bbox=dict(facecolor='WhiteSmoke', edgecolor='r'),
     )
     # Outside selected regions:
-    col_periphery_unit = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['periphery_unit'])].values[0]
     mask = (
         (gdf_points_units[col_selected] == 0) &
         (gdf_points_units[col_periphery_unit] == 1)
@@ -1053,14 +1069,14 @@ def plot_map_catchment(
 
     # Units:
     if len(labels_uns) > 0:
-        section_labels = ['Selected units' + ' '* 50 + '.', 'Periphery units']
+        section_labels = ['Selected units' + ' '* 70 + '.', 'Periphery units']
         handles_lists = [
             [handles_scatter_us, handles_us],
             [handles_scatter_uns, handles_uns]
         ]
         labels_lists = [labels_us, labels_uns]
     else:
-        section_labels = ['Selected units' + ' '* 50 + '.']
+        section_labels = ['Selected units' + ' '* 70 + '.']
         handles_lists = [
             [handles_scatter_us, handles_us]
         ]
@@ -1211,14 +1227,14 @@ def plot_map_outcome(
     # Set everything to the IVT marker:
     markers = np.full(len(gdf_points_units), 'o')
     # Update MT units:
-    col_use_mt = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['use_mt'])].values[0]
+    col_use_mt = find_multiindex_column_names(gdf_points_units, property=['use_mt'])
     mask_mt = (gdf_points_units[col_use_mt] == 1)
     markers[mask_mt] = '*'
     # Store in the DataFrame:
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
+    col_selected = find_multiindex_column_names(gdf_points_units, property=['selected'])
     mask = (gdf_points_units[col_selected] == 1)
     ax, handles_scatter_us = scatter_units(
         ax,
@@ -1230,11 +1246,10 @@ def plot_map_outcome(
 
     # Label units:
     # In selected regions:
-    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
     mask = gdf_points_units[col_selected] == 1
-    col_geometry = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['geometry'])].values[0]
-    col_short_code = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['short_code'])].values[0]
-    col_stroke_team = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['stroke_team'])].values[0]
+    col_geometry = find_multiindex_column_names(gdf_points_units, property=['geometry'])
+    col_short_code = find_multiindex_column_names(gdf_points_units, property=['short_code'])
+    col_stroke_team = find_multiindex_column_names(gdf_points_units, property=['stroke_team'])
     ax, handles_us, labels_us = draw_labels_short(
         ax,
         gdf_points_units.loc[mask, col_geometry],
@@ -1246,7 +1261,7 @@ def plot_map_outcome(
     )
 
     # Units:
-    section_labels = ['Stroke units' + ' '* 50 + '.']
+    section_labels = ['Stroke units' + ' '* 70 + '.']
     handles_lists = [[handles_scatter_us, handles_us]]
     labels_lists = [labels_us]
 

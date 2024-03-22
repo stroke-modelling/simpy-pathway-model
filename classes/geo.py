@@ -265,18 +265,23 @@ def make_new_periphery_data(
     # Reset index for easier column selection:
     df_regions = df_regions.reset_index()
 
+
     # Input dataframes should contain multiple scenarios in a
     # MultiIndex column heading. Pick out each one in turn
     # and calculate the periphery units and regions.
     for scenario in scenario_list:
         # Names of selected LSOA:
+        col_selected = find_multiindex_column_names(
+            df_lsoa, property=['selected'], scenario=[scenario])
+        mask = (df_lsoa[col_selected] == 1).values
 
-        mask = (df_lsoa[('selected', scenario)] == 1).values
-        lsoa_selected = list(
-            df_lsoa.loc[mask].copy().reset_index()['lsoa_code'])
+        df_lsoa_selected = df_lsoa.loc[mask].copy().reset_index()
+        col_lsoa_code = find_multiindex_column_names(
+            df_lsoa_selected, property=['lsoa_code'])
+        lsoa_selected = list(df_lsoa_selected[col_lsoa_code])
 
         # Names of selected units:
-        col_selected = df_units.columns[df_units.columns.get_level_values('property').isin(['selected'])].values[0]
+        col_selected = find_multiindex_column_names(df_units, property=['selected'], scenario=[scenario])
 
         units_selected = df_units[
             df_units[col_selected] == 1].index.values
@@ -285,8 +290,8 @@ def make_new_periphery_data(
             df_units[col_selected] == 1]['region_code'].values.flatten()
 
         # Which columns do we want?
-        cols = df_lsoa.columns.get_level_values('scenario').isin(
-            ['any', scenario])
+        cols = find_multiindex_column_names(
+            df_lsoa, scenario=['any', scenario])
         # Subset of only these columns:
         df_lsoa_here = df_lsoa.loc[:, cols].copy()
         # # Drop the 'scenario' level
@@ -298,27 +303,38 @@ def make_new_periphery_data(
             )
 
         # Add these results to the starting dataframes:
-        try:
-            df_units[('periphery_unit', scenario)] = 0
-        except ValueError:
-            df_units[('periphery_unit', scenario, '')] = 0
+        # Units:
+        nlevels = df_units.columns.nlevels
+        col_periphery_unit = tuple(['periphery_unit', scenario] +
+                                   [''] * (nlevels - 2))
 
+        df_units[col_periphery_unit] = 0
         mask = df_units.index.isin(d['periphery_units'])
-        df_units.loc[mask, ('periphery_unit', scenario)] = 1
+        df_units.loc[mask, col_periphery_unit] = 1
 
-        df_regions[('contains_unit', scenario)] = 0
-        mask = df_regions['region_code'].isin(regions_selected)
-        df_regions.loc[mask, ('contains_unit', scenario)] = 1
+        # Regions:
+        nlevels = df_regions.columns.nlevels
+        col_region_code = find_multiindex_column_names(
+            df_regions, property=['region_code'])
 
-        df_regions[('contains_periphery_lsoa', scenario)] = 0
-        mask = df_regions['region_code'].isin(
-            d['regions_containing_lsoa'])
-        df_regions.loc[mask, ('contains_periphery_lsoa', scenario)] = 1
+        col_unit = tuple(['contains_unit', scenario] +[''] * (nlevels - 2))
+        col_punit = tuple(['contains_periphery_unit', scenario] +
+                          [''] * (nlevels - 2))
+        col_plsoa = tuple(['contains_periphery_lsoa', scenario] +
+                          [''] * (nlevels - 2))
 
-        df_regions[('contains_periphery_unit', scenario)] = 0
-        mask = df_regions['region_code'].isin(
+        df_regions[col_unit] = 0
+        mask = df_regions[col_region_code].isin(regions_selected)
+        df_regions.loc[mask, col_unit] = 1
+
+        df_regions[col_plsoa] = 0
+        mask = df_regions[col_region_code].isin(d['regions_containing_lsoa'])
+        df_regions.loc[mask, col_plsoa] = 1
+
+        df_regions[col_punit] = 0
+        mask = df_regions[col_region_code].isin(
             d['regions_with_periphery_units'])
-        df_regions.loc[mask, ('contains_periphery_unit', scenario)] = 1
+        df_regions.loc[mask, col_punit] = 1
 
     # Set index back to how it was earlier:
     df_regions = df_regions.set_index(['region', 'region_code'])
@@ -346,10 +362,10 @@ def link_pathway_geography(
     """
     # Mask for selected LSOA:
     df_lsoa = df_lsoa.copy().reset_index()
-    col_lsoa_code = df_lsoa.columns[df_lsoa.columns.get_level_values('property').isin(['lsoa_code'])].values[0]
+    col_lsoa_code = find_multiindex_column_names(df_lsoa, property=['lsoa_code'])
     mask_lsoa_selected = df_lsoa.copy().reset_index()[col_lsoa_code].isin(lsoa_selected).values
     # Find list of regions containing LSOA caught by selected units.
-    col_region_code = df_lsoa.columns[df_lsoa.columns.get_level_values('property').isin(['region_code'])].values[0]
+    col_region_code = find_multiindex_column_names(df_lsoa, property=['region_code'])
     regions_containing_lsoa = sorted(list(set(
         df_lsoa.loc[mask_lsoa_selected, col_region_code])))
 
@@ -365,34 +381,35 @@ def link_pathway_geography(
         (s.startswith('Unnamed'))
     )]
     # Which columns do we want?
-    cols = df_units.columns.get_level_values('scenario').isin(scenarios_to_keep)
+    cols = find_multiindex_column_names(df_units, scenario=scenarios_to_keep)
     # Subset of only these columns:
     df_units = df_units.loc[:, cols].copy()
     # Drop the 'scenario' level:
     df_units = df_units.droplevel('scenario', axis='columns')
 
-    col_unit = df_units.columns[df_units.columns.get_level_values('property').isin(['unit'])].values[0]
+    col_unit = find_multiindex_column_names(df_units, property=['unit'])
     mask_units_selected = df_units[col_unit].isin(units_selected)
-
+  
     # Find list of regions containing selected units:
-    col_region_code = df_units.columns[df_units.columns.get_level_values('property').isin(['region_code'])].values[0]
-    regions_containing_units = list(df_units[col_region_code][mask_units_selected])
+    col_region_code = find_multiindex_column_names(df_units, property=['region_code'])
+    regions_containing_units = list(
+        df_units.loc[mask_units_selected, col_region_code])
 
     # Mask for LSOA in regions containing selected units:
-    col_region_code = df_lsoa.columns[df_lsoa.columns.get_level_values('property').isin(['region_code'])].values[0]
+    col_region_code = find_multiindex_column_names(df_lsoa, property=['region_code'])
     mask_lsoa_in_regions_containing_units = (
         df_lsoa[col_region_code].isin(regions_containing_units))
     # Find list of periphery units:
-    col_unit_postcode = df_lsoa.columns[df_lsoa.columns.get_level_values('property').isin(['unit_postcode'])].values[0]
+    col_unit_postcode = find_multiindex_column_names(df_lsoa, property=['unit_postcode'])
     periphery_units = sorted(list(set(
         df_lsoa.loc[mask_lsoa_in_regions_containing_units, col_unit_postcode])))
 
     # Mask for regions containing periphery units:
-    col_unit = df_units.columns[df_units.columns.get_level_values('property').isin(['unit'])].values[0]
+    col_unit = find_multiindex_column_names(df_units, property=['unit'])
     mask_regions_periphery_units = (
         df_units[col_unit].isin(periphery_units))
     # Find list of periphery regions:
-    col_region_code = df_units.columns[df_units.columns.get_level_values('property').isin(['region_code'])].values[0]
+    col_region_code = find_multiindex_column_names(df_units, property=['region_code'])
     regions_with_periphery_units = list(
         df_units.loc[mask_regions_periphery_units, col_region_code])
 
@@ -531,9 +548,8 @@ def main(
     gdf_boundaries_catchment = fill_blank_level(gdf_boundaries_catchment, level='subtype', fill_value='')
 
     # Sort units by short code:
-    col = gdf_points_units.columns[
-        gdf_points_units.columns.get_level_values('property').isin(['short_code'])].values[0]
-    gdf_points_units = gdf_points_units.sort_values(col)
+    col_short_code = find_multiindex_column_names(gdf_points_units, property=['short_code'])
+    gdf_points_units = gdf_points_units.sort_values(col_short_code)
 
     to_return = (
         gdf_boundaries_regions,
@@ -873,8 +889,7 @@ def _load_geometry_lsoa(df_lsoa):
     # print(gdf_boundaries_lsoa)
     # print(gdf_boundaries_lsoa[col_geometry])
     # Set geometry:
-    col_geometry = (gdf_boundaries_lsoa.columns[
-        gdf_boundaries_lsoa.columns.get_level_values('property').isin(['geometry'])].values[0])
+    col_geometry = find_multiindex_column_names(gdf_boundaries_lsoa, property=['geometry'])
     geo_series = gdf_boundaries_lsoa[col_geometry].values.flatten()
     gdf_boundaries_lsoa = geopandas.GeoDataFrame(
         gdf_boundaries_lsoa,
@@ -901,15 +916,13 @@ def _load_geometry_catchment(
         if scenario.startswith('diff'):
             pass
         else:
-            col_to_dissolve = gdf_boundaries_lsoa.columns[(
-                (gdf_boundaries_lsoa.columns.get_level_values('property').isin(['unit_postcode'])) &
-                (gdf_boundaries_lsoa.columns.get_level_values('scenario').isin([scenario]))
-                )].values[0]
-            col_geometry = gdf_boundaries_lsoa.columns[gdf_boundaries_lsoa.columns.get_level_values('property').isin(['geometry'])].values[0]
-            col_selected = gdf_boundaries_lsoa.columns[(
-                (gdf_boundaries_lsoa.columns.get_level_values('property').isin(['selected'])) &
-                (gdf_boundaries_lsoa.columns.get_level_values('scenario').isin([scenario]))
-                )].values[0]
+            
+            col_to_dissolve = find_multiindex_column_names(
+                gdf_boundaries_lsoa, property=['unit_postcode'], scenario=[scenario])
+            col_geometry = find_multiindex_column_names(
+                gdf_boundaries_lsoa, property=['geometry'])
+            col_selected = find_multiindex_column_names(
+                gdf_boundaries_lsoa, property=['selected'], scenario=[scenario])
 
             # Which ones are selected?
             mask = gdf_boundaries_lsoa[[col_selected]] == 1
@@ -1034,6 +1047,25 @@ def _combine_lsoa_into_catchment_shapes(
 # ############################
 # ##### HELPER FUNCTIONS #####
 # ############################
+def find_multiindex_column_names(gdf, **kwargs):
+    """
+    kwargs are level_name=column_name
+    , e.g.
+    find_multiindex_column_name(gdf, scenario='any', property='geometry')
+    """
+    masks = [
+        gdf.columns.get_level_values(level).isin(col_list)
+        for level, col_list in kwargs.items()
+    ]
+    mask = np.all(masks, axis=0)
+    cols = gdf.columns[mask]
+    if len(cols) == 1:
+        cols = cols.values[0]
+    elif len(cols) == 0:
+        cols = ''  # Should throw up a KeyError when used to index.
+    return cols
+
+
 def create_lines_from_coords(
         df,
         cols_with_coords,
@@ -1182,23 +1214,26 @@ def assign_colours_to_regions(gdf, col_col, col_units='unit'):
             colour_grid[row, ind_to_pick] = True
         return colour_grid
 
-    n_attempts = 0
-    n_colours = 4
-    success = False
-    while success is False:
-        try:
-            colour_grid = fill_colour_grid(n_colours)
-            success = True
-        except IndexError:
-            n_attempts += 1
-            # Shuffle the units order:
-            gdf['random'] = np.random.rand(len(gdf))
-            gdf = gdf.sort_values(['total_neighbours', 'random'], ascending=False)
-        if n_attempts > 10:
-            # Use way more colours.
-            n_colours = len(gdf)
-            colour_grid = fill_colour_grid(n_colours)
-            success = True
+    # Current setup never seems to give only 4 colour solution,
+    # but running multiple times in different orders does randomise
+    # the cmaps assigned somewhat. Unwanted?
+    # n_attempts = 0
+    # n_colours = 4
+    # success = False
+    # while success is False:
+    #     try:
+    #         colour_grid = fill_colour_grid(n_colours)
+    #         success = True
+    #     except IndexError:
+    #         n_attempts += 1
+    #         # Shuffle the units order:
+    #         gdf['random'] = np.random.rand(len(gdf))
+    #         gdf = gdf.sort_values(['total_neighbours', 'random'], ascending=False)
+    #     if n_attempts > 10:
+    # Use way more colours.
+    n_colours = len(gdf)
+    colour_grid = fill_colour_grid(n_colours)
+    # success = True
 
     # Use the bool colour grid to assign colours:
     colours = range(n_colours)
