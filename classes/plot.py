@@ -17,7 +17,7 @@ def main(
         gdf_boundaries_catchment,
         gdf_boundaries_lsoa,
         gdf_lines_transfer,
-        crop_axis_leeway=20000,
+        crop_axis_leeway=2000,
         colour_list_units=[],
         colour_list_periphery_units=[],
         ):
@@ -45,11 +45,15 @@ def main(
     # and their transfer units.
     scenario_list = list(set(gdf_boundaries_catchment.columns.get_level_values('scenario')))
 
-    col_unit = ('unit', 'any')
+    # col_unit = ('unit', 'any', '')
     col_postcode = ('postcode', 'any')
 
+    col_unit = gdf_points_units.columns[
+        gdf_points_units.columns.get_level_values('property').isin(['unit'])].values[0]
+
     gdf_lines_transfer = gdf_lines_transfer.set_index(col_postcode)
-    gdf_points_units = gdf_points_units.set_index(col_postcode)
+    gdf_points_units = gdf_points_units.set_index(col_unit)
+    gdf_points_units.index.name = 'unit'
 
     for scenario in scenario_list:
         skip_this = (
@@ -75,6 +79,8 @@ def main(
                 col_output_colour_lines=('colour_lines', scenario),
                 col_output_colour_periphery=('colour_periphery', scenario)
                 )
+            col_unit = gdf_boundaries_catchment.columns[
+                gdf_boundaries_catchment.columns.get_level_values('property').isin(['unit'])].values[0]
             gdf_boundaries_catchment = gdf_boundaries_catchment.set_index(col_unit)
             mask = (gdf_boundaries_catchment[col_use] == 1)
 
@@ -87,9 +93,19 @@ def main(
                 how='left'
                 )
             # Move colours over to the unit scatter markers gdf.
+            # Add a blank 'subtype' level to catchment:
+            gdf_here = gdf_boundaries_catchment.copy().loc[mask, [col_output_colour_lines]]
+            gdf_here.columns = [
+                gdf_here.columns.get_level_values('property'),
+                gdf_here.columns.get_level_values('scenario'),
+                [''] * len(gdf_here.columns)
+            ]
+            gdf_here.columns = gdf_here.columns.set_names(['property', 'scenario', 'subtype'])
+            gdf_here.index.name = 'unit'
+
             gdf_points_units = pd.merge(
                 gdf_points_units,
-                gdf_boundaries_catchment.loc[mask, [col_output_colour_lines]],
+                gdf_here,
                 left_index=True,
                 right_index=True,
                 how='left'
@@ -99,6 +115,8 @@ def main(
 
     gdf_lines_transfer = gdf_lines_transfer.reset_index()
     gdf_points_units = gdf_points_units.reset_index()
+
+    # gdf_points_units = gdf_points_units.rename(columns={('unit', '', ''): ('unit', 'any', '')})
 
     return (
         gdf_boundaries_regions,
@@ -117,7 +135,7 @@ def crop_data_to_shared_extent(
         gdf_boundaries_catchment,
         gdf_boundaries_lsoa,
         gdf_lines_transfer=None,
-        leeway=20000
+        leeway=10000
         ):
     # Find a shared axis extent for all GeoDataFrames.
     # Draw a box that just contains everything useful in all gdf,
@@ -196,8 +214,7 @@ def find_shared_map_extent(
     gdfs_to_merge = []
 
     # Regions.
-    # Pick out regions that have been selected or contain periphery
-    # units or LSOA.
+    # Pick out regions that have been selected.
     col_names = ['contains_unit']
     # 'contains_periphery_lsoa', 'contains_periphery_unit'
     gdf_regions_reduced = filter_gdf_by_columns(
@@ -268,7 +285,7 @@ def find_shared_map_extent(
 
 def get_selected_area_extent(
         gdf_selected,
-        leeway=20000,
+        leeway=10000,
         ):
     """
     What is the spatial extent of everything in this GeoDataFrame?
@@ -339,7 +356,9 @@ def _setup_plot_map_outcome(
         (gdf_boundaries_lsoa.columns.get_level_values('subtype') == 'mean') &
         (gdf_boundaries_lsoa.columns.get_level_values('property') == outcome)
     )
+    print(mask)
     all_mean_vals = gdf_boundaries_lsoa.iloc[:, mask]
+    print(all_mean_vals)
     vlim_abs = all_mean_vals.abs().max().values[0]
     vmax = all_mean_vals.max().values[0]
     vmin = all_mean_vals.min().values[0]
@@ -523,8 +542,10 @@ def plot_map_selected_regions(
         show=True
         ):
     # Drop everything that belongs to other scenarios:
-    gdf_boundaries_regions = drop_other_scenarios(gdf_boundaries_regions, scenario)
-    gdf_points_units = drop_other_scenarios(gdf_points_units, scenario)
+    gdf_boundaries_regions = drop_other_scenarios(
+        gdf_boundaries_regions, scenario)
+    gdf_points_units = drop_other_scenarios(
+        gdf_points_units, scenario)
 
     fig, ax = plt.subplots(figsize=(8, 5))
 

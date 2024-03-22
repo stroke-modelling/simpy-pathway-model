@@ -8,7 +8,7 @@ import os
 
 from classes.patient import Patient
 from classes.pathway import Pathway
-from classes.scenario_setup import Scenario_simpy as Scenario
+from classes.scenario import Scenario
 from stroke_outcome.continuous_outcome import Continuous_outcome
 
 
@@ -139,7 +139,33 @@ class Model(object):
             self.results_summary_by_lsoa.columns.set_names(
                 ['property', 'subtype']))
 
-        # TO DO - merge in input admissions and relative frequency here.
+        # Merge in input admissions and relative frequency here.
+        # The results dataframe has multiindex columns so have to
+        # merge on index.
+        # df_lsoa index: ['lsoa', 'lsoa_code']
+        # results_summary_by_lsoa index: ['lsoa', 'lsoa_code']
+        df_ref = self.scenario.df_selected_lsoa[['admissions', 'relative_frequency']]
+        df_ref = df_ref.rename(columns={
+            'admissions': 'reference_admissions',
+            'relative_frequency': 'reference_relative_frequency'
+            })
+        # Add a 'subtype' column level:
+        df_ref_cols = [df_ref.columns, [''] * len(df_ref.columns)]
+        df_ref = pd.DataFrame(
+            df_ref.values,
+            index=df_ref.index,
+            columns=df_ref_cols
+        )
+        # Rename the MultiIndex column names:
+        df_ref.columns = df_ref.columns.set_names(['property', 'subtype'])
+        # Merge:
+        self.results_summary_by_lsoa = pd.merge(
+            self.results_summary_by_lsoa,
+            df_ref,
+            left_index=True,
+            right_index=True,
+            how='left'
+        )
 
     def generate_patient_arrival(self):
         """

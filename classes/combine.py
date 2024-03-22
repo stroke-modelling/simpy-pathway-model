@@ -40,13 +40,17 @@ class Combine(object):
     # ##### WRAPPERS #####
     # ####################
     def combine_inputs_and_results(
-            self, df_input, df_results, col_input, col_results, how='left'):
+            self, df_input, df_results, how='left'):
         """
         Wrapper for pd.merge().
 
         Expect df_input to have only one unnamed column level.
         Expect df_results to have column levels named
         'property' and 'subtype'.
+
+        Must have matching index content.
+        (pd.merge doesn't work well with MultiIndex merging and
+        left_on, right_on).
         """
         # Target column heading level names:
         headers = df_results.columns.names
@@ -74,6 +78,13 @@ class Combine(object):
                     # Update the new column array with column names from
                     # the input dataframe.
                     df_input_cols[ind] = df_input.columns
+        else:
+            # Find where this column level needs to be
+            # to match df_results.
+            ind = headers.index('property')
+            # Update the new column array with column names from
+            # the input dataframe.
+            df_input_cols[ind] = df_input.columns
 
         # Set up a new input DataFrame with the required column levels.
         df_input = pd.DataFrame(
@@ -81,11 +92,11 @@ class Combine(object):
             index=df_input.index,
             columns=df_input_cols
             )
-        df_input_cols.columns.names = headers
+        df_input.columns.names = headers
 
         # Now that the column header levels match, merge:
         df = pd.merge(df_input, df_results,
-                      left_on=col_input, right_on=col_results, how=how)
+                      left_index=True, right_index=True, how=how)
         return df
 
     def combine_selected_units(
@@ -129,6 +140,16 @@ class Combine(object):
                 'use_msu',
                 'selected',
                 'transfer_unit_postcode',
+                'time_ambulance_called',
+                'time_ambulance_arrival',
+                'time_ambulance_leaves_scene',
+                'time_admitting_unit_arrival',
+                'time_needle',
+                'time_transfer_unit_arrival',
+                'time_puncture',
+                'mRS shift',
+                'utility_shift',
+                'mRS 0-2'
             ])
 
         # col_to_group = data.columns[0]
@@ -143,7 +164,7 @@ class Combine(object):
 
         # Rename the MultiIndex column names:
         headers = ['scenario', 'property']
-        if len(dict_scenario_df_to_merge.values()[0].columns.names) == 3:
+        if 'subtype' in list(dict_scenario_df_to_merge.values())[0].columns.names:
             headers.append('subtype')
         df.columns = df.columns.set_names(headers)
 
@@ -235,6 +256,7 @@ class Combine(object):
             dict_scenario_df_to_merge,
             cols_for_scenario=':'
             )
+        # TO DO - maybe change this so that all columns are combined always and at the end remove duplicate columns, move to 'any' scenario --------------
 
         # col_to_group = data.columns[0]
         cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
@@ -248,7 +270,7 @@ class Combine(object):
 
         # Rename the MultiIndex column names:
         headers = ['scenario', 'property']
-        if len(dict_scenario_df_to_merge.values()[0].columns.names) == 3:
+        if 'subtype' in list(dict_scenario_df_to_merge.values())[0].columns.names:
             headers.append('subtype')
         df.columns = df.columns.set_names(headers)
 
@@ -372,8 +394,9 @@ class Combine(object):
                     # Find the names of these columns in this df.
                     # (so can specify one level of multiindex only).
 
-                    scenario_cols = [self.find_multiindex_col(
-                        df.columns, col) for col in cols_for_scenario]
+                    scenario_cols = cols_for_scenario  # [self.find_multiindex_col(
+                        # df.columns, col) for col in cols_for_scenario]
+                    
 
                     if len(dfs_to_merge.items()) < 1:
                         # First time around this loop.

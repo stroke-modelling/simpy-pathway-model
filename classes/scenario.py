@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-class Scenario_simpy(object):
+class Scenario(object):
     """
     Global variables for model.
 
@@ -184,7 +184,7 @@ class Scenario_simpy(object):
         write me
         """
         # Keep only these LSOAs in the admissions data:
-        df_lsoa = self.df_lsoa.copy()
+        df_lsoa = self.df_selected_lsoa.copy()
         df_lsoa = df_lsoa.reset_index()
         admissions = pd.merge(left=df_lsoa, right=admissions,
                               on='lsoa', how='left')
@@ -209,7 +209,7 @@ class Scenario_simpy(object):
         # through to all of the results data.
         admissions = admissions.set_index(['lsoa', 'lsoa_code'])
 
-        self.df_lsoa = admissions
+        self.df_selected_lsoa = admissions
 
     def process_admissions(self):
         """

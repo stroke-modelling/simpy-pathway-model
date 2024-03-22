@@ -219,11 +219,10 @@ def scatter_units(
     for key, val in kwargs.items():
         kwargs_dict[key] = val
 
+    # Keep a copy of some defaults:
     default_marker_size = kwargs_dict['s']
     default_marker = kwargs_dict['marker']
-
-    # Keep a copy of the default face colour:
-    facecolour = kwargs_dict['facecolor']
+    # facecolour = kwargs_dict['facecolor']
 
     import matplotlib.path as mpath
 
@@ -248,13 +247,13 @@ def scatter_units(
     verts[:, 1] = verts[:, 1] * 0.75
     star_squash = mpath.Path(verts, star.codes)
 
+
     # Only plot these units:
     if len(mask_col) > 0:
         mask = gdf[mask_col] == 1
         masked_gdf = gdf[mask]
     else:
         masked_gdf = gdf
-
     if return_handle:
         # Draw each point separately for use with the legend later.
 
@@ -262,11 +261,13 @@ def scatter_units(
         handles = []
         for row in masked_gdf.index:
             gdf_m = masked_gdf.loc[[row]]
+            col_geometry = gdf_m.columns[gdf_m.columns.get_level_values('property').isin(['geometry'])].values[0]
             # Update marker shape and size:
             try:
-                marker = gdf_m['marker'].values[0]
+                col_marker = gdf_m.columns[gdf_m.columns.get_level_values('property').isin(['marker'])].values[0]
+                marker = gdf_m[col_marker].values[0]
                 kwargs_dict['marker'] = marker
-            except KeyError:
+            except IndexError:
                 kwargs_dict['s'] = default_marker_size
                 kwargs_dict['marker'] = default_marker
 
@@ -292,17 +293,19 @@ def scatter_units(
             #     kwargs_dict['facecolor'] = colour
 
             handle = ax.scatter(
-                gdf_m.geometry.x,
-                gdf_m.geometry.y,
+                gdf_m[col_geometry].x,
+                gdf_m[col_geometry].y,
                 **kwargs_dict
                 )
             handles.append(handle)
         return ax, handles
     else:
+
+        col_geometry = masked_gdf.columns[masked_gdf.columns.get_level_values('property').isin(['geometry'])].values[0]
         # Draw all points in one call.
         ax.scatter(
-            masked_gdf.geometry.x,
-            masked_gdf.geometry.y,
+            masked_gdf[col_geometry].x,
+            masked_gdf[col_geometry].y,
             **kwargs_dict
             )
         return ax
@@ -541,7 +544,8 @@ def plot_map_selected_regions(
         )
 
     # In selected regions:
-    mask = gdf_points_units['selected'] == 1
+    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
+    mask = gdf_points_units[col_selected] == 1
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
@@ -560,12 +564,15 @@ def plot_map_selected_regions(
 
     # Label units:
     # In selected regions:
-    mask = gdf_points_units['selected'] == 1
+    mask = gdf_points_units[col_selected] == 1
+    col_geometry = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['geometry'])].values[0]
+    col_short_code = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['short_code'])].values[0]
+    col_stroke_team = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['stroke_team'])].values[0]
     ax, handles_us, labels_us = draw_labels_short(
         ax,
-        gdf_points_units[mask].geometry,
-        gdf_points_units[mask].short_code,
-        gdf_points_units[mask].stroke_team,
+        gdf_points_units.loc[mask, col_geometry],
+        gdf_points_units.loc[mask, col_short_code],
+        gdf_points_units.loc[mask, col_stroke_team],
         s=label_size_units,
         color='k',
         # bbox=dict(facecolor='WhiteSmoke', edgecolor='r'),
@@ -574,9 +581,9 @@ def plot_map_selected_regions(
     mask = ~mask
     ax, handles_uns, labels_uns = draw_labels_short(
         ax,
-        gdf_points_units[mask].geometry,
-        gdf_points_units[mask].short_code,
-        gdf_points_units[mask].stroke_team,
+        gdf_points_units.loc[mask, col_geometry],
+        gdf_points_units.loc[mask, col_short_code],
+        gdf_points_units.loc[mask, col_stroke_team],
         s=label_size_units,
         color='DimGray',
         # bbox=dict(facecolor='GhostWhite', edgecolor='DimGray'),
@@ -750,22 +757,24 @@ def plot_map_selected_units(
     # Set everything to the IVT marker:
     markers = np.full(len(gdf_points_units), 'o')
     # Update MT units:
-    mask_mt = (gdf_points_units['use_mt'] == 1)
+    col_use_mt = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['use_mt'])].values[0]
+    mask_mt = (gdf_points_units[col_use_mt] == 1)
     markers[mask_mt] = '*'
     # Store in the DataFrame:
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    mask = gdf_points_units['selected'] == 1
+    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
+    mask = gdf_points_units[col_selected] == 1
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
         return_handle=True,
-        facecolor='Gainsboro',
+        facecolor='WhiteSmoke',
         edgecolor='k'
         )
     # Outside selected regions:
-    mask = gdf_points_units['selected'] == 0
+    mask = gdf_points_units[col_selected] == 0
     ax, handles_scatter_uns = scatter_units(
         ax,
         gdf_points_units[mask],
@@ -776,25 +785,31 @@ def plot_map_selected_units(
 
     # Label units:
     # In selected regions:
-    mask = gdf_points_units['selected'] == 1
+    mask = gdf_points_units[col_selected] == 1
+    col_geometry = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['geometry'])].values[0]
+    col_short_code = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['short_code'])].values[0]
+    col_stroke_team = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['stroke_team'])].values[0]
+    col_colour_lines = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['colour_lines'])].values[0]
     ax, handles_us, labels_us = draw_labels_short(
         ax,
-        gdf_points_units[mask].geometry,
-        gdf_points_units[mask].short_code,
-        gdf_points_units[mask].stroke_team,
+        gdf_points_units.loc[mask, col_geometry],
+        gdf_points_units.loc[mask, col_short_code],
+        gdf_points_units.loc[mask, col_stroke_team],
         s=label_size_units,
-        colours=gdf_points_units[mask].colour_lines,
-        # color='k'
+        colours=gdf_points_units.loc[mask, col_colour_lines],
+        # color='k',
+        # bbox=dict(facecolor='WhiteSmoke', edgecolor='r'),
     )
     # Outside selected regions:
     mask = ~mask
     ax, handles_uns, labels_uns = draw_labels_short(
         ax,
-        gdf_points_units[mask].geometry,
-        gdf_points_units[mask].short_code,
-        gdf_points_units[mask].stroke_team,
+        gdf_points_units.loc[mask, col_geometry],
+        gdf_points_units.loc[mask, col_short_code],
+        gdf_points_units.loc[mask, col_stroke_team],
         s=label_size_units,
-        color='DimGray'
+        color='DimGray',
+        # bbox=dict(facecolor='GhostWhite', edgecolor='DimGray'),
     )
 
     # Units:
@@ -920,23 +935,27 @@ def plot_map_catchment(
         fig, ax = plt.subplots(figsize=(12, 8))
 
     # LSOAs in selected units catchment:
-    mask = (gdf_boundaries_catchment['selected'] == 1)
+    col_selected = gdf_boundaries_catchment.columns[gdf_boundaries_catchment.columns.get_level_values('property').isin(['selected'])].values[0]
+    col_periphery_unit = gdf_boundaries_catchment.columns[gdf_boundaries_catchment.columns.get_level_values('property').isin(['periphery_unit'])].values[0]
+    col_colour = gdf_boundaries_catchment.columns[gdf_boundaries_catchment.columns.get_level_values('property').isin(['colour'])].values[0]
+    mask = (gdf_boundaries_catchment[col_selected] == 1)
     ax = draw_boundaries(
         ax,
-        gdf_boundaries_catchment[mask],
-        color=gdf_boundaries_catchment[mask]['colour'],
+        gdf_boundaries_catchment.loc[mask],
+        color=gdf_boundaries_catchment.loc[mask, col_colour],
         **boundary_kwargs
         )
 
     # LSOAs in periphery units catchment:
     mask = (
-        (gdf_boundaries_catchment['selected'] == 0) &
-        (gdf_boundaries_catchment['periphery_unit'] == 1)
+        (gdf_boundaries_catchment[col_selected] == 0) &
+        (gdf_boundaries_catchment[col_periphery_unit] == 1)
     )
+    col_colour_periphery = gdf_boundaries_catchment.columns[gdf_boundaries_catchment.columns.get_level_values('property').isin(['colour_periphery'])].values[0]
     ax = draw_boundaries(
         ax,
         gdf_boundaries_catchment[mask],
-        color=gdf_boundaries_catchment[mask]['colour_periphery'],
+        color=gdf_boundaries_catchment.loc[mask, col_colour_periphery],
         **boundary_periphery_kwargs
         )
 
@@ -968,24 +987,27 @@ def plot_map_catchment(
     # Set everything to the IVT marker:
     markers = np.full(len(gdf_points_units), 'o')
     # Update MT units:
-    mask_mt = (gdf_points_units['use_mt'] == 1)
+    col_use_mt = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['use_mt'])].values[0]
+    mask_mt = (gdf_points_units[col_use_mt] == 1)
     markers[mask_mt] = '*'
     # Store in the DataFrame:
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    mask = (gdf_points_units['selected'] == 1)
+    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
+    col_periphery_unit = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['periphery_unit'])].values[0]
+    mask = (gdf_points_units[col_selected] == 1)
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
-        facecolor='Gainsboro',
+        facecolor='WhiteSmoke',
         edgecolor='k',
         return_handle=True
         )
     # Outside selected regions:
     mask = (
-        (gdf_points_units['selected'] == 0) &
-        (gdf_points_units['periphery_unit'] == 1)
+        (gdf_points_units[col_selected] == 0) &
+        (gdf_points_units[col_periphery_unit] == 1)
     )
     ax, handles_scatter_uns = scatter_units(
         ax,
@@ -997,27 +1019,36 @@ def plot_map_catchment(
 
     # Label units:
     # In selected regions:
-    mask = gdf_points_units['selected'] == 1
+    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
+    mask = gdf_points_units[col_selected] == 1
+    col_geometry = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['geometry'])].values[0]
+    col_short_code = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['short_code'])].values[0]
+    col_stroke_team = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['stroke_team'])].values[0]
+    col_colour_lines = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['colour_lines'])].values[0]
     ax, handles_us, labels_us = draw_labels_short(
         ax,
-        gdf_points_units[mask].geometry,
-        gdf_points_units[mask].short_code,
-        gdf_points_units[mask].stroke_team,
-        colours=gdf_points_units[mask].colour_lines,
+        gdf_points_units.loc[mask, col_geometry],
+        gdf_points_units.loc[mask, col_short_code],
+        gdf_points_units.loc[mask, col_stroke_team],
         s=label_size_units,
+        colours=gdf_points_units.loc[mask, col_colour_lines],
+        # color='k',
+        # bbox=dict(facecolor='WhiteSmoke', edgecolor='r'),
     )
     # Outside selected regions:
+    col_periphery_unit = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['periphery_unit'])].values[0]
     mask = (
-        (gdf_points_units['selected'] == 0) &
-        (gdf_points_units['periphery_unit'] == 1)
+        (gdf_points_units[col_selected] == 0) &
+        (gdf_points_units[col_periphery_unit] == 1)
     )
     ax, handles_uns, labels_uns = draw_labels_short(
         ax,
-        gdf_points_units[mask].geometry,
-        gdf_points_units[mask].short_code,
-        gdf_points_units[mask].stroke_team,
+        gdf_points_units.loc[mask, col_geometry],
+        gdf_points_units.loc[mask, col_short_code],
+        gdf_points_units.loc[mask, col_stroke_team],
+        s=label_size_units,
         color='DimGray',
-        s=label_size_units
+        # bbox=dict(facecolor='GhostWhite', edgecolor='DimGray'),
     )
 
     # Units:
@@ -1180,31 +1211,38 @@ def plot_map_outcome(
     # Set everything to the IVT marker:
     markers = np.full(len(gdf_points_units), 'o')
     # Update MT units:
-    mask_mt = (gdf_points_units['use_mt'] == 1)
+    col_use_mt = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['use_mt'])].values[0]
+    mask_mt = (gdf_points_units[col_use_mt] == 1)
     markers[mask_mt] = '*'
     # Store in the DataFrame:
     gdf_points_units['marker'] = markers
 
     # In selected regions:
-    mask = gdf_points_units['selected'] == 1
+    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
+    mask = (gdf_points_units[col_selected] == 1)
     ax, handles_scatter_us = scatter_units(
         ax,
         gdf_points_units[mask],
-        facecolor='Gainsboro',
+        facecolor='WhiteSmoke',
         edgecolor='k',
         return_handle=True
         )
 
     # Label units:
     # In selected regions:
-    mask = gdf_points_units['selected'] == 1
+    col_selected = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['selected'])].values[0]
+    mask = gdf_points_units[col_selected] == 1
+    col_geometry = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['geometry'])].values[0]
+    col_short_code = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['short_code'])].values[0]
+    col_stroke_team = gdf_points_units.columns[gdf_points_units.columns.get_level_values('property').isin(['stroke_team'])].values[0]
     ax, handles_us, labels_us = draw_labels_short(
         ax,
-        gdf_points_units[mask].geometry,
-        gdf_points_units[mask].short_code,
-        gdf_points_units[mask].stroke_team,
+        gdf_points_units.loc[mask, col_geometry],
+        gdf_points_units.loc[mask, col_short_code],
+        gdf_points_units.loc[mask, col_stroke_team],
         s=label_size_units,
-        color='k'
+        color='k',
+        # bbox=dict(facecolor='WhiteSmoke', edgecolor='r'),
     )
 
     # Units:
