@@ -1,18 +1,37 @@
+"""
+Draw some maps using GeoDataFrames from the Catchment data.
+
+crs reference:
++ EPSG:4326  - longitude / latitude.
++ CRS:84     - same as EPSG:4326.
++ EPSG:27700 - British National Grid (BNG).
+"""
 import matplotlib.pyplot as plt
 import pandas as pd
 from shapely.geometry import Polygon  # For extent box.
 import geopandas
 import numpy as np
 
-
 import classes.plot_functions as maps  # for plotting.
 
 
 def find_multiindex_column_names(gdf, **kwargs):
     """
-    kwargs are level_name=column_name
-    , e.g.
+    Find the full column name to match a partial column name.
+
+    Example usage:
     find_multiindex_column_name(gdf, scenario='any', property='geometry')
+
+    Inputs
+    ------
+    gdf    - GeoDataFrame.
+    kwargs - in format level_name=column_name for column level names
+             in the gdf column MultiIndex.
+
+    Returns
+    -------
+    cols - list or str or tuple. The column name(s) matching the
+           requested names in those levels.
     """
     masks = [
         gdf.columns.get_level_values(level).isin(col_list)
@@ -40,6 +59,40 @@ def main(
         colour_list_units=[],
         colour_list_periphery_units=[],
         ):
+    """
+    Set up GeoDataFrames for plotting - crop and add colours.
+
+    Inputs
+    ------
+    gdf_boundaries_regions      - GeoDataFrame. Regions info.
+    gdf_points_units            - GeoDataFrame. Units info.
+    gdf_boundaries_catchment    - GeoDataFrame. Catchment areas.
+    gdf_boundaries_lsoa         - GeoDataFrame. LSOA info.
+    gdf_lines_transfer          - GeoDataFrame. Transfer info.
+    crop_axis_leeway            - float. Padding space around the edge of
+                                  the plots from the outermost thing of
+                                  interest. Units to match gdf units.
+    colour_list_units           - list. List of #rrggbbaa colour strings
+                                  or colour maps for catchment areas.
+    colour_list_periphery_units - list. List of #rrggbbaa colour strings
+                                  or colour maps for periphery unit
+                                  catchment areas.
+
+    Returns
+    -------
+    gdf_boundaries_regions   - GeoDataFrame. Input but cropped.
+    gdf_points_units         - GeoDataFrame. Input but cropped and
+                               assigned colour strings.
+    gdf_boundaries_catchment - GeoDataFrame. Input but cropped and
+                               assigned colour strings.
+    gdf_boundaries_lsoa      - GeoDataFrame. Input but cropped.
+    gdf_lines_transfer       - GeoDataFrame. Input but cropped and
+                               assigned colour strings.
+    box_shared               - polygon. The box we cropped gdfs to.
+    map_extent_shared        - list. [minx, maxx, miny, maxy]
+                               axis coordinates.
+    )
+    """
     tup = crop_data_to_shared_extent(
         gdf_boundaries_regions,
         gdf_points_units,
@@ -70,6 +123,8 @@ def main(
     col_postcode = find_multiindex_column_names(
         gdf_lines_transfer, property=['postcode'])
 
+    # Define index columns so that pd.merge can be used
+    # (it doesn't behave well with MultiIndex merging).
     gdf_lines_transfer = gdf_lines_transfer.set_index(col_postcode)
     gdf_points_units = gdf_points_units.set_index(col_unit)
     gdf_points_units.index.name = 'unit'
@@ -86,6 +141,8 @@ def main(
             col_output_colour_lines = ('colour_lines', scenario)
             col_use = ('use', scenario)
 
+            # Convert the colour index columns in the gdf into
+            # #rrggbbaa strings that pyplot understands.
             gdf_boundaries_catchment = make_colours_for_catchment(
                 gdf_boundaries_catchment,
                 colour_list_units,
@@ -135,6 +192,7 @@ def main(
 
             gdf_boundaries_catchment = gdf_boundaries_catchment.reset_index()
 
+    # Put the index columns back to how they started:
     gdf_lines_transfer = gdf_lines_transfer.reset_index()
     gdf_points_units = gdf_points_units.reset_index()
 
@@ -157,6 +215,36 @@ def crop_data_to_shared_extent(
         gdf_lines_transfer=None,
         leeway=10000
         ):
+    """
+    Only keep geometry in a shared bounding box.
+
+    For example, the units gdf is reduced to only units within the box.
+    The region boundaries are reduced to only regions that are at least
+    partly in the box and then the region boundaries are trimmed to the
+    box edges.
+
+    Inputs
+    ------
+    gdf_boundaries_regions   - GeoDataFrame. Regions info.
+    gdf_points_units         - GeoDataFrame. Units info.
+    gdf_boundaries_catchment - GeoDataFrame. Catchment areas.
+    gdf_boundaries_lsoa      - GeoDataFrame. LSOA info.
+    gdf_lines_transfer       - GeoDataFrame. Transfer info.
+    leeway                   - float. Padding space around the edge of
+                               the plots from the outermost thing of
+                               interest. Units to match gdf units.
+
+    Returns
+    -------
+    gdf_boundaries_regions   - GeoDataFrame. Input and cropped.
+    gdf_points_units         - GeoDataFrame. Input and cropped.
+    gdf_boundaries_catchment - GeoDataFrame. Input and cropped.
+    gdf_boundaries_lsoa      - GeoDataFrame. Input and cropped.
+    gdf_lines_transfer       - GeoDataFrame. Input and cropped.
+    box                      - polygon. The box we cropped gdfs to.
+    map_extent               - list. [minx, maxx, miny, maxy]
+                               axis coordinates.
+    """
     # Find a shared axis extent for all GeoDataFrames.
     # Draw a box that just contains everything useful in all gdf,
     # then extend it a little bit for a buffer.
@@ -209,6 +297,21 @@ def crop_data_to_shared_extent(
 
 
 def filter_gdf_by_columns(gdf, col_names):
+    """
+    Only take selected columns and rows where any value is 1.
+
+    Use this to only keep certain parts of the GeoDataFrame,
+    e.g. selected units.
+
+    Inputs
+    ------
+    gdf - GeoDataFrame. To be filtered.
+    col_names = list. Column names to keep.
+
+    Returns
+    -------
+    gdf_reduced - GeoDataFrame. The requested subset of values.
+    """
     # Which columns do we want?
     cols = gdf.columns.get_level_values('property').isin(col_names)
     # Subset of only these columns:
@@ -228,49 +331,57 @@ def find_shared_map_extent(
         leeway=None
         ):
     """
-    # Take map extent from the combined LSOA, region,
-    # and stroke unit geometry.
+    Find axis boundaries that show the interesting parts of the gdfs.
+
+    Take map extent from the combined LSOA, region, and stroke unit
+    geometry.
+
+    This assumes that all input gdf share a crs.
+
+    Inputs
+    ------
+    gdf_boundaries_regions   - GeoDataFrame. Regions info.
+    gdf_points_units         - GeoDataFrame. Units info.
+    gdf_boundaries_catchment - GeoDataFrame. Catchment areas.
+    gdf_boundaries_lsoa      - GeoDataFrame. LSOA info.
+    gdf_lines_transfer       - GeoDataFrame. Transfer info.
+    leeway                   - float. Padding space around the edge of
+                               the plots from the outermost thing of
+                               interest. Units to match gdf units.
+
+    Returns
+    -------
+    box                      - polygon. The box we'll crop gdfs to.
+    map_extent               - list. [minx, maxx, miny, maxy]
+                               axis coordinates.
     """
     gdfs_to_merge = []
 
+    def filter_gdf(gdf, cols_to_filter):
+        # Pick out only rows where any cols are 1:
+        gdf = filter_gdf_by_columns(gdf, cols_to_filter)
+        # Keep only the 'geometry' column and name it 'geometry'
+        # (no MultiIndex):
+        gdf = gdf.reset_index()['geometry']
+        gdf.columns = ['geometry']
+        # Set the geometry column again:
+        gdf = gdf.set_geometry('geometry')
+        return gdf
+
     # Regions.
-    # Pick out regions that have been selected.
-    col_names = ['contains_unit']
-    # 'contains_periphery_lsoa', 'contains_periphery_unit'
-    gdf_regions_reduced = filter_gdf_by_columns(
-        gdf_boundaries_regions, col_names)
-    # Keep only the 'geometry' column and name it 'geometry' (no MultiIndex):
-    gdf_regions_reduced = gdf_regions_reduced.reset_index()['geometry']
-    gdf_regions_reduced.columns = ['geometry']
-    # Set the geometry column again:
-    gdf_regions_reduced = gdf_regions_reduced.set_geometry('geometry')
-    # Store in list:
+    # Pick out regions containing units:
+    gdf_regions_reduced = filter_gdf(gdf_boundaries_regions, ['contains_unit'])
     gdfs_to_merge.append(gdf_regions_reduced)
 
     # Units.
     # Pick out units that have been selected or catch periphery LSOA.
-    col_names = ['selected', 'periphery_unit']
-    gdf_units_reduced = filter_gdf_by_columns(
-        gdf_points_units, col_names)
-    # Keep only the 'geometry' column and name it 'geometry' (no MultiIndex):
-    gdf_units_reduced = gdf_units_reduced.reset_index()['geometry']
-    gdf_units_reduced.columns = ['geometry']
-    # Set the geometry column again:
-    gdf_units_reduced = gdf_units_reduced.set_geometry('geometry')
-    # Store in list:
+    gdf_units_reduced = filter_gdf(
+        gdf_points_units, ['selected', 'periphery_unit'])
     gdfs_to_merge.append(gdf_units_reduced)
 
     # LSOA catchment.
     # Pick out catchment areas of units that have been selected
-    col_names = ['selected']
-    gdf_catchment_reduced = filter_gdf_by_columns(
-        gdf_boundaries_catchment, col_names)
-    # Keep only the 'geometry' column and name it 'geometry' (no MultiIndex):
-    gdf_catchment_reduced = gdf_catchment_reduced.reset_index()['geometry']
-    gdf_catchment_reduced.columns = ['geometry']
-    # Set the geometry column again:
-    gdf_catchment_reduced = gdf_catchment_reduced.set_geometry('geometry')
-    # Store in list:
+    gdf_catchment_reduced = filter_gdf(gdf_boundaries_catchment, ['selected'])
     gdfs_to_merge.append(gdf_catchment_reduced)
 
     if gdf_lines_transfer is None:
@@ -278,22 +389,13 @@ def find_shared_map_extent(
     else:
         # Transfer lines.
         # Pick out catchment areas of units that have been selected
-        col_names = ['selected']
-        gdf_lines_reduced = filter_gdf_by_columns(
-            gdf_lines_transfer, col_names)
-        # Keep only the 'geometry' column and name it 'geometry'
-        # (no MultiIndex):
-        gdf_lines_reduced = gdf_lines_reduced.reset_index()['geometry']
-        gdf_lines_reduced.columns = ['geometry']
-        # Set the geometry column again:
-        gdf_lines_reduced = gdf_lines_reduced.set_geometry('geometry')
-        # Store in list:
+        gdf_lines_reduced = filter_gdf(gdf_lines_transfer, ['selected'])
         gdfs_to_merge.append(gdf_lines_reduced)
 
+    # Combine all of the reduced gdf:
     gdf_combo = pd.concat(gdfs_to_merge, axis='rows', ignore_index=True)
 
-    # Set geometry column:
-    # gdf_combo = gdf_combo.set_geometry('geometry')
+    # Convert from DataFrame to GeoDataFrame:
     gdf_combo = geopandas.GeoDataFrame(
         gdf_combo,
         geometry='geometry',
@@ -310,6 +412,18 @@ def get_selected_area_extent(
         ):
     """
     What is the spatial extent of everything in this GeoDataFrame?
+
+    Inputs
+    ------
+    gdf_selected - GeoDataFrame.
+    leeway       - float. Padding space around the edge of
+                   the plots from the outermost thing of
+                   interest. Units to match gdf units.
+
+    Returns
+    -------
+    box        - polygon. The box we'll crop gdfs to.
+    map_extent - list. [minx, maxx, miny, maxy] axis coordinates.
     """
     minx, miny, maxx, maxy = gdf_selected.geometry.total_bounds
     # Give this some leeway:
@@ -330,18 +444,58 @@ def get_selected_area_extent(
 
 
 def _keep_only_geometry_in_box(gdf, box):
+    """
+    Keep only rows of this gdf that intersect the box.
+
+    If a region is partly in and partly outside the box,
+    it will be included in the output gdf.
+
+    Inputs
+    ------
+    gdf - GeoDataFrame.
+    box - polygon.
+
+    Returns
+    -------
+    gdf - GeoDataFrame. Input data reduced to only rows that
+          intersect the box.
+    """
     mask = gdf.geometry.intersects(box)
     gdf = gdf[mask]
     return gdf
 
 
 def _restrict_geometry_edges_to_box(gdf, box):
+    """
+    Clip polygons to the given box.
+
+    Inputs
+    ------
+    gdf - GeoDataFrame.
+    box - polygon.
+
+    Returns
+    -------
+    gdf - GeoDataFrame. Same as the input gdf but cropped so nothing
+          outside the box exists.
+    """
     gdf.geometry = gdf.geometry.intersection(box)
     return gdf
 
 
-def _assign_label_coords_to_regions(
-        gdf, col_point_label):
+def _assign_label_coords_to_regions(gdf, col_point_label):
+    """
+    Assign coordinates for labels of region short codes.
+
+    Inputs
+    ------
+    gdf             - GeoDataFrame.
+    col_point_label - name of the column to place coords in.
+
+    Returns
+    -------
+    gdf - GeoDataFrame. Same as input but with added coordinates.
+    """
     # Get coordinates for where to plot each label:
     point_label = ([poly.representative_point() for
                     poly in gdf.geometry])
@@ -359,7 +513,26 @@ def _setup_plot_map_outcome(
         boundary_kwargs={},
         ):
     """
+    Pick out colour scale properties for outcome map.
 
+    The required colour limits depend on the scenario type.
+    If it's a 'diff' scenario, we want to take shared colour limits
+    from only the other 'diff' scenarios and then use a symmetrical
+    colour map and limits. Otherwise we want to exclude the 'diff'
+    scenarios when finding shared colour limits.
+
+    Inputs
+    ------
+    gdf_boundaries_lsoa - GeoDataFrame. Contains outcomes by LSOA.
+    scenario            - str. Name of the scenario to be plotted.
+    outcome             - str. Name of the outcome measure to be plotted.
+    boundary_kwargs     - dict. Kwargs for the LSOA boundary plot
+                          call later.
+
+    Returns
+    -------
+    lsoa_boundary_kwargs - dict. Kwargs for the LSOA boundary plot
+                           call later including colour scale limits.
     """
     # Find shared outcome limits.
     # Take only scenarios containing 'diff':
@@ -427,17 +600,45 @@ def make_colours_for_catchment(
         col_output_colour_periphery='colour_periphery'
         ):
     """
-    write me
+    Assign colours to the catchment areas.
+
+    If the transfer unit information exists in gdf_boundaries_catchment
+    then colours will be chosen so that units sharing a transfer unit
+    will share a base colour and be assigned different shades.
+    Otherwise the same base colour is used for all catchment areas.
+
+    Inputs
+    ------
+    gdf_boundaries_catchment    - GeoDataFrame. Contains colour index.
+    colour_lists_units          - list. Cmaps or #rrggbbaa to be assigned.
+    colour_list_periphery_units - list. Cmaps or #rrggbbaa to be assigned
+                                  for periphery unit catchment areas.
+    col_colour_ind              - str / tuple. Column of colour index.
+    col_transfer_colour_ind     - str / tuple. Column of transfer unit
+                                  colour index.
+    col_selected                - str / tuple. Column of selected unit.
+    col_use                     - str / tuple. Column of "use" for this
+                                  scenario (different from "selected").
+    col_output_colour           - str / tuple. Column of resulting colour.
+    col_output_colour_lines     - str / tuple. Column of resulting colour
+                                  for other uses, e.g. transfer unit lines.
+    col_output_colour_periphery - str / tuple. Column of resulting colour
+                                  for periphery units.
+
+    Returns
+    -------
+    gdf_boundaries_catchment - GeoDataFrame. Same as input with added
+                               columns with colours.
     """
     def make_colour_list(cmap='Blues', inds_cmap=[0.2, 0.4, 0.6, 0.8]):
         # Pick out colours from the cmap.
-        colour_list_units = plt.get_cmap(cmap)(inds_cmap)
+        colour_list = plt.get_cmap(cmap)(inds_cmap)
         # Convert from (0.0 to 1.0) to (0 to 255):
-        colour_list_units = (colour_list_units * 255.0).astype(int)
+        colour_list = (colour_list * 255.0).astype(int)
         # Convert to string:
-        colour_list_units = np.array([
-            '#%02x%02x%02x%02x' % tuple(c) for c in colour_list_units])
-        return colour_list_units
+        colour_list = np.array([
+            '#%02x%02x%02x%02x' % tuple(c) for c in colour_list])
+        return colour_list
 
     # Pick sequential colourmaps that go from light (0.0) to dark (1.0).
     # Don't include Greys because it's used for periphery units.
@@ -530,6 +731,21 @@ def make_colours_for_catchment(
 
 
 def drop_other_scenarios(df, scenario):
+    """
+    Remove other scenarios and the 'scenario' column heading from df.
+
+    Inputs
+    ------
+    df       - GeoDataFrame. Contains a column MultiIndex with a
+               'scenario' level.
+    scenario - str. Name of the scenario to keep.
+
+    Returns
+    -------
+    df_selected - GeoDataFrame. Subset of the input dataframe with
+                  only the selected scenario and the 'scenario' level
+                  removed.
+    """
     scenario_list = list(set(df.columns.get_level_values('scenario')))
     scenarios_to_keep = [s for s in scenario_list if (
         (s == scenario) |
@@ -564,6 +780,22 @@ def plot_map_selected_regions(
         path_to_file='',
         show=True
         ):
+    """
+    Plot a map labelling selected and nearby regions and units.
+
+    +---+ +---------+ +---+    1 - Legend for units, selected / other.
+    | 1 | |    2    | | 3 |    2 - Map with regions and units.
+    +---+ +---------+ +---+    3 - Legend for regions, selected / other.
+
+    Inputs
+    ------
+    gdf_boundaries_regions - GeoDataFrame.
+    gdf_points_units       - GeoDataFrame.
+    scenario               - str. Name of scenario to use.
+    map_extent             - list. Axis limits [xmin, xmax, ymin, ymax].
+    path_to_file           - str. Save the image here.
+    show                   - bool. Whether to plt.show().
+    """
     # Drop everything that belongs to other scenarios:
     gdf_boundaries_regions = drop_other_scenarios(
         gdf_boundaries_regions, scenario)
@@ -582,7 +814,7 @@ def plot_map_selected_regions(
     if path_to_file is None:
         pass
     else:
-        # Return extra artists so that bbox_inches='tight' line
+        # Include extra artists so that bbox_inches='tight' line
         # in savefig() doesn't cut off the legends.
         # Adding legends with ax.add_artist() means that the
         # bbox_inches='tight' line ignores them.
@@ -610,6 +842,23 @@ def plot_map_selected_units(
         path_to_file='',
         show=True
         ):
+    """
+    Plot a map labelling selected and nearby units and transfers.
+
+    +---+ +---------+    1 - Legend for units, selected / other.
+    | 1 | |    2    |    2 - Map with regions, units, transfer lines.
+    +---+ +---------+
+
+    Inputs
+    ------
+    gdf_boundaries_regions - GeoDataFrame.
+    gdf_points_units       - GeoDataFrame.
+    gdf_lines_transfer     - GeoDataFrame.
+    scenario               - str. Name of scenario to use.
+    map_extent             - list. Axis limits [xmin, xmax, ymin, ymax].
+    path_to_file           - str. Save the image here.
+    show                   - bool. Whether to plt.show().
+    """
     # Drop everything that belongs to other scenarios:
     gdf_boundaries_regions = drop_other_scenarios(
         gdf_boundaries_regions, scenario)
@@ -629,6 +878,10 @@ def plot_map_selected_units(
     if path_to_file is None:
         pass
     else:
+        # Include extra artists so that bbox_inches='tight' line
+        # in savefig() doesn't cut off the legends.
+        # Adding legends with ax.add_artist() means that the
+        # bbox_inches='tight' line ignores them.
         plt.savefig(
             path_to_file,
             bbox_extra_artists=extra_artists,
@@ -657,6 +910,25 @@ def plot_map_catchment(
         path_to_file=''
         ):
     """
+    Plot a map of unit catchment areas.
+
+    +---+ +---------+    1 - Legend for units, selected / other.
+    | 1 | |    2    |    2 - Map with regions, units, transfer lines,
+    +---+ +---------+        catchment areas.
+
+    Inputs
+    ------
+    gdf_boundaries_catchment - GeoDataFrame.
+    gdf_boundaries_regions   - GeoDataFrame.
+    gdf_points_units         - GeoDataFrame.
+    gdf_lines_transfer       - GeoDataFrame.
+    scenario                 - str. Name of scenario to use.
+    title                    - str. Title of the axis.
+    lsoa_boundary_kwargs     - dict. Kwargs for plotting catchment areas.
+    lsoa_boundary_periphery_kwargs - dict. Kwargs for periphery areas.
+    map_extent               - list. Axis limits [xmin, xmax, ymin, ymax].
+    path_to_file             - str. Save the image here.
+    show                     - bool. Whether to plt.show().
     """
     # Drop everything that belongs to other scenarios:
     gdf_boundaries_regions = drop_other_scenarios(
@@ -669,19 +941,11 @@ def plot_map_catchment(
     gdf_boundaries_catchment = gdf_boundaries_catchment.dropna(
         subset='colour_ind')
 
-    boundary_kwargs = {
-        # 'cmap': 'Blues',
-        'edgecolor': 'face',
-        # 'color': 'colour'
-    }
+    boundary_kwargs = {'edgecolor': 'face'}
     # Update this with anything from the input dict:
     lsoa_boundary_kwargs = boundary_kwargs | lsoa_boundary_kwargs
 
-    boundary_periphery_kwargs = {
-        # 'cmap': 'Greys',
-        'edgecolor': 'face',
-        # 'color': 'colour'
-    }
+    boundary_periphery_kwargs = {'edgecolor': 'face'}
     # Update this with anything from the input dict:
     lsoa_boundary_periphery_kwargs = (boundary_periphery_kwargs |
                                       lsoa_boundary_periphery_kwargs)
@@ -703,6 +967,10 @@ def plot_map_catchment(
     if path_to_file is None:
         pass
     else:
+        # Include extra artists so that bbox_inches='tight' line
+        # in savefig() doesn't cut off the legends.
+        # Adding legends with ax.add_artist() means that the
+        # bbox_inches='tight' line ignores them.
         plt.savefig(
             path_to_file,
             bbox_extra_artists=extra_artists,
@@ -730,8 +998,26 @@ def plot_map_outcome(
         path_to_file=None
         ):
     """
-    """
+    Plot a map of LSOA outcomes.
 
+    +---+ +---------+ |     1 - Legend for units, selected / other.
+    | 1 | |    2    | | 3   2 - Map with regions, units, LSOA by outcome.
+    +---+ +---------+ |     3 - Colourbar for outcome.
+
+    Inputs
+    ------
+    gdf_boundaries_catchment - GeoDataFrame.
+    gdf_boundaries_regions   - GeoDataFrame.
+    gdf_points_units         - GeoDataFrame.
+    scenario                 - str. Name of scenario to use.
+    outcome                  - str. Name of outcome to show.
+    title                    - str. Title of the axis.
+    lsoa_boundary_kwargs     - dict. Kwargs for plotting catchment areas.
+    map_extent               - list. Axis limits [xmin, xmax, ymin, ymax].
+    draw_region_boundaries   - bool. Whether to draw regions in background.
+    path_to_file             - str. Save the image here.
+    show                     - bool. Whether to plt.show().
+    """
     lsoa_boundary_kwargs = _setup_plot_map_outcome(
         gdf_boundaries_lsoa,
         scenario,
@@ -761,6 +1047,10 @@ def plot_map_outcome(
     if path_to_file is None:
         pass
     else:
+        # Include extra artists so that bbox_inches='tight' line
+        # in savefig() doesn't cut off the legends.
+        # Adding legends with ax.add_artist() means that the
+        # bbox_inches='tight' line ignores them.
         plt.savefig(
             path_to_file,
             bbox_extra_artists=extra_artists,

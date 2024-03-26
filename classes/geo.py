@@ -1,55 +1,10 @@
 """
-Draw some maps using output files.
+Combine Catchment data with geometry to make GeoDataFrames for plots.
 
 crs reference:
 + EPSG:4326  - longitude / latitude.
 + CRS:84     - same as EPSG:4326.
 + EPSG:27700 - British National Grid (BNG).
-
-NOTES
-# Always load all data every time.
-# Only load it once.
-# Select different DataFrame columns for different plots.
-
-Example catchment areas:
-The two right-hand units are in the selected regions
-and the two units on the left are national units,
-not modelled directly.
-
-    ▓▓▓▓▓▓▓▓▓░░░░░░░░█████▒▒▒▒▒  <-- Drip-and-ship   +------------+
-    ▏   *        o     o   *  ▕                      | * MT unit  |
-    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒  <-- Mothership      | o IVT unit |
-                -->▏ ▕<--                            +------------+
-                Difference
-
-The catchment area boundaries are halfway between adjacent units.
-
-In the mothership model, the right-hand MT unit's catchment area
-covers the whole right half of the rectangle.
-In the drip-and-ship model, some of that area is instead assigned
-to the out-of-area IVT unit in the centre of the rectangle.
-
-TO DO - currently brute forcing all of the dataframes to have mathcing
-column index labels and levels and that, but should be able to function
-it up. Automatically know what levels are already there and which need
-adding.
-
-TO DO - automatic repr() for making maps
-
-TO DO - better colour assignment.
-e.g. drip and ship catchment map, make all feeder units different shades
-of the same colour for each MT unit.
-
-TO DO - get this ready for packaging.
-
-
-    # ----- Gather data -----
-    # Selected LSOA names, codes.
-    # ['lsoa', 'LSOA11CD', 'postcode_nearest', 'time_nearest', 'Use']
-    # Index column: LSOA11NM.
-    # Expected column MultiIndex levels:
-    #   - combined: ['scenario', 'property']
-    #   - separate: ['{unnamed level}']
 """
 import numpy as np
 import pandas as pd
@@ -70,8 +25,6 @@ from pandas.api.types import is_numeric_dtype  # For checking dtype.
 
 # save gdf to file (csv with multiindex)
 
-# add scenario header if not already there
-
 # #####################
 # ##### LOAD DATA #####
 # #####################
@@ -84,28 +37,20 @@ def import_geojson(region_type: 'str'):
 
     Inputs
     ------
-    setup       - Setup() object. Contains attributes for paths to the
-                    data directory and the geojson file names.
     region_type - str. Lookup name for selecting a geojson file.
-                    This should be one of the column names from the
-                    various regions files.
+                  This should be one of the column names from the
+                  various regions files.
 
     Returns
     -------
     gdf_boundaries - GeoDataFrame. One row per region shape in the
-                    file. Expect columns for region name and geometry.
+                     file. Expect columns for region name and geometry.
     """
     # Select geojson file based on input region type:
     geojson_file_dict = {
-        'LSOA11NM': ''.join([
-            'LSOA_(Dec_2011)_Boundaries_Super_Generalised_Clipped_(BSC)',
-            '_EW_V3.geojson'
-        ]),
-        'SICBL22NM': 'SICBL_JUL_2022_EN_BUC_4104971945004813003.geojson',
-        'LHB20NM': ''.join([
-            'Local_Health_Boards_April_2020_WA_BGC_2022_',
-            '94310626700012506.geojson'
-        ]),
+        'LSOA11NM': 'LSOA.geojson',
+        'SICBL22NM': 'SICBL.geojson',
+        'LHB20NM': 'LHB.geojson'
     }
 
     # TO DO - change to relative import.
@@ -192,8 +137,14 @@ def import_geojson(region_type: 'str'):
 def load_regions():
     """
     Load region data from file.
-    """
 
+    Returns
+    -------
+    df_regions - pd.DataFrame. Contains regions including SICBL, LHB.
+                 Contains region codes for matching, names for
+                 displaying prettier names, and invented short codes
+                 for labelling regions on a map.
+    """
     # Load and parse geometry data
     # TO DO - change to relative import.
     # # Relative import from package files:
@@ -224,9 +175,34 @@ def load_regions():
 
 
 def make_new_periphery_data(
-        df_regions, df_units, df_lsoa):
+        df_regions,
+        df_units,
+        df_lsoa
+        ):
     """
     Find units, regions that aren't selected but catch selected LSOA.
+
+    Use the term "periphery unit" for units that were not selected
+    but that catch LSOA in regions that contain selected units.
+    Use the term "periphery lsoa" for LSOA that are selected and
+    lie outside the regions that contain selected units.
+
+    Inputs
+    ------
+    df_regions - pd.DataFrame. Matches output of load_regions().
+    df_units   - pd.DataFrame. Units, services, whether selected for
+                 LSOA catchment. Matches output of Catchment.
+    df_lsoa    - pd.DataFrame. LSOA names, chosen units...
+                 Matches output of Catchment.
+
+    Returns
+    -------
+    df_regions - pd.DataFrame. Same as input with additional columns
+                 for whether region contains any selected unit, any
+                 selected LSOA, or any periphery unit.
+    df_units   - pd.DataFrame. Same as input with additional column
+                 for whether unit catches any LSOA in any region
+                 that contains a selected unit.
     """
     # List of scenarios included in the units and LSOA data:
     scenario_list = sorted(list(set(
@@ -297,9 +273,12 @@ def make_new_periphery_data(
         # # Drop the 'scenario' level
         df_lsoa_here = df_lsoa_here.droplevel('scenario', axis='columns')
 
+        # Get a dictionary "d" of results:
         d = link_pathway_geography(
-            df_lsoa_here, df_units,
-            units_selected, lsoa_selected
+            df_lsoa_here,
+            df_units,
+            units_selected,
+            lsoa_selected
             )
 
         # Add these results to the starting dataframes:
@@ -342,10 +321,14 @@ def make_new_periphery_data(
 
 
 def link_pathway_geography(
-        df_lsoa, df_units,
-        units_selected, lsoa_selected
+        df_lsoa,
+        df_units,
+        units_selected,
+        lsoa_selected
         ):
     """
+    Find regions, units, LSOA that aren't selected but are nearby.
+
     Find:
     + regions containing selected LSOA
     + regions containing selected units
@@ -353,8 +336,18 @@ def link_pathway_geography(
     + stroke units catching those LSOA (periphery units)
     + regions containing periphery units
 
-    periphery units catching any LSOA in selected regions.
+    Inputs
+    ------
+    df_lsoa        - pd.DataFrame. Matches output from Catchment.
+    df_units       - pd.DataFrame. Matches output from Catchment.
+    units_selected - list. Postcodes of selected units.
+    lsoa_selected  - list. LSOA codes of selected LSOA.
 
+    Returns
+    -------
+    to_return - dict. Contains a list of postcodes of periphery units,
+                a list of region codes containing selected LSOA, and
+                a list of region codes containing periphery units.
     """
     # Mask for selected LSOA:
     df_lsoa = df_lsoa.copy().reset_index()
@@ -425,8 +418,26 @@ def link_pathway_geography(
     return to_return
 
 
-def check_scenario_level(df, scenario_name='scenario'):
+def check_scenario_level(
+        df,
+        scenario_name='scenario'
+        ):
+    """
+    Ensure DataFrame contains a column level named 'scenario'.
+
+    Inputs
+    ------
+    df - pd.DataFrame. Check this for a MultiIndex column heading
+         with a level named 'scenario'.
+    scenario_name - str. If the 'scenario' level has to be made here,
+         name the scenario this string.
+
+    Returns
+    -------
+    df - pd.DataFrame. Same as the input with a 'scenario' column level.
+    """
     if df is None:
+        # Nothing to do here.
         return df
     else:
         pass
@@ -434,6 +445,7 @@ def check_scenario_level(df, scenario_name='scenario'):
     # Check if 'scenario' column level exists:
     levels = df.columns.names
     if 'scenario' in levels:
+        # Nothing to do here.
         return df
     else:
         if len(levels) == 1:
@@ -466,9 +478,31 @@ def check_scenario_level(df, scenario_name='scenario'):
 def main(
         df_lsoa,
         df_units,
-        df_regions,
+        df_regions=None,
         df_transfer=None,
         ):
+    """
+    Create GeoDataFrames by loading geometry and matching inputs.
+
+    Inputs
+    ------
+    df_lsoa     - pd.DataFrame. LSOA data from Catchment.
+    df_units    - pd.DataFrame. Units data from Catchment.
+    df_regions  - pd.DataFrame. Regions data from load_regions.
+    df_transfer - pd.DataFrame. Transfer data from Catchment.
+
+    Returns
+    -------
+    gdf_boundaries_regions   - GeoDataFrame for df_regions.
+    gdf_points_units         - GeoDataFrame for df_units.
+    gdf_lines_transfer       - GeoDataFrame for df_transfer.
+    gdf_boundaries_lsoa      - GeoDataFrame for df_lsoa.
+    gdf_boundaries_catchment - GeoDataFrame for df_lsoa where LSOA
+                               are grouped by catchment unit.
+    """
+    if df_regions is None:
+        df_regions = load_regions()
+
     # Check whether the input DataFrames have a 'scenario' column level.
     # If not, add one now with a placeholder scenario name.
     df_lsoa = check_scenario_level(df_lsoa)
@@ -491,7 +525,7 @@ def main(
     # Merge many LSOA into one big blob of catchment area.
     gdf_boundaries_catchment = _load_geometry_catchment(
         gdf_boundaries_lsoa, df_transfer)
-    # Label periphery units:
+    # Label periphery units in catchment data:
     scenario_list = sorted(list(set(
         gdf_boundaries_catchment['selected'
                                  ].columns.get_level_values('scenario'))))
@@ -575,48 +609,16 @@ def main(
     return to_return
 
 
-def fill_blank_level(gdf, level='scenario', fill_value='any'):
-    # Get level names:
-    level_names = gdf.columns.names
-
-    try:
-        scenario_list = list(set(gdf.columns.get_level_values(level)))
-    except KeyError:
-        # Nothing to do here.
-        return gdf
-
-    scenarios_to_update = [
-        scenario for scenario in scenario_list if
-        ((scenario == '') | (scenario.startswith('Unnamed')))
-        ]
-
-    # Which column levels exist?
-    col_level_names = gdf.columns.names
-    # Where is scenario?
-    i_scen = col_level_names.index(level)
-
-    new_columns = []
-    for scen_col in gdf.columns:
-        if scen_col[i_scen] in scenarios_to_update:
-            scen_col = list(scen_col)
-            scen_col[i_scen] = fill_value
-            scen_col = tuple(scen_col)
-        else:
-            # Don't update the column name.
-            pass
-
-        # Only store the level part:
-        new_columns.append(scen_col)
-
-    gdf.columns = pd.MultiIndex.from_tuples(new_columns)
-    gdf.columns = gdf.columns.set_names(level_names)
-
-    return gdf
-
-
 def _load_geometry_regions(df_regions):
     """
-    Create GeoDataFrames of new geometry and existing DataFrames.
+    Create GeoDataFrame of geometry and existing DataFrame.
+
+    Inputs
+    ------
+    df_regions - pd.DataFrame. Region info.
+
+    Returns
+    gdf_regions - GeoDataFrame. Region info and geometry.
     """
     # All region polygons:
     gdf_list = []
@@ -680,27 +682,15 @@ def _load_geometry_regions(df_regions):
 
 def _load_geometry_stroke_units(df_units):
     """
-    Create GeoDataFrames of new geometry and existing DataFrames.
-
-    Import GeoDataFrame of selected stroke unit data.
-
-    The file read is the output from Scenario() after the
-    national stroke units have been reduced to those selected.
-
-    The file contains coordinates (Easting, Northing) and (long, lat)
-    which are picked out here and converted into Point() objects.
-    The crs (coordinate reference system) is set to British National
-    Grid.
+    Create GeoDataFrame of geometry and existing DataFrame.
 
     Inputs
     ------
-    setup - Setup() object. Contains attributes for paths to the
-            data directory and the geojson file names.
+    df_units - pd.DataFrame. Unit info.
 
     Returns
     -------
-    gdf_units - GeoDataFrame. One row per selected stroke unit in
-                the file. Columns include unit name and geometry.
+    gdf_units - GeoDataFrame. Unit info and geometry.
     """
     # Selected stroke units names, services, and regions.
     # Index column: Postcode.
@@ -760,6 +750,14 @@ def _load_geometry_stroke_units(df_units):
 def _load_geometry_transfer_units(df_transfer):
     """
     Create GeoDataFrames of new geometry and existing DataFrames.
+
+    Inputs
+    ------
+    df_transfer - pd.DataFrame. Unit info.
+
+    Returns
+    -------
+    gdf_transfer - GeoDataFrame. Unit info and geometry.
     """
     # Selected stroke units names, coordinates, and services.
     # Index column: ['postcode', 'name_nearest_mt']
@@ -851,6 +849,14 @@ def _load_geometry_transfer_units(df_transfer):
 def _load_geometry_lsoa(df_lsoa):
     """
     Create GeoDataFrames of new geometry and existing DataFrames.
+
+    Inputs
+    ------
+    df_lsoa - pd.DataFrame. LSOA info.
+
+    Returns
+    -------
+    gdf_boundaries_lsoa - GeoDataFrame. LSOA info and geometry.
     """
 
     # All LSOA shapes:
@@ -917,6 +923,21 @@ def _load_geometry_catchment(
         gdf_boundaries_lsoa,
         df_transfer=None
         ):
+    """
+    Create GeoDataFrames of LSOA grouped by unit catchment area.
+
+    Inputs
+    ------
+    gdf_boundaries_lsoa - GeoDataFrame. LSOA info including units.
+    df_transfer - pd.DataFrame. Transfer unit info. Used in colour
+                  selection to make units with the same transfer
+                  unit share a colour.
+
+    Returns
+    -------
+    gdf_boundaries_catchment - GeoDataFrame. Catchment area
+                               info and geometry.
+    """
     # List of scenarios included in the LSOA data:
     scenario_list = sorted(list(set(
         gdf_boundaries_lsoa.columns.get_level_values('scenario'))))
@@ -1045,11 +1066,24 @@ def _load_geometry_catchment(
 
 
 def _combine_lsoa_into_catchment_shapes(
-        gdf, col_to_dissolve, col_geometry='geometry',
-        col_after_dissolve='dissolve'):
+        gdf,
+        col_to_dissolve,
+        col_geometry='geometry',
+        col_after_dissolve='dissolve'
+        ):
     """
-    # Combine LSOA geometry - from separate polygon per LSOA to one
-    # big polygon for all LSOAs in catchment area.
+    Blob together LSOA geometry that shares a catchment unit.
+
+    Inputs
+    ------
+    gdf                - GeoDataFrame. With geometry to be blobbed.
+    col_to_dissolve    - str / tuple. Column name to blob.
+    col_geometry       - str / tuple. Column name for geometry.
+    col_after_dissolve - str / tuple. Column name for final data.
+
+    Returns
+    -------
+    gdf2 - GeoDataFrame. With blobbed geometry.
     """
     # Copy to avoid pandas shenanigans.
     gdf = gdf.copy()
@@ -1072,9 +1106,21 @@ def _combine_lsoa_into_catchment_shapes(
 # ############################
 def find_multiindex_column_names(gdf, **kwargs):
     """
-    kwargs are level_name=column_name
-    , e.g.
+    Find the full column name to match a partial column name.
+
+    Example usage:
     find_multiindex_column_name(gdf, scenario='any', property='geometry')
+
+    Inputs
+    ------
+    gdf    - GeoDataFrame.
+    kwargs - in format level_name=column_name for column level names
+             in the gdf column MultiIndex.
+
+    Returns
+    -------
+    cols - list or str or tuple. The column name(s) matching the
+           requested names in those levels.
     """
     masks = [
         gdf.columns.get_level_values(level).isin(col_list)
@@ -1112,12 +1158,16 @@ def create_lines_from_coords(
     ------
     df               - pd.DataFrame. Contains some coordinates.
     cols_with_coords - list. List of column names in df that contain
-                    coordinates for making lines.
+                       coordinates for making lines.
+    col_coord        - str / tuple. Resulting column containing
+                       coordinates.
+    col_geom         - str / tuple. Resulting column containing
+                       geometry.
 
     Returns
     -------
     gdf - GeoDataFrame. The input df with the new Line
-        geometry objects and converted to a GeoDataFrame.
+          geometry objects and converted to a GeoDataFrame.
     """
     # Combine multiple columns of coordinates into a single column
     # with a list of lists of coordinates:
@@ -1139,7 +1189,8 @@ def create_lines_from_coords(
 
 def create_combo_cols(gdf, scenario):
     """
-    TO DO - write me
+    Combine columns from two scenarios to make data for diff columns.
+
     When dataframe doesn't have the diff_this_minus_that columns,
     use this function to create that data and prevent KeyError later.
 
@@ -1148,6 +1199,16 @@ def create_combo_cols(gdf, scenario):
     but bad for regions catching LSOA (outcome diff is NaN when not in both,
     so the regions contain no info).
     Allow selection of min and max. (Or anything else?)
+
+    Inputs
+    ------
+    gdf      - GeoDataFrame. With data from multiple scenarios.
+    scenario - str. The diff scenario name,
+               diff_scenario1_minus_scenario2.
+
+    Returns
+    -------
+    gdf - GeoDataFrame. The input data with added diff columns.
     """
     # Find out what diff what:
     scen_bits = scenario.split('_')
@@ -1195,11 +1256,89 @@ def create_combo_cols(gdf, scenario):
     return gdf
 
 
+def fill_blank_level(
+        gdf,
+        level='scenario',
+        fill_value='any'
+        ):
+    """
+    Fill empty column MultiIndex level headings with some string.
+
+    Inputs
+    ------
+    gdf        - GeoDataFrame. Expect to have MultiIndex columns.
+    level      - str. The column level name to check.
+    fill_value - str. What to fill empty entries with.
+
+    Returns
+    -------
+    gdf - GeoDataFrame. The input data with any empty column names
+          filled.
+    """
+    # Get level names:
+    level_names = gdf.columns.names
+
+    try:
+        scenario_list = list(set(gdf.columns.get_level_values(level)))
+    except KeyError:
+        # Nothing to do here.
+        return gdf
+
+    scenarios_to_update = [
+        scenario for scenario in scenario_list if
+        ((scenario == '') | (scenario.startswith('Unnamed')))
+        ]
+
+    # Which column levels exist?
+    col_level_names = gdf.columns.names
+    # Where is scenario?
+    i_scen = col_level_names.index(level)
+
+    new_columns = []
+    for scen_col in gdf.columns:
+        if scen_col[i_scen] in scenarios_to_update:
+            scen_col = list(scen_col)
+            scen_col[i_scen] = fill_value
+            scen_col = tuple(scen_col)
+        else:
+            # Don't update the column name.
+            pass
+
+        # Only store the level part:
+        new_columns.append(scen_col)
+
+    gdf.columns = pd.MultiIndex.from_tuples(new_columns)
+    gdf.columns = gdf.columns.set_names(level_names)
+
+    return gdf
+
+
 # ###################
 # ##### COLOURS #####
 # ###################
-def assign_colours_to_regions(gdf, col_col, col_units='unit'):
+def assign_colours_to_regions(
+        gdf,
+        col_col,
+        col_units='unit'
+        ):
+    """
+    Assign colours to boundaries so neighbours have different colours.
 
+    This assigns an integer to each boundary. These integers can be
+    used later with a list of colours to sample the list.
+
+    Inputs
+    ------
+    gdf       - GeoDataFrame. Contains geometry to assign colours to.
+    col_col   - str / tuple. Name of the column to contain the
+                colour index results.
+    col_units - str / tuple. Name of the column that contains
+                unit postcodes for labelling the catchment areas.
+
+    Returns
+    -------
+    gdf - GeoDataFrame. The input data with added colour index column.
+    """
     gdf = find_neighbours_for_regions(gdf, col_units)
     gdf = gdf.sort_values('total_neighbours', ascending=False)
 
@@ -1262,6 +1401,21 @@ def assign_colours_to_regions(gdf, col_col, col_units='unit'):
 
 
 def find_neighbours_for_regions(df, col_units='unit'):
+    """
+    Find which boundaries border each other.
+
+    Inputs
+    ------
+    df        - GeoDataFrame. Contains geometry to be compared.
+    col_units - str / tuple. The name of the column with unit postcodes
+                that are used to label the neighbouring regions.
+
+    Returns
+    -------
+    df - GeoDataFrame. The input data with added columns for which
+         regions border each row of data and how many neighbours
+         there are.
+    """
 
     dict_neighbours = {}
 

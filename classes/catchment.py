@@ -1,11 +1,9 @@
 """
-Catchment class with global parameters for the pathway model.
+Catchment class to find LSOAs nearest given stroke units.
 
-set up dataframes that then get passed to pathway for actual setup.
-
-TO DO -----------------------------------------------------------------------------
-- write this docstring
-
+Given a dataframe of stroke units and which services they provide,
+this class can find each unit's chosen transfer unit and each unit's
+catchment area of LSOAs.
 """
 import numpy as np
 import pandas as pd
@@ -21,10 +19,53 @@ class Catchment(object):
 
     Attributes
     ----------
+    name:
+        Name for this Catchment instance.
+
+    catchment_yml:
+        Name of a yml to load instance attributes from.
+
+    limit_to_england:
+        Whether to limit LSOA selection to England.
+
+    limit_to_wales:
+        Whether to limit LSOA selection to Wales.
+
+    lsoa_catchment_type:
+        Whether to only keep selected stroke units ('island') or
+        to keep all units nationally for LSOA catchment calculation.
 
     Methods
     -------
+    load_catchment_from_files:
+        Load in attributes from a .yml.
 
+    save_to_file:
+        Save the variable dict as a .yml file.
+
+    main:
+        Calculate LSOA catchment for the selected units.
+
+    get_unit_services:
+        Load the stroke units data from file.
+
+    get_transfer_units:
+        Find each stroke unit's chosen transfer unit.
+
+    find_national_mt_feeder_units:
+        Find wheel-and-spoke IVT feeder units to each MT unit.
+
+    calculate_lsoa_catchment:
+        Calculate the LSOAs caught by each stroke unit.
+
+    find_each_lsoa_chosen_unit:
+        Extract LSOA unit data from LSOA-unit travel matrix.
+
+    find_lsoa_catchment:
+        Wrapper to load travel time matrix and pick out LSOA data.
+
+    limit_lsoa_catchment_to_selected_units:
+        Choose which LSOAs are selected using regions and units.
     """
 
     def __init__(
@@ -39,8 +80,6 @@ class Catchment(object):
         # ----- Directory setup -----
         # Name that will also be used for output directory:
         self.name = 'catchment'
-        # Load existing data from this dir:
-        self.load_dir = None
 
         # ----- Geography -----
         # Which LSOAs, stroke units, and regions will we use?
@@ -65,6 +104,7 @@ class Catchment(object):
 
     def load_catchment_from_files(self):
         """
+        Load in attributes from a .yml.
         """
         # Import the kwargs from provided yml file:
         with open(self.catchment_yml, 'r') as f:
@@ -73,8 +113,17 @@ class Catchment(object):
         for key, val in catchment_vars_imported.items():
             setattr(self, key, val)
 
-    def save_to_file(self, file_yml='catchment_output.yml'):
-        """Save the variable dict as a .yml file."""
+    def save_to_file(
+            self,
+            file_yml='catchment_output.yml'
+            ):
+        """
+        Save the variable dict as a .yml file.
+
+        Inputs
+        ------
+        file_yml: str. Path to a yml file for saving.
+        """
         catchment_vars = vars(self)
 
         # Only keep a selection of params:
@@ -95,7 +144,22 @@ class Catchment(object):
     # ###############################
     def main(self, units):
         """
-        write me
+        Calculate LSOA catchment for the selected units.
+
+        Takes the input units and their services and defines
+        each unit's transfer unit (df_transfer) and each
+        LSOA's chosen unit (df_lsoa).
+
+        Inputs
+        ------
+        units - pd.DataFrame. Which units are selected, offer
+                IVT, MT, MSU etc. Must match the format and columns
+                of the df returned by get_unit_services().
+
+        Returns
+        -------
+        return_dict - dict. The main results dataframes containing info
+                      on units, transfer units, and LSOA catchment.
         """
         self.df_units = units
 
@@ -115,7 +179,12 @@ class Catchment(object):
     # #########################
     def get_unit_services(self):
         """
-        write me
+        Load the stroke units data from file.
+
+        Returns
+        -------
+        df - pd.DataFrame. Information about stroke units and their
+             services.
         """
         # # Relative import from package files:
         # path_to_file = files('catchment.data').joinpath(
@@ -138,7 +207,13 @@ class Catchment(object):
     # ##########################
     def get_transfer_units(self):
         """
-        write me
+        Find each stroke unit's chosen transfer unit.
+
+        Stores
+        ------
+        df_transfer - pd.DataFrame. Stores info on each unit's
+                      transfer unit and whether the transfer should
+                      be used for the selected units.
         """
         # Find which IVT units are feeders to each MT unit:
         transfer = self.find_national_mt_feeder_units(self.df_units)
@@ -166,19 +241,18 @@ class Catchment(object):
 
     def find_national_mt_feeder_units(self, df_stroke_teams):
         """
-        Find catchment areas for national hospitals offering MT.
+        Find wheel-and-spoke IVT feeder units to each MT unit.
 
-        For each stroke unit, find the name of and travel time to
-        its nearest MT unit. Wheel-and-spoke model. If the unit
-        is an MT unit then the travel time is zero.
-
-        Stores
+        Inputs
         ------
+        df_stroke_teams - pd.DataFrame. Contains info on each unit
+                          and the services it provides (IVT, MT, MSU).
 
-        national_ivt_feeder_units:
-            pd.DataFrame. Each row is a stroke unit. Columns are
-            its postcode, the postcode of the nearest MT unit,
-            and travel time to that MT unit.
+        Returns
+        ------
+        df_nearest_mt - pd.DataFrame. Each row is a stroke unit.
+                        Columns are its postcode, its transfer unit
+                        postcode and travel time.
         """
         df_stroke_teams = df_stroke_teams.copy()
         df_stroke_teams = df_stroke_teams.reset_index()
@@ -257,7 +331,19 @@ class Catchment(object):
     # #########################
     def calculate_lsoa_catchment(self):
         """
-        TO DO - write me
+        Calculate the LSOAs caught by each stroke unit.
+
+        For the 'island' catchment type, nothing exists except the
+        selected units and LSOAs in regions (English Integrated Care
+        Boards ICBs and Welsh Local Health Boards LHBs) that contain
+        selected units.
+        For other catchment types, all catchment for all units is
+        calculated.
+
+        Stores
+        ------
+        df_lsoa - pd.DataFrame. Contains one row per LSOA and columns
+                  for its selected unit and travel time.
         """
         units = self.df_units
         regions_selected = sorted(list(set(units.loc[
@@ -295,7 +381,17 @@ class Catchment(object):
 
     def find_each_lsoa_chosen_unit(self, df_time_lsoa_to_units):
         """
+        Extract LSOA unit data from LSOA-unit travel matrix.
 
+        Inputs
+        ------
+        df_time_lsoa_to_units - pd.DataFrame. Travel time matrix
+                                with columns already limited as needed.
+
+        Returns
+        -------
+        df_results - pd.DataFrame. One row per LSOA, columns for
+                     chosen unit and travel time.
         """
         # Put the results in this dataframe where each row
         # is a different LSOA:
@@ -313,6 +409,19 @@ class Catchment(object):
             self,
             teams_to_limit=[]
             ):
+        """
+        Wrapper to load travel time matrix and pick out LSOA data.
+
+        Inputs
+        ------
+        teams_to_limit - list. Only keep these units in the travel
+                         matrix columns.
+
+        Returns
+        -------
+        df_catchment - pd.DataFrame. One row per LSOA, columns for
+                       chosen unit and travel time.
+        """
         # TO DO - change to relative import
         # Load travel time matrix:
         # # Relative import from package files:
@@ -341,6 +450,29 @@ class Catchment(object):
             limit_to_england=False,
             limit_to_wales=False
             ):
+        """
+        Choose which LSOAs are selected using regions and units.
+
+        Optionally limit the LSOAs to only a few regions.
+        Optionally limit the LSOAs to only those caught by
+        selected units.
+        Optionally limit the LSOAs to only those in England or
+        only those in Wales.
+
+        Inputs
+        ------
+        df_catchment     - pd.DataFrame. LSOAs and their chosen units.
+        regions_to_limit - list. List of regions to limit to.
+        units_to_limit   - list. List of units to limit to.
+        limit_to_england - bool. Whether to only keep English LSOA.
+        limit_to_wales   - bool. Whether to only keep Welsh LSOA.
+
+        Returns
+        -------
+        df_catchment - pd.DataFrame. The input dataframe with added
+                       columns for LSOA codes and whether the LSOA
+                       is selected.
+        """
         # TO DO - change to relative import
         # Load in all LSOA names, codes, regions...
         # # Relative import from package files:

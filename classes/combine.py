@@ -1,15 +1,8 @@
 """
-Combine features from multiple runs.
+Combine data from multiple sets of Catchment data.
 
-Welcome to MultiIndex hell. *Doom trumpets*
-
-TO DO - write me --------------------------------------------------------------------
-
-self.combine_selected_units()
-self.combine_selected_transfer()
-self.combine_selected_lsoa()
-self.combine_results_summary_by_lsoa()
-self.combine_results_summary_by_admitting_unit()
+Also a function to combine one set of Catchment data with another
+data set with the same index.
 """
 import numpy as np
 import pandas as pd
@@ -18,11 +11,37 @@ from itertools import combinations
 
 class Combine(object):
     """
-    Combine files from multiple runs of the pathway.
+    Combine data from multiple sets of Catchment data.
 
     class Combine():
 
-    TO DO - write me
+    Attributes
+    ----------
+    (none)
+
+    Methods
+    -------
+    combine_inputs_and_results:
+        Wrapper for pd.merge().
+
+    combine_selected_units:
+        Combine units data.
+
+    combine_selected_transfer:
+        Combine transfer units data.
+
+    combine_selected_lsoa:
+        Combine LSOA data.
+
+    _diff_data:
+    Make new data of this column minus that column across scenarios.
+
+    _hstack_multiple_dataframes:
+        Combine multiple DataFrames from different scenarios into here.
+
+    _merge_multiple_dataframes:
+        Stack multiple DataFrames on top of the other, keep columns.
+
     """
     def __init__(self, *initial_data, **kwargs):
 
@@ -39,11 +58,14 @@ class Combine(object):
     # ##### WRAPPERS #####
     # ####################
     def combine_inputs_and_results(
-            self, df_input, df_results, how='left'):
+            self,
+            df_input,
+            df_results,
+            how='left'
+            ):
         """
         Wrapper for pd.merge().
 
-        Expect df_input to have only one unnamed column level.
         Expect df_results to have column levels named
         'property' and 'subtype'.
 
@@ -99,11 +121,13 @@ class Combine(object):
         return df
 
     def combine_selected_units(
-            self, dict_scenario_df_to_merge):
+            self,
+            dict_scenario_df_to_merge
+            ):
         """
-        Combine selected units.
+        Combine units data.
 
-        Each file input:
+        Each DataFrame input:
         +------+-------------+-------------+
         |      |   time_1    |    shift_1  |    property
         +------+------+------+------+------+
@@ -130,6 +154,17 @@ class Combine(object):
         |  ... |  ... |  ... |  ... |  ... |  ... |  ... |
         |    n | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
         +------+------+------+------+------+------+------+
+
+        Inputs
+        ------
+        dict_scenario_df_to_merge - dict of pd.DataFrame.
+            Each key in the dict will be the 'scenario' column name
+            for the matching data. Each DataFrame in the dict will
+            be stacked side-by-side with the Unit index matching.
+
+        Returns
+        -------
+        df - pd.DataFrame. The merged dataframe.
         """
         df = self._hstack_multiple_dataframes(
             dict_scenario_df_to_merge,
@@ -151,14 +186,8 @@ class Combine(object):
                 'mRS 0-2'
             ])
 
-        # col_to_group = data.columns[0]
-        cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
-        # Same LSOA appearing in multiple files will currently have
-        # multiple mostly-empty rows in the "data" DataFrame.
-        # Group matching rows:
-        # df = self._group_data(data, col_to_group, cols_to_keep)
-
         # Create new columns of this diff that:
+        cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
         df = self._diff_data(df, cols_to_keep)
 
         # Rename the MultiIndex column names:
@@ -175,9 +204,11 @@ class Combine(object):
         return df
 
     def combine_selected_transfer(
-            self, dict_scenario_df_to_merge):
+            self,
+            dict_scenario_df_to_merge
+            ):
         """
-        Combine selected units.
+        Combine transfer units data.
 
         Each file input:
         +------+-----+---------------+-----------------+
@@ -202,6 +233,17 @@ class Combine(object):
         |  ... |           ... |        ... |        ... |
         |    1 |             9 |          0 |          1 |
         +------+---------------+------------+------------+
+
+        Inputs
+        ------
+        dict_scenario_df_to_merge - dict of pd.DataFrame.
+            Each key in the dict will be the 'scenario' column name
+            for the matching data. Each DataFrame in the dict will
+            be stacked side-by-side with the Unit index matching.
+
+        Returns
+        -------
+        df - pd.DataFrame. The merged dataframe.
         """
         # Merge the separate files based on combo of unit and
         # transfer unit, two indexes.
@@ -223,7 +265,7 @@ class Combine(object):
     def combine_selected_lsoa(
             self, dict_scenario_df_to_merge):
         """
-        Combine selected LSOA.
+        Combine LSOA data.
 
         Each file input:
         +------+-------------+-------------+
@@ -252,6 +294,17 @@ class Combine(object):
         |  ... |  ... |  ... |  ... |  ... |  ... |  ... |
         |    n | x.xx | x.xx | y.yy | y.yy | z.zz | z.zz |
         +------+------+------+------+------+------+------+
+
+        Inputs
+        ------
+        dict_scenario_df_to_merge - dict of pd.DataFrame.
+            Each key in the dict will be the 'scenario' column name
+            for the matching data. Each DataFrame in the dict will
+            be stacked side-by-side with the Unit index matching.
+
+        Returns
+        -------
+        df - pd.DataFrame. The merged dataframe.
         """
         df = self._hstack_multiple_dataframes(
             dict_scenario_df_to_merge,
@@ -259,14 +312,8 @@ class Combine(object):
             )
         # TO DO - maybe change this so that all columns are combined always and at the end remove duplicate columns, move to 'any' scenario --------------
 
-        # col_to_group = data.columns[0]
-        cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
-        # Same LSOA appearing in multiple files will currently have
-        # multiple mostly-empty rows in the "data" DataFrame.
-        # Group matching rows:
-        # df = self._group_data(data, col_to_group, cols_to_keep)
-
         # Create new columns of this diff that:
+        cols_to_keep = ['utility_shift', 'mRS shift', 'mRS 0-2']
         df = self._diff_data(df, cols_to_keep)
 
         # Rename the MultiIndex column names:
@@ -286,10 +333,14 @@ class Combine(object):
     # #####################
     def _diff_data(self, df, cols_to_diff):
         """
-        C
-        """
-        # Combine data into this DataFrame:
+        Make new data of this column minus that column across scenarios.
 
+        Inputs
+        ------
+        df           - pd.DataFrame. Contains the columns to diff.
+        cols_to_diff - list. Column names to take the difference of
+                       across two scenarios.
+        """
         # Change to select top level of multiindex:
         scenario_name_list = sorted(list(set(
             df.columns.get_level_values(0).to_list())))
@@ -325,8 +376,6 @@ class Combine(object):
                             d1 = data1[col].copy().pow(2.0)
                             d2 = d0.add(d1, fill_value=0)
                             data_diff = d2.pow(0.5)
-                            # data_diff = np.sqrt(np.nansum(
-                            #     [data0[col]**2.0,  data1[col]**2.0]))
                         else:
                             # Don't know what to do with the rest yet. ----------------------
                             # TO DO
@@ -336,7 +385,9 @@ class Combine(object):
                     # No more nested column index levels.
                     data_diff = data0 - data1
                     df[diff_col_name, c] = data_diff
-                    # TO DO - what about std herE? ---------------------------------
+                    # TO DO - currently this just takes the difference
+                    # as though it's a mean or a median. No way to
+                    # propagate the error as though it's an std.
         return df
 
     def _hstack_multiple_dataframes(
@@ -347,9 +398,9 @@ class Combine(object):
             extra_cols_for_index=[]
             ):
         """
-        # Combine multiple DataFrames from different scenarios into here.
-        # Stacks all DataFrames one on top of the other with no other
-        # change in columns.
+        Combine multiple DataFrames from different scenarios into here.
+
+        Stacks all DataFrames side by side with indexes matched.
 
         Each file input:
         +--------+-----------+----------+
@@ -374,6 +425,23 @@ class Combine(object):
         |    ... |       ... |      ... |       ... |      ... |
         |      n |     False |     True |     False |     True |
         +--------+-----------+----------+-----------+----------+
+
+        Inputs
+        ------
+        dict_scenario_df_to_merge - dict of pd.DataFrame.
+            Each key in the dict will be the 'scenario' column name
+            for the matching data. Each DataFrame in the dict will
+            be stacked side-by-side with the Unit index matching.
+        add_use_column - bool. Whether to add a new column 'use'
+            where 1 means that row is used in that scenario.
+        cols_for_scenario - list. Column names that should be kept
+            separately for each scenario.
+        extra_cols_for_index - list. Set index to the initial index
+            column and any columns in this list.
+
+        Returns
+        -------
+        df - pd.DataFrame. The merged dataframe.
         """
         dfs_to_merge = {}
 
@@ -395,10 +463,7 @@ class Combine(object):
                 if split_for_any:
                     # Find the names of these columns in this df.
                     # (so can specify one level of multiindex only).
-
-                    scenario_cols = cols_for_scenario  # [self.find_multiindex_col(
-                        # df.columns, col) for col in cols_for_scenario]
-                    
+                    scenario_cols = cols_for_scenario
 
                     if len(dfs_to_merge.items()) < 1:
                         # First time around this loop.
@@ -461,9 +526,21 @@ class Combine(object):
             dict_scenario_df_to_merge,
             merge_col='lsoa_code'
             ):
-        # Combine multiple DataFrames from different scenarios into here.
-        # Stacks all DataFrames one on top of the other with no other
-        # change in columns.
+        """
+        Stack multiple DataFrames on top of the other, keep columns.
+
+        Inputs
+        ------
+        dict_scenario_df_to_merge - dict of pd.DataFrame.
+            Each key in the dict will be the 'scenario' column name
+            for the matching data. Each DataFrame in the dict will
+            be stacked side-by-side with the Unit index matching.
+        merge_col - str. Name of the column to match dfs on.
+
+        Returns
+        -------
+        data - pd.DataFrame. The merged dataframe.
+        """
         data = pd.DataFrame(columns=[merge_col])
         scenario_cols_list = []
         scenario_series_list = []
@@ -495,25 +572,3 @@ class Combine(object):
         # Sort rows:
         data = data.sort_values(merge_col)
         return data
-
-    # def find_multiindex_col(self, columns, target):
-    #     """
-    #     MOVE ME - currently copied directly from Map()
-    #     """
-    #     if (type(columns[0]) == list) | (type(columns[0]) == tuple):
-    #         # Convert all columns tuples into an ndarray:
-    #         all_cols = np.array([[n for n in c] for c in columns])
-    #     else:
-    #         # No MultiIndex.
-    #         all_cols = columns.values
-    #     # Find where the grid matches the target string:
-    #     inds = np.where(all_cols == target)
-    #     # If more than one column, select the first.
-    #     ind = inds[0][0]
-    #     # Components of column containing the target:
-    #     bits = all_cols[ind]
-    #     bits_is_list = (type(columns[0]) == list) | (type(columns[0]) == tuple)
-    #     # TO DO - make this generic arraylike ^
-    #     # Convert to tuple for MultiIndex or str for single level.
-    #     final_col = list((tuple(bits), )) if bits_is_list else bits
-    #     return final_col

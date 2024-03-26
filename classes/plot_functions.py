@@ -2,15 +2,35 @@
 Functions for drawing maps.
 """
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+import matplotlib.patches as mpatches  # For blank patches.
+import matplotlib.path as mpath        # For custom patches.
+# For adjusting size of text scatter markers:
+from PIL import ImageFont
+from matplotlib import font_manager
+
 import numpy as np
 
 
+# ###################
+# ##### HELPERS #####
+# ###################
 def find_multiindex_column_names(gdf, **kwargs):
     """
-    kwargs are level_name=column_name
-    , e.g.
+    Find the full column name to match a partial column name.
+
+    Example usage:
     find_multiindex_column_name(gdf, scenario='any', property='geometry')
+
+    Inputs
+    ------
+    gdf    - GeoDataFrame.
+    kwargs - in format level_name=column_name for column level names
+             in the gdf column MultiIndex.
+
+    Returns
+    -------
+    cols - list or str or tuple. The column name(s) matching the
+           requested names in those levels.
     """
     masks = [
         gdf.columns.get_level_values(level).isin(col_list)
@@ -25,10 +45,36 @@ def find_multiindex_column_names(gdf, **kwargs):
     return cols
 
 
-# ###################
-# ##### HELPERS #####
-# ###################
-def combine_legend_sections(section_labels, handles_lists, labels_lists):
+def combine_legend_sections(
+        section_labels,
+        handles_lists,
+        labels_lists
+        ):
+    """
+    Combine elements of multiple separate legends into one legend.
+
+    +-----------+
+    | o  Thing1 |   <-- Handles are the markers on the left,
+    | x  Thing2 |       labels are the strings on the right.
+    | *  Thing3 |
+    +-----------+
+
+    This combines multiple sets of handles and labels into one long
+    set with new section labels (with invisible handles) between the
+    sets.
+
+    Inputs
+    ------
+    section_labels - list of str. Title for each section of legend.
+    handles_lists  - list of lists. Patches for each legend.
+    labels_lists   - list of lists. Labels for each legend.
+
+    Returns
+    -------
+    handles_all - list. Patches for combined legend.
+    labels_all - list. Labels for combined legend.
+    """
+    # Place the results in here:
     handles_all = []
     labels_all = []
     for i, section_label in enumerate(section_labels):
@@ -43,11 +89,26 @@ def combine_legend_sections(section_labels, handles_lists, labels_lists):
     return handles_all, labels_all
 
 
-def set_legend_section_labels_to_bold(leg, section_labels, all_labels):
-    # Set the section labels to bold (heavy) text:
+def set_legend_section_labels_to_bold(
+        leg,
+        section_labels,
+        all_labels
+        ):
+    """
+    Change the text of some legend entries to bold.
+
+    Inputs
+    ------
+    leg            - plt.legend object.
+    section_labels - list. Strings to become bold.
+    all_labels     - list. All labels in the legend.
+    """
+    # Get the list of labels in the legend:
     leg1_list = leg.get_texts()
     for s in section_labels:
+        # Where is the legend label that matches this section label?
         i = all_labels.index(s)
+        # Update the label with the same index:
         leg1_list[i] = leg1_list[i].set_weight('heavy')
     return leg
 
@@ -59,10 +120,41 @@ def create_units_legend(
         section_labels,
         **legend_kwargs
         ):
+    """
+    Create a legend for the unit markers with labels overlaid.
+
+    Each legend handle will end up as a normal scatter marker
+    with a string displayed on top. Looks like e.g. the letters
+    'EX' contained in an oval.
+
+    +-----------+
+    | o  Thing1 |   <-- Handles are the markers on the left,
+    | x  Thing2 |       labels are the strings on the right.
+    | *  Thing3 |
+    +-----------+
+
+    Inputs
+    ------
+    handles_lists   - list of lists. One list of handles for each
+                      legend.
+    labels_lists    - list of lists. One list of labels for each
+                      legend.
+    section_labels  - list of str. Headings to separate the legends
+                      after combination.
+    **legend_kwargs - dict. Kwargs for plt.legend().
+
+    Returns
+    -------
+    leg2 - plt.legend() object.
+    """
+    # By default, each handles list is in the format:
+    # [[h[0], h[1], ... h[n]], [h2[0], h2[1], ... h2[n]]]
+    # Where e.g. h is a list of the oval scatter markers
+    # and h2 is a list of the string labels to place on top.
     # To combine the handle types, the list needs to be like:
     # [(h[0], h2[0]), (h[1], h2[1]), ...]
     # and it has to be pairs of tuple, not of list.
-
+    # Rejig the list in the following loop:
     handles_list = []
     for hlist in handles_lists:
         hlist = np.array(hlist).T.tolist()
@@ -87,22 +179,37 @@ def create_units_legend(
 # ####################
 # ##### PLOTTING #####
 # ####################
-# n.b. The following functions mostly just use plt.plot()
-# but are given different wrappers anyway for the sake of
-# applying some kwargs automatically.
 def draw_boundaries_by_contents(
         ax,
         gdf_boundaries_regions,
         kwargs_with_nowt={},
-        kwargs_with_lsoa={},
+        kwargs_with_periphery={},
         kwargs_with_unit={}
         ):
+    """
+    Draw region boundaries formatted by contains unit or periphery bits.
+
+    Inputs
+    ------
+    ax                     - plt.subplot().
+    gdf_boundaries_regions - GeoDataFrame.
+    kwargs_with_nowt       - dict. Format for regions with
+                             nothing of interest.
+    kwargs_with_periphery  - dict. Format for regions with
+                             periphery bits.
+    kwargs_with_unit       - dict. Format for regions with
+                             selected unit.
+
+    Returns
+    -------
+    ax - plt.subplot(). Same as input with the boundaries drawn on.
+    """
     # Set up kwargs.
     kwargs_nowt = {
         'edgecolor': 'none',
         'facecolor': 'none',
     }
-    kwargs_lsoa = {
+    kwargs_periphery = {
         'edgecolor': 'silver',
         'facecolor': 'none',
         'linewidth': 0.5,
@@ -115,7 +222,7 @@ def draw_boundaries_by_contents(
     }
     # Update these with anything from the input dicts:
     kwargs_nowt = kwargs_nowt | kwargs_with_nowt
-    kwargs_lsoa = kwargs_lsoa | kwargs_with_lsoa
+    kwargs_periphery = kwargs_periphery | kwargs_with_periphery
     kwargs_unit = kwargs_unit | kwargs_with_unit
 
     # Regions containing neither LSOAs nor stroke units here:
@@ -165,7 +272,7 @@ def draw_boundaries_by_contents(
     if len(gdf_boundaries_with_lsoa) > 0:
         ax = draw_boundaries(
             ax, gdf_boundaries_with_lsoa,
-            **kwargs_lsoa
+            **kwargs_periphery
             )
     else:
         pass
@@ -209,7 +316,6 @@ def draw_boundaries(ax, gdf, **kwargs):
 def scatter_units(
         ax,
         gdf,
-        mask_col='',
         return_handle=False,
         **kwargs
         ):
@@ -218,8 +324,12 @@ def scatter_units(
 
     Inputs
     ------
-    ax     - pyplot axis. Where to draw the scatter markers.
-    gdf    - GeoDataFrame. Stores stroke unit coordinates and services.
+    ax            - pyplot axis. Where to draw the scatter markers.
+    gdf           - GeoDataFrame. Stores stroke unit coordinates
+                    and services.
+    return_handle - bool. Whether to return the scatter marker
+                    handles for making a legend later.
+    kwargs        - dict. kwargs for plt.scatter().
 
     Returns
     -------
@@ -243,8 +353,6 @@ def scatter_units(
     default_marker = kwargs_dict['marker']
     # facecolour = kwargs_dict['facecolor']
 
-    import matplotlib.path as mpath
-
     # Create an ellipse marker by taking the standard circle
     # and stretching the x-coordinates.
     circle = mpath.Path.unit_circle()
@@ -266,20 +374,14 @@ def scatter_units(
     verts[:, 1] = verts[:, 1] * 0.75
     star_squash = mpath.Path(verts, star.codes)
 
-    # Only plot these units:
-    if len(mask_col) > 0:
-        mask = gdf[mask_col] == 1
-        masked_gdf = gdf[mask]
-    else:
-        masked_gdf = gdf
     if return_handle:
         # Draw each point separately for use with the legend later.
 
         # Need a separate call for each when there is
         # an array of marker shapes.
         handles = []
-        for row in masked_gdf.index:
-            gdf_m = masked_gdf.loc[[row]]
+        for row in gdf.index:
+            gdf_m = gdf.loc[[row]]
             col_geometry = find_multiindex_column_names(
                 gdf_m, property=['geometry'])
             # Update marker shape and size:
@@ -300,19 +402,6 @@ def scatter_units(
                 kwargs_dict['s'] = 150
                 kwargs_dict['marker'] = ellipse
 
-            # # Update marker colour:
-            # if 'colour_lines' in gdf_m.columns:
-            #     if gdf_m['selected'].values[0] == 0:
-            #         # Use input default value.
-            #         colour = facecolour
-            #     elif len(gdf_m['colour_lines'].values[0]) < 7:
-            #         # Not in the format #rrggbb or #rrggbbaa.
-            #         # Use input default value.
-            #         colour = facecolour
-            #     else:
-            #         colour = gdf_m['colour_lines']
-            #     kwargs_dict['facecolor'] = colour
-
             handle = ax.scatter(
                 gdf_m[col_geometry].x,
                 gdf_m[col_geometry].y,
@@ -323,11 +412,11 @@ def scatter_units(
     else:
 
         col_geometry = find_multiindex_column_names(
-            masked_gdf, property=['geometry'])
+            gdf, property=['geometry'])
         # Draw all points in one call.
         ax.scatter(
-            masked_gdf[col_geometry].x,
-            masked_gdf[col_geometry].y,
+            gdf[col_geometry].x,
+            gdf[col_geometry].y,
             **kwargs_dict
             )
         return ax
@@ -339,9 +428,10 @@ def plot_lines_between_units(ax, gdf, **line_kwargs):
 
     Inputs
     ------
-    ax     - pyplot axis. Where to draw the scatter markers.
-    gdf    - GeoDataFrame. Stores LineString objects that connect
-            each stroke unit to its MT transfer unit.
+    ax          - pyplot axis. Where to draw the scatter markers.
+    gdf         - GeoDataFrame. Stores LineString objects that connect
+                  each stroke unit to its MT transfer unit.
+    line_kwargs - dict. Kwargs for plt.plot().
 
     Returns
     -------
@@ -397,15 +487,25 @@ def draw_labels_short(
         ):
     """
     Draw labels from the geodataframe.
+
+    Inputs
+    ------
+    ax         - plt.subplot().
+    points     - pd.Series. Geometry of Points.
+    map_labels - pd.Series. Text for the scatter markers.
+    leg_labels - pd.Series. Text for legend entries.
+    colours    - pd.Series. #rrggbbaa strings for label colour.
+    **kwargs   - dict. kwargs for plt.scatter().
+
+    Returns
+    -------
+    ax                 - plt.subplot(). Input axis with labels drawn on.
+    markers_for_legend - List of handles for making a legend.
+    labels_for_legend  - List of labels for the legend.
     """
     marker_kwargs = dict(
-        # ha='center',
-        # va='center',
-        # bbox=dict(facecolor='w', edgecolor='k'),
-        # fontsize=8,
-        # weight=None,
         s=8,
-        edgecolor="none",  # to prevent border around text
+        edgecolor='none',  # to prevent border around text
         color='k'
     )
     # Update this with anything from the input dict:
@@ -413,8 +513,6 @@ def draw_labels_short(
 
     ref_s = marker_kwargs['s']
 
-    from PIL import ImageFont
-    from matplotlib import font_manager
     font = font_manager.FontProperties()
     file = font_manager.findfont(font)
     font = ImageFont.truetype(file, marker_kwargs['s'])
@@ -434,12 +532,6 @@ def draw_labels_short(
         colours
         )
     for x, y, map_label, leg_label, colour in z:
-        # Place the label slightly offset from the
-        # exact hospital coordinates (x, y).
-        if len(map_label) == 1:
-            # Add an empty space after it.
-            map_label = f'{map_label}~'
-
         # Adjust label size based on its width.
         # Only need the ratio of height to width,
         # so find that for the same font outside the plot:
@@ -464,20 +556,11 @@ def draw_labels_short(
         m = ax.scatter(
             x, y,
             marker=r'$\mathdefault{' + f'{map_label}' + '}$',
-            # marker=MarkerStyle(label, 'left', t),
-            # label=leg_label,
             zorder=5,
             **marker_kwargs
         )
         markers_for_legend.append(m)
         labels_for_legend.append(leg_label)
-        # ax.annotate(
-        #     label,
-        #     xy=(x, y),
-        #     # xytext=(8, 8),
-        #     textcoords='data',
-        #     **label_kwargs
-        #     )
     return ax, markers_for_legend, labels_for_legend
 
 
@@ -491,6 +574,17 @@ def plot_dummy_axis(fig, ax, leg, side='left'):
     "upper right" for new axis on left-hand-side and
     "upper left" for new axis on right-hand-side.
     For other options, make new if/else settings below.
+
+    Inputs
+    ------
+    fig  - plt.figure().
+    ax   - plt.subplot().
+    leg  - plt.legend().
+    side - str. Whether to place legend on the 'left' or 'right'.
+
+    Returns
+    -------
+    fig - plt.figure(). Input fig extended to make room for legend.
     """
     # Current axis:
     abox = ax.get_window_extent().transformed(
@@ -533,7 +627,17 @@ def plot_map_selected_regions(
     """
     Make map of the selected regions and any units.
 
-    TO DO - write me.
+    Inputs
+    ------
+    gdf_boundaries_regions - GeoDataFrame.
+    gdf_points_units       - GeoDataFrame.
+    ax                     - plt.subplot().
+    map_extent             - list. Axis limits [xmin, xmax, ymin, ymax].
+
+    Returns
+    -------
+    ax            - plt.subplot(). Input ax with bits drawn on.
+    extra_artists - list. Extra legends drawn on with plt.add_artist().
     """
 
     # Set up kwargs
@@ -559,10 +663,8 @@ def plot_map_selected_regions(
         ax,
         gdf_boundaries_regions,
         kwargs_with_nowt=kwargs_with_nowt,
-        kwargs_with_lsoa=kwargs_with_nowt,
+        kwargs_with_periphery=kwargs_with_nowt,
         kwargs_with_unit=kwargs_with_unit,
-        # kwargs_selected=kwargs_selected,
-        # kwargs_not_selected=kwargs_not_selected
         )
 
     # In selected regions:
@@ -612,7 +714,6 @@ def plot_map_selected_regions(
         gdf_points_units.loc[mask, col_stroke_team],
         s=label_size_units,
         color='DimGray',
-        # bbox=dict(facecolor='GhostWhite', edgecolor='DimGray'),
     )
 
     # Label regions:
@@ -717,7 +818,18 @@ def plot_map_selected_units(
     """
     Make map of the selected units and the regions containing them.
 
-    TO DO - write me.
+    Inputs
+    ------
+    gdf_boundaries_regions - GeoDataFrame.
+    gdf_points_units       - GeoDataFrame.
+    gdf_lines_transfer     - GeoDataFrame.
+    ax                     - plt.subplot().
+    map_extent             - list. Axis limits [xmin, xmax, ymin, ymax].
+
+    Returns
+    -------
+    ax            - plt.subplot(). Input ax with bits drawn on.
+    extra_artists - list. Extra legends drawn on with plt.add_artist().
     """
     # Set up kwargs.
     # Region boundaries:
@@ -741,7 +853,7 @@ def plot_map_selected_units(
         ax,
         gdf_boundaries_regions,
         kwargs_with_nowt=kwargs_region_with_nowt,
-        kwargs_with_lsoa=kwargs_region_with_nowt,
+        kwargs_with_periphery=kwargs_region_with_nowt,
         kwargs_with_unit=kwargs_region_with_unit,
         # kwargs_selected=kwargs_selected,
         # kwargs_not_selected=kwargs_not_selected
@@ -872,7 +984,23 @@ def plot_map_catchment(
     """
     Map the selected units, containing regions, and catchment areas.
 
-    TO DO - write me.
+    Inputs
+    ------
+    gdf_boundaries_catchment  - GeoDataFrame.
+    gdf_boundaries_regions    - GeoDataFrame.
+    gdf_points_units          - GeoDataFrame.
+    gdf_lines_transfer        - GeoDataframe.
+    ax                        - plt.subplot().
+    map_extent                - list. Axis limits [xmin, xmax, ymin, ymax].
+    boundary_kwargs           - dict. Kwargs for plt.plot() for
+                                catchment areas.
+    boundary_periphery_kwargs - dict. Kwargs for plt.plot() for
+                                periphery catchment areas.
+
+    Returns
+    -------
+    ax            - plt.subplot(). Input ax with bits drawn on.
+    extra_artists - list. Extra legends drawn on with plt.add_artist().
     """
     label_size_units = 15
 
@@ -929,7 +1057,7 @@ def plot_map_catchment(
         ax,
         gdf_boundaries_regions,
         kwargs_with_nowt=kwargs_region_with_nowt,
-        kwargs_with_lsoa=kwargs_region_with_lsoa,
+        kwargs_with_periphery=kwargs_region_with_lsoa,
         kwargs_with_unit=kwargs_region_with_unit,
         )
 
@@ -1058,14 +1186,28 @@ def plot_map_outcome(
         gdf_boundaries_regions,  # TO DO - make this optional...?
         gdf_points_units,
         ax=None,
+        map_extent=[],
         boundary_kwargs={},
         draw_region_boundaries=True,
-        map_extent=[]
         ):
     """
     Map the selected units, containing regions, and LSOA outcomes.
 
-    TO DO - write me.
+    Inputs
+    ------
+    gdf_boundaries_lsoa       - GeoDataFrame.
+    gdf_boundaries_regions    - GeoDataFrame.
+    gdf_points_units          - GeoDataFrame.
+    ax                        - plt.subplot().
+    map_extent                - list. Axis limits [xmin, xmax, ymin, ymax].
+    boundary_kwargs           - dict. Kwargs for plt.plot() for
+                                catchment areas.
+    draw_region_boundaries    - bool. Whether to draw background regions.
+
+    Returns
+    -------
+    ax            - plt.subplot(). Input ax with bits drawn on.
+    extra_artists - list. Extra legends drawn on with plt.add_artist().
     """
     label_size_units = 15
 
@@ -1103,7 +1245,7 @@ def plot_map_outcome(
             ax,
             gdf_boundaries_regions,
             kwargs_with_nowt=kwargs_region_with_nowt,
-            kwargs_with_lsoa=kwargs_region_with_lsoa,
+            kwargs_with_periphery=kwargs_region_with_lsoa,
             kwargs_with_unit=kwargs_region_with_unit,
             )
 
