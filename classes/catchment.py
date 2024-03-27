@@ -187,10 +187,8 @@ class Catchment(object):
              services.
         """
         # # Relative import from package files:
-        # path_to_file = files('catchment.data').joinpath(
-        #     'stroke_units_regions.csv')
-        # Load and parse unit data TO DO - change to relative import above
-        path_to_file = './data/stroke_units_regions.csv'
+        path_to_file = files('stroke_maps.data').joinpath(
+            'stroke_units_regions.csv')
         df = pd.read_csv(path_to_file)
 
         # Drop the LSOA column.
@@ -267,16 +265,13 @@ class Catchment(object):
         mask = df_stroke_teams['postcode'].isin(ivt_hospital_names)
         df_stroke_teams.loc[~mask, 'transfer_unit_postcode'] = 'none'
 
-        # TO DO - change to relative import
         # Firstly, determine MT feeder units based on travel time.
         # Each stroke unit will be assigned the MT unit that it is
         # closest to in travel time.
         # Travel time matrix between hospitals:
-        # # Relative import from package files:
-        # path_to_file = files('catchment.data').joinpath(
-        #     'inter_hospital_time_calibrated.csv')
-        # Load and parse unit data TO DO - change to relative import above
-        path_to_file = './data/inter_hospital_time_calibrated.csv'
+        # Relative import from package files:
+        path_to_file = files('stroke_maps.data').joinpath(
+            'inter_hospital_time_calibrated.csv')
         df_time_inter_hospital = pd.read_csv(path_to_file,
                                              index_col='from_postcode')
         # Reduce columns of inter-hospital time matrix to just MT hospitals:
@@ -422,13 +417,10 @@ class Catchment(object):
         df_catchment - pd.DataFrame. One row per LSOA, columns for
                        chosen unit and travel time.
         """
-        # TO DO - change to relative import
         # Load travel time matrix:
         # # Relative import from package files:
-        # path_to_file = files('catchment.data').joinpath(
-        #     'lsoa_travel_time_matrix_calibrated.csv')
-        # Load and parse unit data TO DO - change to relative import above
-        path_to_file = './data/lsoa_travel_time_matrix_calibrated.csv'
+        path_to_file = files('stroke_maps.data').joinpath(
+            'lsoa_travel_time_matrix_calibrated.csv')
         df_time_lsoa_to_units = pd.read_csv(path_to_file, index_col='LSOA')
         # Each column is a postcode of a stroke team and
         # each row is an LSOA name (LSOA11NM).
@@ -473,12 +465,11 @@ class Catchment(object):
                        columns for LSOA codes and whether the LSOA
                        is selected.
         """
-        # TO DO - change to relative import
         # Load in all LSOA names, codes, regions...
-        # # Relative import from package files:
-        # path_to_file = files('catchment.data').joinpath(
-        #     'regions_lsoa_ew.csv')
-        # Load and parse unit data TO DO - change to relative import above
+        # Relative import from package files:
+        path_to_file = files('stroke_maps.data').joinpath(
+            'regions_lsoa_ew.csv')
+        # Load and parse unit data:
         path_to_file = './data/regions_lsoa_ew.csv'
         df_lsoa = pd.read_csv(path_to_file)
         # Columns: [lsoa, lsoa_code, region_code, region, region_type,

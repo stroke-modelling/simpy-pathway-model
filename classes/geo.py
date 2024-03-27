@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import geopandas
 import os
+from importlib_resources import files
 
 from shapely import LineString  # For creating line geometry.
 from pandas.api.types import is_numeric_dtype  # For checking dtype.
@@ -54,12 +55,10 @@ def import_geojson(region_type: 'str'):
         'LHB20NM': 'LHB.geojson'
     }
 
-    # TO DO - change to relative import.
-    # # Relative import from package files:
-    # path_to_file = files('map.data_geojson').joinpath(file_input)
     # Import region file:
     file_input = geojson_file_dict[region_type]
-    path_to_file = os.path.join('data_geojson', file_input)
+    # Relative import from package files:
+    path_to_file = files('stroke_maps.data_geojson').joinpath(file_input)
     gdf_boundaries = geopandas.read_file(path_to_file)
 
     if region_type == 'LSOA11NM':
@@ -147,10 +146,8 @@ def load_regions():
                  for labelling regions on a map.
     """
     # Load and parse geometry data
-    # TO DO - change to relative import.
-    # # Relative import from package files:
-    # path_to_file = files('map.data').joinpath('regions_ew.csv')
-    path_to_file = os.path.join('data', 'regions_ew.csv')
+    # Relative import from package files:
+    path_to_file = files('stroke_maps.data').joinpath('regions_ew.csv')
     df_regions = pd.read_csv(path_to_file, index_col=[0, 1])
 
     # Add an extra column level:
@@ -213,11 +210,8 @@ def make_new_periphery_data(
     scenario_list = [s for s in scenario_list if not s.startswith('diff')]
 
     # Load region info for each LSOA:
-    # TO DO - change to relative import.
-    # # Relative import from package files:
-    # path_to_file = files('map.data').joinpath('regions_lsoa_ew.csv')
-    # Import region file:
-    path_to_file = os.path.join('data', 'regions_lsoa_ew.csv')
+    # Relative import from package files:
+    path_to_file = files('stroke_maps.data').joinpath('regions_lsoa_ew.csv')
     df_lsoa_regions = pd.read_csv(path_to_file, index_col=[0, 1])
     # Add an extra column level:
     # Everything needs two levels: scenario, property.
@@ -700,10 +694,8 @@ def _load_geometry_stroke_units(df_units):
     #   - separate: ['{unnamed level}']
 
     # Load and parse geometry data
-    # TO DO - change to relative import.
-    # # Relative import from package files:
-    # path_to_file = files('map.data').joinpath('unit_postcodes_coords.csv')
-    path_to_file = os.path.join('data', 'unit_postcodes_coords.csv')
+    # Relative import from package files:
+    path_to_file = files('stroke_maps.data').joinpath('unit_postcodes_coords.csv')
     df_coords = pd.read_csv(path_to_file, index_col='postcode')
     # Index: postcode.
     # Columns: BNG_E, BNG_N, Longitude, Latitude.
@@ -767,10 +759,9 @@ def _load_geometry_transfer_units(df_transfer):
     #   - separate: ['{unnamed level}']
 
     # Load and parse geometry data
-    # TO DO - change to relative import.
-    # # Relative import from package files:
-    # path_to_file = files('map.data').joinpath('unit_postcodes_coords.csv')
-    path_to_file = os.path.join('data', 'unit_postcodes_coords.csv')
+    # Relative import from package files:
+    path_to_file = files('stroke_maps.data').joinpath(
+        'unit_postcodes_coords.csv')
     df_coords = pd.read_csv(path_to_file)
     # Columns: postcode, BNG_E, BNG_N, Longitude, Latitude.
 
