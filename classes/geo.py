@@ -13,6 +13,7 @@ import os
 
 from shapely import LineString  # For creating line geometry.
 from pandas.api.types import is_numeric_dtype  # For checking dtype.
+from classes.utils import find_multiindex_column_names
 
 
 # #####################
@@ -1104,37 +1105,6 @@ def _combine_lsoa_into_catchment_shapes(
 # ############################
 # ##### HELPER FUNCTIONS #####
 # ############################
-def find_multiindex_column_names(gdf, **kwargs):
-    """
-    Find the full column name to match a partial column name.
-
-    Example usage:
-    find_multiindex_column_name(gdf, scenario='any', property='geometry')
-
-    Inputs
-    ------
-    gdf    - GeoDataFrame.
-    kwargs - in format level_name=column_name for column level names
-             in the gdf column MultiIndex.
-
-    Returns
-    -------
-    cols - list or str or tuple. The column name(s) matching the
-           requested names in those levels.
-    """
-    masks = [
-        gdf.columns.get_level_values(level).isin(col_list)
-        for level, col_list in kwargs.items()
-    ]
-    mask = np.all(masks, axis=0)
-    cols = gdf.columns[mask]
-    if len(cols) == 1:
-        cols = cols.values[0]
-    elif len(cols) == 0:
-        cols = ''  # Should throw up a KeyError when used to index.
-    return cols
-
-
 def create_lines_from_coords(
         df,
         cols_with_coords,
