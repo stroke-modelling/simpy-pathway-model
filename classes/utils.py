@@ -3,6 +3,8 @@ Generic functions for certain tasks such as saving and loading files.
 """
 import numpy as np
 import pandas as pd
+from shapely import wkt  # for making geometry.
+import geopandas
 
 
 def find_multiindex_column_names(gdf, **kwargs):
@@ -34,3 +36,36 @@ def find_multiindex_column_names(gdf, **kwargs):
     elif len(cols) == 0:
         cols = ''  # Should throw up a KeyError when used to index.
     return cols
+
+
+def convert_df_to_gdf(df):
+    """
+    Convert a dataframe with a 'geometry' column to a GeoDataFrame.
+
+    Useful for reading in a csv from file.
+
+    Inputs
+    ------
+    df - pd.DataFrame.
+
+    Returns
+    -------
+    gdf - GeoDataFrame. Same as input but with geometry column set.
+    """
+    df = df.copy()
+    # Find the intended geometry column in the "property" column level:
+    col = find_multiindex_column_names(df, property='geometry')
+    try:
+        gdf = geopandas.GeoDataFrame(
+            df,
+            geometry=col
+            )
+    except TypeError:
+        # # Convert to a proper geometry column:
+        df[col] = df[col].apply(wkt.loads)
+        # Convert to a proper GeoDataFrame:
+        gdf = geopandas.GeoDataFrame(
+            df,
+            geometry=col
+            )
+    return gdf

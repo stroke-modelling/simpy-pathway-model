@@ -24,13 +24,13 @@ class Combine(object):
     combine_inputs_and_results:
         Wrapper for pd.merge().
 
-    combine_selected_units:
+    combine_units:
         Combine units data.
 
-    combine_selected_transfer:
+    combine_transfer:
         Combine transfer units data.
 
-    combine_selected_lsoa:
+    combine_lsoa:
         Combine LSOA data.
 
     _diff_data:
@@ -120,7 +120,7 @@ class Combine(object):
                       left_index=True, right_index=True, how=how)
         return df
 
-    def combine_selected_units(
+    def combine_units(
             self,
             dict_scenario_df_to_merge
             ):
@@ -203,7 +203,7 @@ class Combine(object):
 
         return df
 
-    def combine_selected_transfer(
+    def combine_transfer(
             self,
             dict_scenario_df_to_merge
             ):
@@ -262,7 +262,7 @@ class Combine(object):
 
         return df
 
-    def combine_selected_lsoa(
+    def combine_lsoa(
             self, dict_scenario_df_to_merge):
         """
         Combine LSOA data.
