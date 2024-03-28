@@ -1,0 +1,16 @@
+property,,transfer_unit_travel_time,selected,selected
+scenario,,any,drip-and-ship,mothership
+postcode,transfer_unit_postcode,,,
+BA13NG,BS105NB,33.7,1,
+BA214AT,BS105NB,74.5,1,
+BS105NB,BS105NB,0.0,1,1
+BS234TQ,BS105NB,43.4,1,
+EX25DW,PL68DH,59.5,1,
+EX314JB,PL68DH,90.6,1,
+GL13NN,BS105NB,46.6,1,
+PL68DH,PL68DH,0.0,1,1
+SN36BB,BS105NB,49.8,1,
+SP28BJ,SO166YD,35.9,1,
+TA15DA,BS105NB,65.9,1,
+TQ27AA,PL68DH,52.0,1,
+TR13LQ,PL68DH,75.6,1,

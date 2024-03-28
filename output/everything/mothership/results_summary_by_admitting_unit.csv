@@ -1,0 +1,5 @@
+property,time_ambulance_called,time_ambulance_called,time_ambulance_arrival,time_ambulance_arrival,time_ambulance_leaves_scene,time_ambulance_leaves_scene,time_admitting_unit_arrival,time_admitting_unit_arrival,time_needle,time_needle,time_transfer_unit_arrival,time_transfer_unit_arrival,time_puncture,time_puncture,mRS shift,mRS shift,utility_shift,utility_shift,mRS 0-2,mRS 0-2
+subtype,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std
+unit,,,,,,,,,,,,,,,,,,,,
+BS105NB,30.0,0.0,60.0,0.0,80.0,0.0,124.02702977856961,18.867321811574797,154.59180470793373,18.638143786509147,,,154.93036935704515,18.71351814518686,-0.6111983699640826,0.1951684574135519,0.1163149091681852,0.04073481051227463,0.6047534686008237,0.10632315544775084
+PL68DH,30.0,0.0,60.0,0.0,80.0,0.0,138.6757863695937,25.20638689991589,169.1714367816092,25.30624561130407,,,168.24300884955753,24.7856393192245,-0.5763042699908146,0.19642095559944958,0.11016006074739822,0.04070719703323367,0.5961566407674822,0.10834631782691026

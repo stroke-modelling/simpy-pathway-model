@@ -1,0 +1,3 @@
+postcode,stroke_team,short_code,ssnap_name,use_ivt,use_mt,use_msu,transfer_unit_postcode,lsoa_code,region,region_code,region_type,country,icb,icb_code,isdn,selected
+PL68DH,"Derriford Hospital, Plymouth",DF,Derriford Hospital,1,1,1,nearest,E01015092,NHS Devon ICB - 15N,E38000230,SICBL,England,NHS Devon Integrated Care Board,E54000037,"Devon, Cornwall and Isles of Scilly",1
+BS105NB,North Bristol Hospital (Southmead),NB,North Bristol Hospitals,1,1,1,nearest,E01014631,"NHS Bristol, North Somerset and South Gloucestershire ICB - 15C",E38000222,SICBL,England,"NHS Bristol, North Somerset and South Gloucestershire Integrated Care Board",E54000039,"Gloucester, BSW, BNSSG and Somerset",1
